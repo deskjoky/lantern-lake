@@ -12,8 +12,8 @@
           "wins"
         ],
         "$uid": {
-          ".write": "auth != null && (auth.uid === $uid || (root.child('admins').child(auth.uid).exists() && !newData.exists()))",
-          ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('catches').isNumber() && newData.child('catches').val() < 1000000 && newData.child('biggest').isNumber() && newData.child('biggest').val() < 1000 && newData.child('level').isNumber() && newData.child('level').val() < 1000 && newData.child('earned').isNumber() && newData.child('earned').val() < 1000000000"
+          ".write": "auth != null && (root.child('owner').val() === auth.uid || (auth.uid === $uid && !root.child('restrict').child(auth.uid).exists()) || (root.child('admins').child(auth.uid).exists() && !newData.exists()))",
+          ".validate": "root.child('owner').val() === auth.uid || (newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('catches').isNumber() && newData.child('catches').val() >= 0 && newData.child('catches').val() < 1000000 && newData.child('biggest').isNumber() && newData.child('biggest').val() >= 0 && newData.child('biggest').val() <= 1600 && newData.child('level').isNumber() && newData.child('level').val() >= 1 && newData.child('level').val() <= 60 && newData.child('xp').isNumber() && newData.child('xp').val() >= 0 && newData.child('xp').val() < 1000000000 && newData.child('earned').isNumber() && newData.child('earned').val() >= 0 && newData.child('earned').val() < 1000000000 && newData.child('updated').val() === now && (!data.exists() || !data.child('updated').exists() || !data.child('xp').exists() || !data.child('earned').exists() || !data.child('catches').exists() || (root.child('mod').child($uid).child('lbok').exists() && root.child('mod').child($uid).child('lbok').val() >= data.child('updated').val()) || (newData.child('catches').val() <= data.child('catches').val() + 100 + (now - data.child('updated').val()) / 20000 && newData.child('xp').val() <= data.child('xp').val() + 40000 + (now - data.child('updated').val()) * 0.02 && newData.child('earned').val() <= data.child('earned').val() + 400000 + (now - data.child('updated').val()) * 0.2)))"
         }
       },
       "fish": {
@@ -22,8 +22,8 @@
             "lb"
           ],
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || (root.child('admins').child(auth.uid).exists() && !newData.exists()))",
-            ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('lb').isNumber() && newData.child('lb').val() < 1000"
+            ".write": "auth != null && (root.child('owner').val() === auth.uid || (auth.uid === $uid && !root.child('restrict').child(auth.uid).exists()) || (root.child('admins').child(auth.uid).exists() && !newData.exists()))",
+            ".validate": "root.child('owner').val() === auth.uid || (newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('lb').isNumber() && newData.child('lb').val() > 0 && newData.child('lb').val() <= 1600 && (!root.child('fishmax').child($fish).exists() || newData.child('lb').val() <= root.child('fishmax').child($fish).val()) && newData.child('t').val() === now)"
           }
         }
       }
@@ -44,7 +44,7 @@
             "t"
           ],
           "$e": {
-            ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid"
+            ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid && (newData.child('type').val() !== 'catch' || !root.child('restrict').child(auth.uid).exists())"
           }
         },
         "derby": {
@@ -58,14 +58,14 @@
         "t"
       ],
       "$id": {
-        ".write": "auth != null && ((!data.exists() && newData.child('u').val() === auth.uid) || (data.exists() && !newData.exists() && (data.child('u').val() === auth.uid || root.child('admins').child(auth.uid).exists())))",
+        ".write": "auth != null && ((!data.exists() && newData.child('u').val() === auth.uid) || (data.exists() && !newData.exists() && (data.child('u').val() === auth.uid || root.child('admins').child(auth.uid).exists() || root.child('owner').val() === auth.uid)))",
         ".validate": "!newData.exists() || (newData.child('text').isString() && newData.child('text').val().length >= 4 && newData.child('text').val().length <= 280 && newData.child('n').isString() && newData.child('n').val().length <= 16 && newData.child('t').val() <= now)"
       }
     },
     "boardVotes": {
       ".read": true,
       "$id": {
-        ".write": "auth != null && root.child('admins').child(auth.uid).exists() && !newData.exists()",
+        ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || root.child('owner').val() === auth.uid) && !newData.exists()",
         "$uid": {
           ".write": "auth != null && auth.uid === $uid",
           ".validate": "!newData.exists() || newData.val() === 1 || newData.val() === -1"
@@ -77,6 +77,10 @@
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.val() === 'YOUR-ADMIN-CODE'"
       }
+    },
+    "owner": {
+      ".read": "auth != null",
+      ".write": "auth != null && !data.exists() && auth.token.firebase.sign_in_provider === 'google.com' && newData.val() === auth.uid && root.child('admins').child(auth.uid).val() === 'YOUR-ADMIN-CODE'"
     },
     "saves": {
       "$uid": {
@@ -90,6 +94,63 @@
         ".read": true,
         ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid",
         ".validate": "newData.child('data').isString() && newData.child('data').val().length < 1000000"
+      }
+    },
+    "players": {
+      ".read": "auth != null && root.child('owner').val() === auth.uid",
+      ".indexOn": [
+        "nl",
+        "t"
+      ],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['n','nl','t','data','money','xp']) && newData.child('t').val() === now && newData.child('data').isString() && newData.child('data').val().length < 900000 && newData.child('n').isString() && newData.child('n').val().length <= 16 && newData.child('nl').val() === newData.child('n').val().toLowerCase() && newData.child('money').isNumber() && newData.child('money').val() >= 0 && newData.child('money').val() < 1000000000 && newData.child('xp').isNumber() && newData.child('xp').val() >= 0 && newData.child('xp').val() < 1000000000"
+      }
+    },
+    "mod": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('owner').val() === auth.uid)",
+        "q": {
+          "$id": {
+            ".write": "auth != null && root.child('owner').val() === auth.uid && !data.exists()",
+            ".validate": "newData.hasChildren(['k','why','t']) && newData.child('why').isString() && newData.child('why').val().length >= 3 && newData.child('why').val().length <= 400 && newData.child('t').val() === now"
+          }
+        },
+        "done": {
+          "$id": {
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('mod').child($uid).child('q').child($id).exists()",
+            ".validate": "newData.child('t').val() === now"
+          }
+        },
+        "lbok": {
+          ".write": "auth != null && root.child('owner').val() === auth.uid",
+          ".validate": "newData.val() === now"
+        }
+      }
+    },
+    "modlog": {
+      ".read": "auth != null && root.child('owner').val() === auth.uid",
+      ".indexOn": [
+        "t",
+        "uid"
+      ],
+      "$id": {
+        ".write": "auth != null && root.child('owner').val() === auth.uid && !data.exists()",
+        ".validate": "newData.hasChildren(['k','why','t','uid']) && newData.child('why').isString() && newData.child('why').val().length >= 3 && newData.child('t').val() === now"
+      }
+    },
+    "restrict": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('owner').val() === auth.uid)",
+        ".write": "auth != null && root.child('owner').val() === auth.uid",
+        ".validate": "!newData.exists() || (newData.child('why').isString() && newData.child('why').val().length >= 3 && newData.child('t').val() === now)"
+      }
+    },
+    "fishmax": {
+      ".read": true,
+      "$f": {
+        ".write": "auth != null && root.child('owner').val() === auth.uid",
+        ".validate": "newData.isNumber() && newData.val() > 0"
       }
     }
   }
