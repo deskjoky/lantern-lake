@@ -2923,7 +2923,7 @@ NET.loadSdk=function(){if(window.firebase&&window.firebase.database)return Promi
 NET.connect=async function(){if(NET.status==='on')return true;if(NET._conn)return NET._conn;
  NET.status='connecting';NET._conn=(async()=>{try{await NET.loadSdk();const fb=window.firebase;if(!fb.apps.length)fb.initializeApp(FB_CONFIG);const cred=await fb.auth().signInAnonymously();NET.uid=(cred.user||fb.auth().currentUser).uid;NET.db=fb.database();
   NET.db.ref('.info/serverTimeOffset').on('value',s=>{NET.offset=s.val()||0;});NET.status='on';NET.err='';return true;}
-  catch(e){NET.status='error';NET.err=String(e&&e.message||e);NET._conn=null;return false;}})();return NET._conn;};
+  catch(e){NET.status='error';NET.err=String((e&&e.code?e.code+': ':'')+(e&&e.message||e));NET._conn=null;console.warn('online',NET.err);return false;}})();return NET._conn;};
 NET.now=()=>Date.now()+NET.offset;
 NET.ref=p=>NET.db.ref(p);
 const cleanName=n=>String(n||'').replace(/[^\w .'\-]/g,'').trim().slice(0,16);
@@ -3036,7 +3036,8 @@ NET.updateBoard=async function(){if(!BOARD.item)return;const d=Math.hypot(BOARD.
 UI.onlineView=function(){const nm=myName();let h='';
  const statusTxt=NET.status==='on'?'<span style="color:var(--green)">● Online</span>':NET.status==='connecting'?'<span style="color:var(--gold2)">● Connecting…</span>':NET.status==='error'?'<span style="color:var(--red)">● Offline</span>':'<span style="color:var(--muted)">● Not connected</span>';
  h+=`<div class="sect">Your angler name <small style="font-family:Nunito;font-size:12px;margin-left:8px">${statusTxt}</small></div><div class="netrow"><input id="nameInput" maxlength="16" placeholder="Pick a name" value="${esc(nm)}" autocomplete="off"><button class="btn gold" data-a="saveName">Save</button></div>`;
- if(NET.status==='error')h+=`<p style="color:#ffc3b5;font-size:13px">Couldn't connect to the online service${/claude/.test(location.hostname)?'. Online play works on your GitHub site (deskjoky.github.io/lantern-lake)':' — check your internet connection'}.</p>`;
+ if(NET.status==='error'){const e=NET.err||'',hint=/operation-not-allowed|admin-restricted/.test(e)?'Anonymous sign-in is switched off in Firebase (Authentication → Sign-in method → Anonymous).':/configuration-not-found/.test(e)?'Authentication hasn\'t been set up in Firebase yet (Authentication → Get started).':/Could not load/.test(e)?'The online code couldn\'t download. A content blocker or private browsing setting may be blocking gstatic.com.':/network/.test(e)?'Check your internet connection.':'';
+  h+=`<p style="color:#ffc3b5;font-size:13px;line-height:1.45">Couldn't connect to the online service.${/claude/.test(location.hostname)?' Online play works on your GitHub site (deskjoky.github.io/lantern-lake).':' '+hint}<br><span style="color:var(--muted);font-size:12px;user-select:text;-webkit-user-select:text">Details: ${esc(e.slice(0,200))}</span></p><button class="btn" data-a="netRetry" style="margin-bottom:6px">↻ Try again</button>`;}
  if(!nm)return h+`<p style="color:var(--muted)">Choose a name to play with friends and appear on the leaderboards.</p>`;
  if(!NET.room){h+=`<div class="sect">Host a room</div><p style="color:var(--muted);margin:0 0 8px">Get a code to share. Friends who join fish on your lake, at your time of day and weather.</p><div class="seg" style="margin-bottom:10px">${[4,6,8,10].map(n=>`<button class="${(UI._roomMax||8)===n?'on':''}" data-a="roomMax" data-v="${n}">${n} players</button>`).join('')}</div><button class="btn gold" data-a="hostRoom">Create room</button>
   <div class="sect">Join a room</div><div class="netrow"><input id="codeInput" maxlength="12" placeholder="e.g. TROUT-42" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase" value="${esc(UI._codeDraft||'')}"><button class="btn teal" data-a="joinRoom">Join</button></div>${S.lastRoom?`<p style="color:var(--muted);font-size:12.5px">Last room: <button class="btn" style="min-height:34px;padding:0 10px" data-a="joinLast">${esc(S.lastRoom)}</button></p>`:''}`;return h;}
@@ -3072,6 +3073,7 @@ Object.assign(UI.A,{
  quickChat:v=>{NET.chat(v);},sendChat:()=>{const i=$('#chatInput');NET.chat(i.value);i.value='';},
  lbCat:v=>{UI._lbCat=v;UI.refresh();},lbRefresh:()=>{NET.fetchLb(UI._lbCat||'biggest',true).then(()=>UI.refresh());},
  openOnline:()=>UI.openMenu('online'),
+ netRetry:()=>{NET.status='off';NET._conn=null;NET.connect().then(()=>UI.refresh());UI.refresh();},
 });
 document.addEventListener('change',e=>{if(e.target.id==='lbFish'){UI._lbFish=+e.target.value;UI._lbCat='fish:'+e.target.value;UI.refresh();}});
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id==='chatInput')UI.A.sendChat();else if(e.target.id==='codeInput')UI.A.joinRoom();else if(e.target.id==='nameInput')UI.A.saveName();});
