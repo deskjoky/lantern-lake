@@ -3,17 +3,26 @@
     "lb": {
       ".read": true,
       "players": {
-        ".indexOn": ["biggest", "catches", "species", "earned", "xp", "wins"],
+        ".indexOn": [
+          "biggest",
+          "catches",
+          "species",
+          "earned",
+          "xp",
+          "wins"
+        ],
         "$uid": {
-          ".write": "auth != null && auth.uid === $uid",
-          ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('catches').isNumber() && newData.child('biggest').isNumber() && newData.child('biggest').val() < 1000"
+          ".write": "auth != null && (auth.uid === $uid || (root.child('admins').child(auth.uid).exists() && !newData.exists()))",
+          ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('catches').isNumber() && newData.child('catches').val() < 1000000 && newData.child('biggest').isNumber() && newData.child('biggest').val() < 1000 && newData.child('level').isNumber() && newData.child('level').val() < 1000 && newData.child('earned').isNumber() && newData.child('earned').val() < 1000000000"
         }
       },
       "fish": {
         "$fish": {
-          ".indexOn": ["lb"],
+          ".indexOn": [
+            "lb"
+          ],
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && (auth.uid === $uid || (root.child('admins').child(auth.uid).exists() && !newData.exists()))",
             ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('lb').isNumber() && newData.child('lb').val() < 1000"
           }
         }
@@ -26,15 +35,47 @@
           ".write": "auth != null && (!data.exists() || data.child('host').val() === auth.uid || now - data.child('created').val() > 43200000)"
         },
         "p": {
-          "$uid": { ".write": "auth != null && auth.uid === $uid" }
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
         },
         "ev": {
-          ".indexOn": ["t"],
-          "$e": { ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid" }
+          ".indexOn": [
+            "t"
+          ],
+          "$e": {
+            ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid"
+          }
         },
         "derby": {
           ".write": "auth != null && root.child('rooms').child($code).child('meta/host').val() === auth.uid"
         }
+      }
+    },
+    "board": {
+      ".read": true,
+      ".indexOn": [
+        "t"
+      ],
+      "$id": {
+        ".write": "auth != null && ((!data.exists() && newData.child('u').val() === auth.uid) || (data.exists() && !newData.exists() && (data.child('u').val() === auth.uid || root.child('admins').child(auth.uid).exists())))",
+        ".validate": "!newData.exists() || (newData.child('text').isString() && newData.child('text').val().length >= 4 && newData.child('text').val().length <= 280 && newData.child('n').isString() && newData.child('n').val().length <= 16 && newData.child('t').val() <= now)"
+      }
+    },
+    "boardVotes": {
+      ".read": true,
+      "$id": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists() && !newData.exists()",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "!newData.exists() || newData.val() === 1 || newData.val() === -1"
+        }
+      }
+    },
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.val() === 'YOUR-ADMIN-CODE'"
       }
     }
   }
