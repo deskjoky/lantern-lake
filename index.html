@@ -3241,7 +3241,7 @@ const Wg=[
 ['New','Deep-water giants: shortfin mako, great hammerhead, swordfish, Atlantic bluefin tuna and a new legend lurking in The Abyss'],
 ['New','Not just fish: catch squid, octopus, blue crabs, spiny lobster and stingrays on the Gulf, plus crayfish and snapping turtles on the lake'],
 ['New','New baits and lures for the big ones: live squid, live bonito, stingray wing, bonito chunks, a deep-drop glow rig, cedar plugs, spreader bars and a glow squid jig'],
-['New','Whales surface, blow and breach offshore, and dolphin pods ride your bow wave when you run in deep water'],
+['New','Whales surface, blow and breach offshore, and dolphin pods pass by out in deep water'],
 ['New','Birds overhead on both maps: geese in V formation and ospreys that dive for fish on the lake; pelicans that crash-dive for bait, gulls that follow your boat and frigatebirds on the Gulf'],
 ['New','Better gear unlocks as you level up. Each map has its own level requirements'],
 ['Improved','Hooked fish leap clear of the water, and billfish and tarpon tail-walk. The camera swings round to catch the jump'],
@@ -4354,11 +4354,11 @@ const Kub=$a(wub.x,Fub,wub.z,wub.hd,Gub,Hub,Bub);Qtb.push({mesh:Pi.meshes.whale,
 Qtb.push({mesh:Pi.meshes.fluke,model:cd(Kub,$a(0,0,-6.4,0,Iub+Math.sin(Pi.t*.8)*.12,0)),prog:'lit',moving:true,twoSided:true,refl:true,shadow:false,mat:[.45,40,0,0]});}
 if(og.dolphinMesh){const Vub=kf.mode==='boat'?Math.abs(mf.speed):kf.mode==='aboard'&&Bi()?Math.abs(Bi().sp||0):0;
 const Wub=ub(kf.x,kf.z)<-5;
-if(Wub&&Pi.pods.length<1&&Math.random()<Ptb*(Vub>4?.08:.015)){const Xub=Math.random()*da;Pi.pods.push({x:kf.x+Math.cos(Xub)*60,z:kf.z+Math.sin(Xub)*60,hd:Math.random()*da,t:0,n:3+Math.floor(Math.random()*4),life:40+Math.random()*50,ride:0});}
+if(Wub&&Pi.pods.length<1&&Math.random()<Ptb*.01){const Xub=Math.random()*da;Pi.pods.push({x:kf.x+Math.cos(Xub)*110,z:kf.z+Math.sin(Xub)*110,hd:Math.random()*da,t:0,n:3+Math.floor(Math.random()*4),life:40+Math.random()*50,ride:0});}
 for(let Yub=Pi.pods.length-1;Yub>=0;Yub--){const Zub=Pi.pods[Yub];Zub.t+=Ptb;Zub.life-=Ptb;
 const _ub=kf.mode==='boat'?mf.x:kf.x,$ub=kf.mode==='boat'?mf.z:kf.z,avb=kf.mode==='boat'?mf.rot:(Bi()?Bi().r:0);
-let bvb,cvb,dvb;if(Vub>3&&Zub.life>0){
-bvb=_ub+Math.sin(avb)*7;cvb=$ub+Math.cos(avb)*7;dvb=Vub+2;Zub.ride=Math.min(1,Zub.ride+Ptb*.4);}else{bvb=Zub.x+Math.sin(Zub.hd)*30;cvb=Zub.z+Math.cos(Zub.hd)*30;dvb=3;Zub.ride=Math.max(0,Zub.ride-Ptb*.3);if(Zub.life<0&&Math.hypot(Zub.x-_ub,Zub.z-$ub)>320){Pi.pods.splice(Yub,1);continue;}}
+let bvb,cvb,dvb;if(false){
+bvb=_ub+Math.sin(avb)*7;cvb=$ub+Math.cos(avb)*7;dvb=Vub+2;Zub.ride=Math.min(1,Zub.ride+Ptb*.4);}else{bvb=Zub.x+Math.sin(Zub.hd)*30;cvb=Zub.z+Math.cos(Zub.hd)*30;dvb=3;Zub.ride=Math.max(0,Zub.ride-Ptb*.3);if(Zub.life<0||Math.hypot(Zub.x-_ub,Zub.z-$ub)>320){Pi.pods.splice(Yub,1);continue;}}
 const evb=Math.atan2(bvb-Zub.x,cvb-Zub.z),fvb=Math.hypot(bvb-Zub.x,cvb-Zub.z);Zub.hd+=ea((Zub.ride>.3?evb:Zub.hd+Math.sin(Zub.t*.2)*.4)-Zub.hd)*Math.min(1,Ptb*2);const gvb=Math.min(dvb*1.15,fvb>2?dvb+fvb*.3:dvb);const hvb=Zub.x+Math.sin(Zub.hd)*gvb*Ptb,ivb=Zub.z+Math.cos(Zub.hd)*gvb*Ptb;if(ub(hvb,ivb)<-2.5){Zub.x=hvb;Zub.z=ivb;}else Zub.hd+=Ptb*2;
 if(Math.hypot(Zub.x-Rtb,Zub.z-Stb)>300)continue;
 for(let jvb=0;jvb<Zub.n;jvb++){const kvb=(Zub.t*(Zub.ride>.3?.9:.55)+jvb*.41)%2.6,lvb=(jvb%2?1:-1)*(1.3+Math.floor(jvb/2)*1.4),mvb=-Math.floor(jvb/2)*1.6-(jvb%2)*.6;const nvb=kvb<1?Math.sin(kvb*Math.PI):0;
