@@ -26,6 +26,20 @@
             ".validate": "root.child('owner').val() === auth.uid || (newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('lb').isNumber() && newData.child('lb').val() > 0 && newData.child('lb').val() <= 1600 && (!root.child('fishmax').child($fish).exists() || newData.child('lb').val() <= root.child('fishmax').child($fish).val()) && newData.child('t').val() === now)"
           }
         }
+      },
+      "gplayers": {
+        ".indexOn": [
+          "biggest",
+          "catches",
+          "species",
+          "earned",
+          "xp",
+          "wins"
+        ],
+        "$uid": {
+          ".write": "auth != null && (root.child('owner').val() === auth.uid || (auth.uid === $uid && !root.child('restrict').child(auth.uid).exists()) || (root.child('admins').child(auth.uid).exists() && !newData.exists()))",
+          ".validate": "root.child('owner').val() === auth.uid || (newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('catches').isNumber() && newData.child('catches').val() >= 0 && newData.child('catches').val() < 1000000 && newData.child('biggest').isNumber() && newData.child('biggest').val() >= 0 && newData.child('biggest').val() <= 1600 && newData.child('level').isNumber() && newData.child('level').val() >= 1 && newData.child('level').val() <= 60 && newData.child('xp').isNumber() && newData.child('xp').val() >= 0 && newData.child('xp').val() < 1000000000 && newData.child('earned').isNumber() && newData.child('earned').val() >= 0 && newData.child('earned').val() < 1000000000 && newData.child('updated').val() === now && (!data.exists() || !data.child('updated').exists() || !data.child('xp').exists() || !data.child('earned').exists() || !data.child('catches').exists() || (root.child('mod').child($uid).child('lbok').exists() && root.child('mod').child($uid).child('lbok').val() >= data.child('updated').val()) || (newData.child('catches').val() <= data.child('catches').val() + 100 + (now - data.child('updated').val()) / 20000 && newData.child('xp').val() <= data.child('xp').val() + 40000 + (now - data.child('updated').val()) * 0.02 && newData.child('earned').val() <= data.child('earned').val() + 400000 + (now - data.child('updated').val()) * 0.2)))"
+        }
       }
     },
     "rooms": {
