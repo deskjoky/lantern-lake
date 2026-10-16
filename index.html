@@ -2933,6 +2933,11 @@ NET.myState=function(){const s=F.state,code={idle:0,charge:1,flight:1,water:2,bi
  if((s==='water'||s==='bite'||s==='snag')&&F.lure){lx=F.lure.x;lz=F.lure.z;}else if(s==='fight'&&F.fight){lx=F.fight.fx;lz=F.fight.fz;lf=F.fight.f.id;}else if(s==='landed'&&F.catch&&F.catch.f){lf=F.catch.f.id;}
  const r2=v=>Math.round(v*100)/100;
  return {n:myName(),m:PL.mode==='boat'?1:0,x:r2(PL.mode==='boat'?BOAT.x:PL.x),y:r2(PL.mode==='boat'?BOAT.y:PL.y),z:r2(PL.mode==='boat'?BOAT.z:PL.z),r:r2(PL.mode==='boat'?BOAT.rot:PL.rot),sp:r2(PL.mode==='boat'?BOAT.speed:PL.speed),air:r2(PL.air||0),b:BOAT.type,bp:S.boat.paint[BOAT.type]||'',f:code,lx:r2(lx),lz:r2(lz),lf,h:S.outfit.hat,sh:S.outfit.shirt,hr:S.outfit.hair??0,hc:S.outfit.hairCol??0,bd:S.outfit.beard?1:0,lv:levelOf(),t:firebase.database.ServerValue.TIMESTAMP};};
+NET.guard=function(name,fn){return async function(...a){if(NET.busy)return;NET.busy=name;if(UI.modal)UI.refresh();let to;
+ try{return await Promise.race([fn.apply(this,a),new Promise((_,rj)=>{to=setTimeout(()=>rj(new Error('timeout')),12000);})]);}
+ catch(e){const m=String((e&&e.code?e.code+': ':'')+(e&&e.message||e));console.warn(name,m);NET.lastErr=m;
+  UI.toast(/permission|PERMISSION/.test(m)?'Firebase blocked that. The database rules need to be published (Realtime Database → Rules → paste → Publish).':/timeout/.test(m)?'The database didn\'t answer. Check the databaseURL in the Firebase setup.':'Something went wrong: '+m.slice(0,90),'warn');}
+ finally{clearTimeout(to);NET.busy=null;if(UI.modal)UI.refresh();}};};
 NET.host=async function(max){if(!await NET.connect())return UI.toast('Could not reach the online service. Check your connection.','warn');
  for(let tries=0;tries<6;tries++){const code=ROOM_WORDS[Math.floor(Math.random()*ROOM_WORDS.length)]+'-'+String(10+Math.floor(Math.random()*90));const meta=NET.ref('rooms/'+code+'/meta');const snap=await meta.once('value');const v=snap.val();
   if(v&&NET.now()-(v.created||0)<12*3600e3)continue;
@@ -3031,6 +3036,8 @@ function drawBoardCanvas(rows){const cv=BOARD.cv,c=cv.getContext('2d'),W=cv.widt
 NET.updateBoard=async function(){if(!BOARD.item)return;const d=Math.hypot(BOARD.pos[0]-PL.x,BOARD.pos[1]-PL.z);if(d>120||Date.now()-BOARD.at<60000)return;BOARD.at=Date.now();if(!myName()){BOARD.tex=texFromCanvas(drawBoardCanvas(null));return;}
  const rows=await NET.fetchLb('biggest');if(rows){const gl=GL.gl;gl.deleteTexture(BOARD.tex);BOARD.tex=texFromCanvas(drawBoardCanvas(rows));}};
 
+NET.host=NET.guard('host',NET.host);NET.join=NET.guard('join',NET.join);
+
 // ---- 20-netui.js ----
 // ===== Online UI: menu tabs, HUD chip, derby HUD =====
 UI.onlineView=function(){const nm=myName();let h='';
@@ -3039,8 +3046,8 @@ UI.onlineView=function(){const nm=myName();let h='';
  if(NET.status==='error'){const e=NET.err||'',hint=/operation-not-allowed|admin-restricted/.test(e)?'Anonymous sign-in is switched off in Firebase (Authentication → Sign-in method → Anonymous).':/configuration-not-found/.test(e)?'Authentication hasn\'t been set up in Firebase yet (Authentication → Get started).':/Could not load/.test(e)?'The online code couldn\'t download. A content blocker or private browsing setting may be blocking gstatic.com.':/network/.test(e)?'Check your internet connection.':'';
   h+=`<p style="color:#ffc3b5;font-size:13px;line-height:1.45">Couldn't connect to the online service.${/claude/.test(location.hostname)?' Online play works on your GitHub site (deskjoky.github.io/lantern-lake).':' '+hint}<br><span style="color:var(--muted);font-size:12px;user-select:text;-webkit-user-select:text">Details: ${esc(e.slice(0,200))}</span></p><button class="btn" data-a="netRetry" style="margin-bottom:6px">↻ Try again</button>`;}
  if(!nm)return h+`<p style="color:var(--muted)">Choose a name to play with friends and appear on the leaderboards.</p>`;
- if(!NET.room){h+=`<div class="sect">Host a room</div><p style="color:var(--muted);margin:0 0 8px">Get a code to share. Friends who join fish on your lake, at your time of day and weather.</p><div class="seg" style="margin-bottom:10px">${[4,6,8,10].map(n=>`<button class="${(UI._roomMax||8)===n?'on':''}" data-a="roomMax" data-v="${n}">${n} players</button>`).join('')}</div><button class="btn gold" data-a="hostRoom">Create room</button>
-  <div class="sect">Join a room</div><div class="netrow"><input id="codeInput" maxlength="12" placeholder="e.g. TROUT-42" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase" value="${esc(UI._codeDraft||'')}"><button class="btn teal" data-a="joinRoom">Join</button></div>${S.lastRoom?`<p style="color:var(--muted);font-size:12.5px">Last room: <button class="btn" style="min-height:34px;padding:0 10px" data-a="joinLast">${esc(S.lastRoom)}</button></p>`:''}`;return h;}
+ if(!NET.room){h+=`<div class="sect">Host a room</div><p style="color:var(--muted);margin:0 0 8px">Get a code to share. Friends who join fish on your lake, at your time of day and weather.</p><div class="seg" style="margin-bottom:10px">${[4,6,8,10].map(n=>`<button class="${(UI._roomMax||8)===n?'on':''}" data-a="roomMax" data-v="${n}">${n} players</button>`).join('')}</div><button class="btn gold" data-a="hostRoom" ${NET.busy?'disabled':''}>${NET.busy==='host'?'Creating…':'Create room'}</button>${NET.lastErr?`<p style="color:#ffc3b5;font-size:12.5px;user-select:text;-webkit-user-select:text">Last error: ${esc(NET.lastErr.slice(0,200))}</p>`:''}
+  <div class="sect">Join a room</div><div class="netrow"><input id="codeInput" maxlength="12" placeholder="e.g. TROUT-42" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase" value="${esc(UI._codeDraft||'')}"><button class="btn teal" data-a="joinRoom" ${NET.busy?'disabled':''}>${NET.busy==='join'?'Joining…':'Join'}</button></div>${S.lastRoom?`<p style="color:var(--muted);font-size:12.5px">Last room: <button class="btn" style="min-height:34px;padding:0 10px" data-a="joinLast">${esc(S.lastRoom)}</button></p>`:''}`;return h;}
  const R2=NET.room,others=Object.values(NET.players).filter(p=>!p.hidden);
  h+=`<div class="sect">Room</div><div class="roomcode"><div><small>ROOM CODE</small><b>${esc(R2.code)}</b></div><button class="btn" data-a="copyCode">Copy</button></div>`;
  h+=`<div class="sect">On the lake · ${others.length+1}/${(R2.meta&&R2.meta.max)||R2.max||8}</div><div class="row2"><div class="l"><b>${esc(nm)} (you)${R2.host?' · host':''}</b><small>Level ${levelOf()}</small></div></div>`+others.map(p=>{const d=Math.hypot(p.disp.x-PL.x,p.disp.z-PL.z);const z=zoneAt(p.disp.x,p.disp.z);return `<div class="row2"><div class="l"><b>${esc(p.st.n||'Angler')}${R2.meta&&R2.meta.host===p.uid?' · host':''}</b><small>Level ${p.st.lv||1} · ${Math.round(d)} m away${z?' · '+esc(z.name):''}${p.st.m===1?' · on a boat':''}</small></div></div>`;}).join('');
@@ -3065,8 +3072,8 @@ UI.leadersView=function(){const cat=UI._lbCat||'biggest';let h=`<div class="seg"
 Object.assign(UI.A,{
  saveName:()=>{const v=cleanName($('#nameInput').value);if(!v){UI.toast('Names can use letters, numbers and spaces.','warn');return;}S.profile=S.profile||{};S.profile.name=v;saveGame();UI.toast('Name saved: '+v,'good');NET.connect().then(ok=>{if(ok)NET.pushScores(true);UI.refresh();});UI.refresh();},
  roomMax:v=>{UI._roomMax=+v;UI.refresh();},
- hostRoom:()=>{NET.host(UI._roomMax||8).then(()=>UI.refresh());UI.refresh();},
- joinRoom:()=>{const v=$('#codeInput').value;UI._codeDraft=v;NET.join(v).then(()=>UI.refresh());},
+ hostRoom:()=>{NET.lastErr='';NET.host(UI._roomMax||8).then(()=>UI.refresh());},
+ joinRoom:()=>{const v=$('#codeInput').value;UI._codeDraft=v;NET.lastErr='';NET.join(v).then(()=>UI.refresh());},
  joinLast:()=>NET.join(S.lastRoom).then(()=>UI.refresh()),
  copyCode:()=>{const c=NET.room&&NET.room.code;if(!c)return;try{navigator.clipboard.writeText(c).then(()=>UI.toast('Copied '+c,'good'),()=>UI.toast('Room code: '+c,'info'));}catch(e){UI.toast('Room code: '+c,'info');}},
  leaveRoom:()=>NET.leave(),startDerby:()=>NET.startDerby().then(()=>UI.refresh()),
