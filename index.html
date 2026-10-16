@@ -198,6 +198,16 @@ input[type=range]{width:100%;accent-color:var(--gold)}
 .card img.thumb.wide{aspect-ratio:16/9}
 img.thumb.big{width:min(420px,100%);aspect-ratio:16/10;object-fit:contain;border-radius:12px;background:radial-gradient(ellipse at 50% 40%,rgba(120,170,175,.28),rgba(20,45,52,.35) 70%);display:block;margin:0 auto 10px}
 #lureChip .dot{width:44px;height:32px;border-radius:10px;overflow:hidden}
+
+.netrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.netrow input,.netrow select{flex:1;min-width:160px;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--ink);font:700 15px Nunito,system-ui,sans-serif;user-select:text;-webkit-user-select:text}
+.netrow input:focus,.netrow select:focus{outline:2px solid var(--gold);outline-offset:1px}
+.roomcode{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid var(--gold);background:rgba(242,184,75,.08)}
+.roomcode small{display:block;font-size:10.5px;letter-spacing:1.4px;color:var(--muted);font-weight:900}.roomcode b{font:700 30px Fraunces,Georgia,serif;color:var(--gold2);letter-spacing:1px}
+.chatlog{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.22);font-size:13.5px;margin-bottom:8px;user-select:text;-webkit-user-select:text}
+.chatlog .me b{color:var(--gold2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.chips .pill{min-height:36px;font-size:12px;padding:0 11px}
+#netChip{min-height:34px;font-size:12px;padding:0 12px;color:var(--gold2)}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="loading"><div class="logo">Lantern <span>Lake</span></div><div class="lb"><i id="lbar"></i></div><small id="lmsg">Filling the lake…</small></div>
@@ -208,7 +218,7 @@ img.thumb.big{width:min(420px,100%);aspect-ratio:16/10;object-fit:contain;border
   <div id="zoneTag" class="glass hide"></div>
   <div id="quest" class="glass"></div>
  </div>
- <div id="hudTR"><div id="mini"><canvas width="216" height="216"></canvas><span class="n">N</span></div><div class="trBtns"><button class="ibtn glass" id="bMap" aria-label="Map">🗺️</button><button class="ibtn glass" id="bMenu" aria-label="Menu">☰</button></div></div>
+ <div id="hudTR"><div id="mini"><canvas width="216" height="216"></canvas><span class="n">N</span></div><div class="trBtns"><button class="ibtn glass" id="bMap" aria-label="Map">🗺️</button><button class="ibtn glass" id="bMenu" aria-label="Menu">☰</button></div><button id="netChip" class="pill glass hide" data-a="openOnline"></button></div>
  <div id="sonar" class="glass hide"><canvas width="300" height="170"></canvas><small><span id="sonDepth">— ft</span><span id="sonInfo"></span></small></div>
  <div id="tourn" class="glass hide"></div>
  <div id="fishPanel" class="glass hide"><div id="fpStatus"></div><div id="fpRows"></div><div id="fpDir"></div></div>
@@ -727,11 +737,15 @@ in vec3 vW;in vec2 vUV;out vec4 o;void main(){float t=uCam.w;vec2 uv=vec2(vUV.x*
  vec3 c=mix(vec3(.25,.42,.45),vec3(.95,.98,1.),smoothstep(.35,.8,s));c*=uSkyCol.rgb*1.1+uSunCol.rgb*.55;float a=(.55+s*.45)*edge;a*=smoothstep(0.,.05,vUV.y);
  o=vec4(toScreen(applyFog(c,vW)),a);}`;
 
+SH.boardVS=`${GLSL_FRAME}
+layout(location=0) in vec3 aPos;layout(location=1) in vec3 aNrm;layout(location=2) in vec4 aCol;out vec3 vW;out vec2 vUV;out vec3 vN;void main(){vW=aPos;vUV=aCol.xy;vN=aNrm;gl_Position=uVP*vec4(aPos,1.);}`;
+SH.boardFS=`${GLSL_FRAME}${GLSL_COMMON}
+in vec3 vW;in vec2 vUV;in vec3 vN;uniform sampler2D uTex;out vec4 o;void main(){vec3 t=pow(texture(uTex,vUV).rgb,vec3(2.2));vec3 N=normalize(vN);float ndl=max(dot(N,uSunDir.xyz),0.)*.8+.2;vec3 c=t*(mix(uGndCol.rgb,uSkyCol.rgb,.7)*1.4+uSunCol.rgb*ndl*.5+.45)+t*uMisc.x*.9;o=vec4(toScreen(applyFog(c,vW)),1.);}`;
 function buildPrograms(){
  compile('lit',SH.litVS,SH.litFS);compile('litI',SH.litVS,SH.litFS,'#define INST');compile('foliageI',SH.litVS,SH.litFS,'#define INST\n#define FOLIAGE');compile('foliage',SH.litVS,SH.litFS,'#define FOLIAGE');
  compile('terrain',SH.litVS,SH.litFS,'#define TERRAIN');compile('fish',SH.litVS,SH.litFS,'#define FISH');
  compile('depth',SH.depthVS,SH.depthFS);compile('skin',SH.litVS,SH.litFS,'#define SKIN');compile('depthS',SH.depthVS,SH.depthFS,'#define SKIN');compile('depthI',SH.depthVS,SH.depthFS,'#define INST');
- compile('sky',SH.skyVS,SH.skyFS);compile('water',SH.waterVS,SH.waterFS);compile('pts',SH.ptsVS,SH.ptsFS);compile('line',SH.lineVS,SH.lineFS);compile('fall',SH.fallVS,SH.fallFS);
+ compile('sky',SH.skyVS,SH.skyFS);compile('water',SH.waterVS,SH.waterFS);compile('pts',SH.ptsVS,SH.ptsFS);compile('line',SH.lineVS,SH.lineFS);compile('fall',SH.fallVS,SH.fallFS);compile('board',SH.boardVS,SH.boardFS);
 }
 
 // ---- 04-env.js ----
@@ -833,8 +847,9 @@ function setupShadow(focus){const L=ENV.keyDir,S=R.Q.shadowDist;const lv=M4.look
 const IDENT=M4.create();
 const REFLECT=new Float32Array([1,0,0,0, 0,-1,0,0, 0,0,1,0, 0,0,0,1]);
 function drawItem(it,prog,pass){const gl=GL.gl,u=prog.u;
+ if(it.prog==='board'&&BOARD.tex)bindTex(prog,'uTex',BOARD.tex);
  if(it.bones){gl.uniformMatrix4fv(u.uBones,false,it.bones);}else if(u.uModel)gl.uniformMatrix4fv(u.uModel,false,it.model||IDENT);
- if(pass==='main'||pass==='refl'){const t=it.tint||[1,1,1,1];gl.uniform4f(u.uTint,t[0],t[1],t[2],t[3]??1);const m=it.mat||[.08,24,0,0];gl.uniform4f(u.uMat,m[0],m[1],m[2],m[3]);if(it.anim&&u.uAnim)gl.uniform4f(u.uAnim,it.anim[0],it.anim[1],0,0);}
+ if(pass==='main'||pass==='refl'){const t=it.tint||[1,1,1,1];if(u.uTint)gl.uniform4f(u.uTint,t[0],t[1],t[2],t[3]??1);const m=it.mat||[.08,24,0,0];if(u.uMat)gl.uniform4f(u.uMat,m[0],m[1],m[2],m[3]);if(it.anim&&u.uAnim)gl.uniform4f(u.uAnim,it.anim[0],it.anim[1],0,0);}
  if(it.terrainLod!==undefined){const ch=it.chunk;gl.bindVertexArray(ch.vao);const lod=Math.min(it.terrainLod,ch.ibos.length-1);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ch.ibos[lod]);gl.drawElements(gl.TRIANGLES,ch.counts[lod],ch.itype||gl.UNSIGNED_INT,0);GL.stats.draws++;GL.stats.tris+=ch.counts[it.terrainLod]/3;return;}
  if(it.twoSided&&pass!=='shadow'){gl.disable(gl.CULL_FACE);drawMesh(it.mesh);gl.enable(gl.CULL_FACE);}else drawMesh(it.mesh);}
 function itemBounds(it){if(it._b&&!it.moving)return it._b;if(it.bones){it._b={c:[it.bones[12],it.bones[13]+.4,it.bones[14]],r:1.4};return it._b;}const m=it.mesh;let c=m.center;if(it.model)c=M4.xform(it.model,c[0],c[1],c[2]);const s=it.model?Math.hypot(it.model[0],it.model[1],it.model[2]):1;it._b={c,r:m.radius*s};return it._b;}
@@ -1792,7 +1807,7 @@ function newState(){return {v:1,created:Date.now(),money:120,xp:0,minutes:6.4*60
  lanterns:[],quest:{main:0,flags:{}},jobs:{day:0,list:[],done:[]},bounty:null,
  stats:{casts:0,catches:0,released:0,sold:0,earned:0,distance:0,lucky:0,perfect:0,lost:0,junk:0,boatCatches:0,shoreCatches:0,nightCatches:0,tournWins:0,tourns:0,lbTotal:0},
  ach:{},zones:[],settings:{quality:null,music:.35,sfx:.8,amb:.7,sens:1,invert:false,units:'lb',fps:false,hints:true,timeScale:1},
- junk:[],pressure:{},seenTips:{}};}
+ junk:[],pressure:{},seenTips:{},profile:{name:''}};}
 function loadGame(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){adoptSave(JSON.parse(raw));return true;}}catch(e){}S=newState();return false;}
 function hasSave(){if(CLOUD.found)return true;try{return !!localStorage.getItem(SAVE_KEY);}catch(e){return false;}}
 function saveGame(){S.savedAt=Date.now();const j=JSON.stringify(S);let ok=false;try{localStorage.setItem(SAVE_KEY,j);ok=true;}catch(e){}CLOUD.queue(j);return ok;}
@@ -2204,7 +2219,7 @@ F.landFish=function(){const G=F.fight,f=G.f,lb=G.lb,len=fishLength(f,lb);AUDIO.s
  addXP(F.catch.xp);
  jobEvent({type:'catch',fish:f.id,lb,zone:zone?zone.id:null,night,lucky:F.lucky,perfect:G.perfect});
  if(S.quest.main===1)advanceQuest('first');if(S.quest.main===4&&PL.mode==='boat')advanceQuest('boat');if(f.n==='The Lantern King')advanceQuest('king');
- TOURN.onCatch(f,lb);if(S.bounty&&S.bounty.fish===f.id&&lb>=S.bounty.w&&!S.bounty.done){S.bounty.done=true;UI.toast('Bounty fulfilled! Visit the Job Board.','quest');}
+ TOURN.onCatch(f,lb);try{NET.onCatch(f,lb);}catch(e){}if(S.bounty&&S.bounty.fish===f.id&&lb>=S.bounty.w&&!S.bounty.done){S.bounty.done=true;UI.toast('Bounty fulfilled! Visit the Job Board.','quest');}
  AUDIO.catchJingle(f.r);checkAch();saveGame();
 };
 F.keep=function(){const c=F.catch;if(c&&c.f){if(S.cooler.length>=coolerCap()){UI.toast('Cooler full! Sell fish at Otis\' or release this one.','warn');return false;}S.cooler.push({f:c.f.id,lb:c.lb,len:c.len,uid:c.uid,day:ENV.day});UI.toast('Kept '+c.f.n+' ('+fmtW(c.lb)+')','info');}F.reset();F.catch=null;UI.closeReveal();saveGame();return true;};
@@ -2325,6 +2340,7 @@ UI.frame=function(dt){
  const q=curQuest();let qtxt=`<b>${esc(q.t)}</b><span class="qd">${esc(q.d)}</span>`;if(q.id==='lanterns')qtxt=`<b>${esc(q.t)} · ${S.lanterns.length}/7</b><span class="qd">${esc(q.d)}</span>`;
  const qt=q.target&&q.target();if(qt){const ang=Math.atan2(qt[0]-PL.x,qt[1]-PL.z),rel=ang-(CAM.yaw+Math.PI);const d=Math.hypot(qt[0]-PL.x,qt[1]-PL.z);qtxt=`<b><span class="arrow" style="transform:rotate(${-rel}rad)">▲</span>${esc(q.t)} <span style="color:var(--muted);font-weight:700">· ${Math.round(d)} m</span></b><span class="qd">${esc(q.d)}</span>`;}
  if(UI._qt!==qtxt){$('#quest').innerHTML=qtxt;UI._qt=qtxt;}
+ UI.netHud();if(UI.modal&&UI.modal.id==='menu'&&UI.tab.menu==='online'){UI._onlT=(UI._onlT||0)+dt;if(UI._onlT>2.5){UI._onlT=0;UI.refresh();}}
  UI.drawMini();UI.updateLabels();UI.updateActions();UI.updateSonar(dt);UI.updateTournHud();
  if(S.settings.fps){const f=$('#fps');f.classList.remove('hide');UI._fpsA=(UI._fpsA||0)*.95+dt*.05;f.textContent=Math.round(1/UI._fpsA)+' fps · '+GL.stats.draws+' draws · '+(GL.stats.tris/1000|0)+'k tris';}else $('#fps').classList.add('hide');
 };
@@ -2336,6 +2352,7 @@ UI.updateLabels=function(){const L=[];const px=PL.x,pz=PL.z;
  if(PL.mode!=='boat'){const d=Math.hypot(BOAT.x-px,BOAT.z-pz);if(d<45&&d>2)L.push({x:BOAT.x,y:BOAT.y+1.8,z:BOAT.z,t:'⛵ Your '+boatDef().n.toLowerCase(),c:''});}
  const q=curQuest(),qt=q.target&&q.target();if(qt){const d=Math.hypot(qt[0]-px,qt[1]-pz);if(d>8&&d<400)L.push({x:qt[0],y:terrainHeight(qt[0],qt[1])+4,z:qt[1],t:'★ '+q.t,c:'q'});}
  for(const b of NPC.boats){const d=Math.hypot(b.x-px,b.z-pz);if(d<40)L.push({x:b.x,y:b.y+2.6,z:b.z,t:b.name,c:''});}
+ NET.labels(L);
  for(let i=0;i<UI.labels.length;i++){const el=UI.labels[i],l=L[i];if(!l){el.classList.add('hide');continue;}const p=UI.project(l.x,l.y,l.z);if(!p||UI.modal){el.classList.add('hide');continue;}el.classList.remove('hide');if(el._t!==l.t){el.textContent=l.t;el._t=l.t;}el.className='lbl '+l.c;el.style.left=p[0]+'px';el.style.top=p[1]+'px';el.style.opacity=clamp(1.4-p[2]/80,.35,1);}
  // aim reticle
  const aim=$('#aim');const ap=(F.state==='charge'||(F.state==='idle'&&F.nearWater()&&!UI.modal&&!PL.inside))?F.aimPoint():null;const pp=ap&&UI.project(ap[0],ap[1]+.05,ap[2]);if(pp){aim.classList.remove('hide');aim.style.left=pp[0]+'px';aim.style.top=pp[1]+'px';const z0=F.luckyZone();aim.classList.toggle('lucky',F.state==='charge'&&F.power>=z0[0]&&F.power<=z0[1]);aim.style.opacity=F.state==='charge'?1:.45;}else aim.classList.add('hide');};
@@ -2344,7 +2361,7 @@ UI.contexts=function(){const out=[];if(UI.modal||F.state!=='idle')return out;
  if(PL.mode==='walk'){
   if(nearBoat())out.push(['board','⛵ Board','gold']);
   for(const n of NPC.list)if(Math.hypot(n.x-PL.x,n.z-PL.z)<3.2){out.push(['talk:'+n.id,'💬 '+n.name,'gold']);break;}
-  for(const b of STRUCT.buildings){if(!b.door)continue;if(Math.hypot(b.door[0]-PL.x,b.door[1]-PL.z)<3.2&&b.id!=='cabin'&&b.id!=='maeve'){out.push(['shop:'+b.id,b.icon+' '+(b.id==='jobs'?'Job Board':'Shop'),'teal']);break;}}
+  for(const b of STRUCT.buildings){if(!b.door)continue;if(Math.hypot(b.door[0]-PL.x,b.door[1]-PL.z)<3.2&&b.id!=='cabin'&&b.id!=='maeve'){out.push(['shop:'+b.id,b.icon+' '+(b.id==='jobs'?'Job Board':b.id==='leaders'?'Leaderboard':'Shop'),'teal']);break;}}
   if(PL.inside){out.push(['cabin','🏡 Cabin','teal']);out.push(['sleep','🛏 Sleep','teal']);}
   for(const l of STRUCT.lanterns)if(Math.hypot(l.x-PL.x,l.z-PL.z)<3.5&&!S.lanterns.includes(l.id)){out.push(['light:'+l.id,'🏮 Light lantern','gold']);break;}
  }else{out.push(['ashore','🚶 Step ashore','teal']);}
@@ -2401,20 +2418,23 @@ UI.updateSonar=function(dt){const el=$('#sonar');const on=PL.mode==='boat'&&S.bo
  const z=zoneAt(BOAT.x,BOAT.z);if(z&&(z.tags.includes('timber')||z.tags.includes('wreck'))&&Math.random()<.5){c.fillStyle='#7bd389';c.fillRect(gx,by-Math.random()*by*.35,2,3);}
  const lvl=S.boat.up.sonar;const k=Math.floor(BOAT.x/9)*7+Math.floor(BOAT.z/9);if(hash2(Math.floor(BOAT.x/9),Math.floor(BOAT.z/9),3)<.35+lvl*.05){const fd=(.2+hash2(k,1)*.75)*d;c.fillStyle=lvl>=2?'#ff7a7a':'#ffd36a';c.fillRect(gx,fd/range*H-2,2,4);UI._sonFish=lvl>=3&&z?FISH.find(f=>f.z.some(t=>z.tags.includes(t))&&!f.legend&&fd>=f.d[0]&&fd<=f.d[1]):null;}
  $('#sonDepth').textContent=(d*3.28).toFixed(0)+' ft';$('#sonInfo').textContent=UI._sonFish?'≈ '+UI._sonFish.n:(range*3.28).toFixed(0)+' ft range';};
-UI.updateTournHud=function(){const el=$('#tourn');if(!TOURN.active||F.state==='fight'){el.classList.add('hide');return;}el.classList.remove('hide');const rows=TOURN.standings(),left=Math.max(0,TOURN.dur-TOURN.t),me=rows.findIndex(r=>r.me);
+UI.updateTournHud=function(){const el=$('#tourn');const dby=NET.derby;if(dby&&NET.now()<dby.end&&F.state!=='fight'&&!TOURN.active){el.classList.remove('hide');const rows=NET.derbyStandings(),left=Math.max(0,(dby.end-NET.now())/1000);const html=`<div class="tt"><span>🏁 Room derby</span><span>${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}</span></div>`+rows.slice(0,4).map((r,i)=>`<div class="r ${r.me?'me':''}"><span>${i+1}. ${esc(r.n||'Angler')}</span><span>${r.lb?fmtW(r.lb):'—'}</span></div>`).join('');if(el._h!==html){el.innerHTML=html;el._h=html;}return;}
+ if(!TOURN.active||F.state==='fight'){el.classList.add('hide');return;}el.classList.remove('hide');const rows=TOURN.standings(),left=Math.max(0,TOURN.dur-TOURN.t),me=rows.findIndex(r=>r.me);
  const show=rows.slice(0,3);if(me>2)show.push(rows[me]);const html=`<div class="tt"><span>🏁 ${TFORMATS[TOURN.format].n}</span><span>${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}</span></div>`+show.map(r=>`<div class="r ${r.me?'me':''}"><span>${rows.indexOf(r)+1}. ${esc(r.n)}</span><span>${TOURN.fmt(r.s)}</span></div>`).join('');if(el._h!==html){el.innerHTML=html;el._h=html;}};
 UI.tournResult=function(rows,rank,prize){UI.openModal('Tournament results',null,()=>`<div class="sect">${rank===1?'🏆 Champion!':rank<=3?'🥈 On the podium!':'Better luck next time'}</div>${rows.map((r,i)=>`<div class="row2" style="${r.me?'border:1px solid var(--gold)':''}"><div class="l"><b>${i+1}. ${esc(r.n)}</b></div><b>${TOURN.fmt(r.s)}</b></div>`).join('')}<p style="color:var(--muted)">${prize?'Prize: <b style="color:var(--gold2)">'+fmtMoney(prize)+'</b>':'Enter again from the Job Board.'}</p>`);};
 // ---- modal framework ----
 UI.openModal=function(title,tabs,render,id){UI.modal={title,tabs,render,id};UI.tab[id]=UI.tab[id]||(tabs?tabs[0][0]:null);$('#modal').classList.remove('hide');UI.renderModal();AUDIO.ui('open');INPUT.jx=INPUT.jy=0;};
-UI.renderModal=function(keepScroll){const m=UI.modal;if(!m)return;const box=$('#modal .box');const sc=keepScroll&&box.querySelector('.body')?box.querySelector('.body').scrollTop:0;const tab=UI.tab[m.id];
+UI.renderModal=function(keepScroll){const m=UI.modal;if(!m)return;const box=$('#modal .box');const keep={};box.querySelectorAll('input[id]').forEach(i=>{keep[i.id]=i.value;});const af=document.activeElement&&document.activeElement.id;const sc=keepScroll&&box.querySelector('.body')?box.querySelector('.body').scrollTop:0;const tab=UI.tab[m.id];
  box.innerHTML=`<header><div class="ttl">${esc(m.title)}</div><div class="cash">${fmtMoney(S.money)}</div><button class="ibtn" data-a="close" aria-label="Close" style="font-size:22px">✕</button></header>${m.tabs?`<nav>${m.tabs.map(t=>`<button class="${t[0]===tab?'on':''}" data-a="tab" data-v="${t[0]}">${t[1]}</button>`).join('')}</nav>`:''}<div class="body">${m.render(tab)}</div>`;
- if(keepScroll)box.querySelector('.body').scrollTop=sc;if(m.after)m.after(tab);const bd=box.querySelector('.body');bd.classList.toggle('mapBody',tab==='map');if(tab==='map')UI.initBigMap();};
+ for(const [id,v] of Object.entries(keep)){const i=box.querySelector('#'+id);if(i&&i.type!=='range')i.value=v;}if(af){const i=box.querySelector('#'+af);if(i&&i.tagName==='INPUT')i.focus();}if(keepScroll)box.querySelector('.body').scrollTop=sc;if(m.after)m.after(tab);const bd=box.querySelector('.body');bd.classList.toggle('mapBody',tab==='map');if(tab==='map')UI.initBigMap();};
 UI.modalClose=function(){UI.modal=null;$('#modal').classList.add('hide');saveGame();};
 UI.refresh=()=>UI.renderModal(true);
-UI.openMenu=function(tab){UI.openModal('Lantern Lake',[['journal','📖 Journal'],['cooler','🧊 Cooler'],['tackle','🎣 Tackle'],['quests','📜 Quests'],['ach','🏅 Achievements'],['map','🗺️ Map'],['settings','⚙️ Settings'],['help','❔ Help']],UI.menuTab,'menu');if(tab){UI.tab.menu=tab;UI.renderModal();}};
+UI.openMenu=function(tab){UI.openModal('Lantern Lake',[['journal','📖 Journal'],['cooler','🧊 Cooler'],['tackle','🎣 Tackle'],['online','🌐 Online'],['leaders','🏆 Leaderboard'],['quests','📜 Quests'],['ach','🏅 Achievements'],['map','🗺️ Map'],['settings','⚙️ Settings'],['help','❔ Help']],UI.menuTab,'menu');if(tab){UI.tab.menu=tab;UI.renderModal();}};
 UI.openTackle=()=>UI.openMenu('tackle');
 UI.menuTab=function(tab){
  if(tab==='journal')return UI.journal();
+ if(tab==='online')return UI.onlineView();
+ if(tab==='leaders')return UI.leadersView();
  if(tab==='cooler')return UI.coolerView(false);
  if(tab==='tackle')return UI.tackleView();
  if(tab==='quests')return UI.questView();
@@ -2511,6 +2531,7 @@ UI.openShop=function(id){const b=STRUCT.buildings.find(b=>b.id===id);
  else if(id==='marina')UI.openModal(b.name,[['boats','Boats'],['up','Upgrades'],['paint','Paint'],['serv','Services']],UI.marinaShop,'marina');
  else if(id==='outfit')UI.openModal(b.name,[['hats','Hats'],['shirts','Shirts'],['look','Hair & beard'],['home','Home goods']],UI.outfitShop,'outfit');
  else if(id==='trophy')UI.openModal(b.name,null,UI.trophyShop,'trophy');
+ else if(id==='leaders')UI.openMenu('leaders');
  else if(id==='jobs')UI.openModal('Job Board',null,UI.jobsBoard,'jobs');
  else if(id==='cabin')UI.openModal('Your Cabin',null,UI.cabinView,'cabin');};
 UI.tackleShop=function(tab){const g=S.gear;if(tab==='lures'){return `<div class="grid">${LURES.map((l,i)=>{if(l.story||l.crafted)return '';const n=g.lures[i]||0,bait=l.fam==='bait'||l.fam==='stink';const fans=FISH.filter(f=>f.l.includes(l.fam)&&!f.legend).slice(0,4);return `<div class="card">${iconImg(ICON.lure(i))}<h4>${esc(l.n)}</h4><p><b style="color:var(--ink)">${METHODS[l.m]}</b> · ${esc(l.desc)}</p><div style="display:flex;gap:4px">${fans.map(f=>S.records[f.id]?`<img src="${UI.fishIcon(f)}" title="${esc(f.n)}" style="width:44px;background:none">`:'').join('')}</div><div class="meta"><span>${n?'Have '+n:'—'}</span><button class="btn gold" data-a="buyLure" data-v="${i}">${bait?l.pack+' for ':''}${fmtMoney(l.price)}</button></div></div>`;}).join('')}</div>`;}
@@ -2888,6 +2909,174 @@ const ICON={
 };
 function iconImg(url,cls=''){return `<img class="thumb ${cls}" src="${url}" alt="">`;}
 
+// ---- 19-net.js ----
+// ===== Online: Firebase (rooms with codes, live players, chat, friend derbies, leaderboards) =====
+const FB_CONFIG={apiKey:"AIzaSyD7AjIhFzO5TETaUBeeJ8vVgjSCtroVPg8",authDomain:"lantern-lake-c1f08.firebaseapp.com",databaseURL:"https://lantern-lake-c1f08-default-rtdb.firebaseio.com",projectId:"lantern-lake-c1f08",storageBucket:"lantern-lake-c1f08.firebasestorage.app",messagingSenderId:"307360266226",appId:"1:307360266226:web:c737f60f7e55ae6f89dd6b"};
+const FB_VER='10.12.2';
+const NET={status:'off',uid:null,db:null,offset:0,room:null,players:{},sendT:0,lastSent:null,heart:0,lb:{},lbAt:{},chatLog:[],derby:null,metaT:0,err:''};
+const ROOM_WORDS=['TROUT','BASS','PIKE','PERCH','CARP','MUSKY','GAR','EEL','CATFISH','WALLEYE','CRAPPIE','BLUEGILL','LANTERN','HERON','LOON','OTTER','FALLS','COVE','REEL','BOBBER'];
+NET.loadSdk=function(){if(window.firebase&&window.firebase.database)return Promise.resolve();if(NET._sdk)return NET._sdk;
+ const load=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(s);});
+ const base='https://www.gstatic.com/firebasejs/'+FB_VER+'/';
+ NET._sdk=load(base+'firebase-app-compat.js').then(()=>Promise.all([load(base+'firebase-auth-compat.js'),load(base+'firebase-database-compat.js')]));NET._sdk.catch(()=>{NET._sdk=null;});return NET._sdk;};
+// connect (anonymous sign-in); safe to call repeatedly
+NET.connect=async function(){if(NET.status==='on')return true;if(NET._conn)return NET._conn;
+ NET.status='connecting';NET._conn=(async()=>{try{await NET.loadSdk();const fb=window.firebase;if(!fb.apps.length)fb.initializeApp(FB_CONFIG);const cred=await fb.auth().signInAnonymously();NET.uid=(cred.user||fb.auth().currentUser).uid;NET.db=fb.database();
+  NET.db.ref('.info/serverTimeOffset').on('value',s=>{NET.offset=s.val()||0;});NET.status='on';NET.err='';return true;}
+  catch(e){NET.status='error';NET.err=String(e&&e.message||e);NET._conn=null;return false;}})();return NET._conn;};
+NET.now=()=>Date.now()+NET.offset;
+NET.ref=p=>NET.db.ref(p);
+const cleanName=n=>String(n||'').replace(/[^\w .'\-]/g,'').trim().slice(0,16);
+function myName(){return S.profile&&S.profile.name||'';}
+// ---------------- Rooms ----------------
+NET.myState=function(){const s=F.state,code={idle:0,charge:1,flight:1,water:2,bite:2,snag:2,fight:3,landed:4}[s]??0;let lx=0,lz=0,lf=-1;
+ if((s==='water'||s==='bite'||s==='snag')&&F.lure){lx=F.lure.x;lz=F.lure.z;}else if(s==='fight'&&F.fight){lx=F.fight.fx;lz=F.fight.fz;lf=F.fight.f.id;}else if(s==='landed'&&F.catch&&F.catch.f){lf=F.catch.f.id;}
+ const r2=v=>Math.round(v*100)/100;
+ return {n:myName(),m:PL.mode==='boat'?1:0,x:r2(PL.mode==='boat'?BOAT.x:PL.x),y:r2(PL.mode==='boat'?BOAT.y:PL.y),z:r2(PL.mode==='boat'?BOAT.z:PL.z),r:r2(PL.mode==='boat'?BOAT.rot:PL.rot),sp:r2(PL.mode==='boat'?BOAT.speed:PL.speed),air:r2(PL.air||0),b:BOAT.type,bp:S.boat.paint[BOAT.type]||'',f:code,lx:r2(lx),lz:r2(lz),lf,h:S.outfit.hat,sh:S.outfit.shirt,hr:S.outfit.hair??0,hc:S.outfit.hairCol??0,bd:S.outfit.beard?1:0,lv:levelOf(),t:firebase.database.ServerValue.TIMESTAMP};};
+NET.host=async function(max){if(!await NET.connect())return UI.toast('Could not reach the online service. Check your connection.','warn');
+ for(let tries=0;tries<6;tries++){const code=ROOM_WORDS[Math.floor(Math.random()*ROOM_WORDS.length)]+'-'+String(10+Math.floor(Math.random()*90));const meta=NET.ref('rooms/'+code+'/meta');const snap=await meta.once('value');const v=snap.val();
+  if(v&&NET.now()-(v.created||0)<12*3600e3)continue;
+  await meta.set({host:NET.uid,hostName:myName(),max:max||8,created:firebase.database.ServerValue.TIMESTAMP,minutes:S.minutes,weather:ENV.weather});
+  return NET.enter(code,true);}
+ UI.toast('Could not create a room, try again.','warn');};
+NET.join=async function(code){code=String(code||'').toUpperCase().replace(/[^A-Z0-9\-]/g,'').replace(/^([A-Z]+)(\d+)$/,'$1-$2');if(!code)return UI.toast('Type a room code first.','warn');
+ if(!await NET.connect())return UI.toast('Could not reach the online service. Check your connection.','warn');
+ const meta=(await NET.ref('rooms/'+code+'/meta').once('value')).val();if(!meta||NET.now()-(meta.created||0)>24*3600e3)return UI.toast('No room called '+code+'. Check the code and try again.','warn');
+ const ps=(await NET.ref('rooms/'+code+'/p').once('value')).val()||{};const live=Object.values(ps).filter(p=>NET.now()-(p.t||0)<20000).length;if(live>=(meta.max||8))return UI.toast('That room is full ('+meta.max+' players).','warn');
+ if(meta.minutes!=null){S.minutes=meta.minutes;}if(meta.weather)setWeatherNow(meta.weather);
+ return NET.enter(code,meta.host===NET.uid);};
+NET.enter=async function(code,isHost){if(NET.room)await NET.leave(true);
+ const me=NET.ref('rooms/'+code+'/p/'+NET.uid);await me.onDisconnect().remove();await me.set(NET.myState());
+ NET.room={code,host:isHost,joined:NET.now(),max:UI._roomMax||8};NET.players={};NET.chatLog=[];
+ const pr=NET.ref('rooms/'+code+'/p');
+ pr.on('child_added',s=>NET.onPlayer(s.key,s.val()));pr.on('child_changed',s=>NET.onPlayer(s.key,s.val()));pr.on('child_removed',s=>{const p=NET.players[s.key];if(p&&s.key!==NET.uid){UI.toast('👋 '+(p.st.n||'Someone')+' left the lake','info');}delete NET.players[s.key];});
+ NET.ref('rooms/'+code+'/ev').orderByChild('t').startAt(NET.now()-2000).on('child_added',s=>NET.onEvent(s.val()));
+ NET.ref('rooms/'+code+'/meta').on('value',s=>{const m=s.val();if(!m)return;NET.room&&(NET.room.meta=m);if(!NET.room.host&&m.minutes!=null&&Math.abs(m.minutes-S.minutes)>20){S.minutes=m.minutes;}if(!NET.room.host&&m.weather&&m.weather!==ENV.weather&&ENV.next!==m.weather){ENV.next=m.weather;ENV.blend=0;}if(m.host===NET.uid)NET.room.host=true;});
+ NET.ref('rooms/'+code+'/derby').on('value',s=>{const d=s.val();const was=NET.derby;NET.derby=d;if(d&&(!was||was.start!==d.start)){UI.toast('🏁 Room derby started! Heaviest fish in 5 minutes wins.','quest');AUDIO.quest();}});
+ S.lastRoom=code;UI.toast((isHost?'Room created: ':'Joined room ')+code,'good');AUDIO.quest();NET.emit({type:'join'});UI.refresh&&UI.modal&&UI.refresh();return true;};
+NET.leave=async function(silent){if(!NET.room)return;const code=NET.room.code;try{NET.ref('rooms/'+code+'/p').off();NET.ref('rooms/'+code+'/ev').off();NET.ref('rooms/'+code+'/meta').off();NET.ref('rooms/'+code+'/derby').off();await NET.ref('rooms/'+code+'/p/'+NET.uid).remove();}catch(e){}
+ NET.room=null;NET.players={};NET.derby=null;if(!silent)UI.toast('Left room '+code,'info');if(UI.modal)UI.refresh();};
+NET.onPlayer=function(uid,st){if(uid===NET.uid||!st)return;let p=NET.players[uid];const now=performance.now();
+ if(!p){p=NET.players[uid]={uid,st,prev:{...st},at:now,prevAt:now-200,ch:{},disp:{x:st.x,y:st.y,z:st.z,r:st.r},bubble:null,joinedToast:false};if(NET.room&&NET.now()-(st.t||0)<20000)UI.toast('🎣 '+(st.n||'An angler')+' joined the lake','good');return;}
+ p.prev={...p.disp};p.prevAt=now;p.st=st;p.at=now;};
+NET.emit=function(ev){if(!NET.room||!NET.db)return;try{NET.ref('rooms/'+NET.room.code+'/ev').push({...ev,u:NET.uid,n:myName(),t:firebase.database.ServerValue.TIMESTAMP});}catch(e){}};
+NET.onEvent=function(ev){if(!ev||!NET.room)return;const mine=ev.u===NET.uid;
+ if(ev.type==='chat'){NET.chatLog.push({n:ev.n,msg:String(ev.msg||'').slice(0,80),mine});if(NET.chatLog.length>40)NET.chatLog.shift();const p=NET.players[ev.u];if(p)p.bubble={msg:String(ev.msg||'').slice(0,60),until:performance.now()+5000};if(!mine)UI.toast('💬 '+ev.n+': '+String(ev.msg||'').slice(0,60),'quest');if(UI.modal&&UI.modal.id==='online')UI.refresh();}
+ else if(ev.type==='catch'){const f=FISH[ev.f];if(!f)return;if(NET.derby&&ev.t>=NET.derby.start&&ev.t<=NET.derby.end){(NET.derby._c=NET.derby._c||[]).push(ev);}if(!mine&&(f.r>=3||ev.lb>=10))UI.toast('🐟 '+ev.n+' landed a '+fmtW(ev.lb)+' '+f.n+'!','gold');}
+ else if(ev.type==='join'&&!mine){}};
+NET.chat=function(msg){msg=String(msg||'').replace(/\s+/g,' ').trim().slice(0,80);if(!msg||!NET.room)return;NET.emit({type:'chat',msg});};
+NET.startDerby=async function(){if(!NET.room||!NET.room.host)return;const now=NET.now();await NET.ref('rooms/'+NET.room.code+'/derby').set({start:now,end:now+300000});};
+NET.derbyStandings=function(){const d=NET.derby;if(!d)return [];const best={};for(const e of d._c||[]){if(!best[e.u]||e.lb>best[e.u].lb)best[e.u]={n:e.n,lb:e.lb,f:e.f,me:e.u===NET.uid};}
+ for(const p of Object.values(NET.players))if(!best[p.uid])best[p.uid]={n:p.st.n,lb:0};if(!best[NET.uid])best[NET.uid]={n:myName(),lb:0,me:true};return Object.values(best).sort((a,b)=>b.lb-a.lb);};
+// per-frame: send my state, interpolate & draw others
+NET.update=function(dt,out){
+ if(NET.room&&NET.db){const rn=performance.now();if(rn-(NET._sentAt||0)>=200){NET._sentAt=rn;const st=NET.myState();const key=JSON.stringify({...st,t:0});if(key!==NET.lastSent||rn-(NET._beatAt||0)>3000){NET.lastSent=key;NET._beatAt=rn;NET.ref('rooms/'+NET.room.code+'/p/'+NET.uid).set(st).catch(()=>{});}}
+  if(NET.room.host){NET.metaT-=dt;if(NET.metaT<=0){NET.metaT=10;NET.ref('rooms/'+NET.room.code+'/meta').update({minutes:S.minutes,weather:ENV.weather}).catch(()=>{});}}
+  const d=NET.derby;if(d&&!d.done&&NET.now()>d.end){d.done=true;const rows=NET.derbyStandings();const win=rows[0];UI.banner('🏁 Derby over',win&&win.lb>0?(win.me?'You won':win.n+' won')+' with a '+fmtW(win.lb)+' '+(FISH[win.f]?FISH[win.f].n:'fish')+'!':'Nobody landed a fish this time.');if(win&&win.me&&win.lb>0){addMoney(250);addXP(150);S.stats.derbyWins=(S.stats.derbyWins|0)+1;NET.pushScores(true);}}}
+ const now=performance.now(),t=R.time;
+ for(const p of Object.values(NET.players)){const st=p.st;if(!st||NET.now()-(st.t||NET.now())>30000){p.hidden=true;continue;}p.hidden=false;
+  const u=clamp((now-p.at)/220+0,0,1),D=p.disp;D.x=lerp(D.x,st.x,Math.min(1,dt*8));D.y=lerp(D.y,st.y,Math.min(1,dt*8));D.z=lerp(D.z,st.z,Math.min(1,dt*8));D.r+=wrapAngle(st.r-D.r)*Math.min(1,dt*8);
+  const dd=Math.hypot(D.x-R.cam[0],D.z-R.cam[2]);if(dd>420)continue;
+  const ch=p.ch;Object.assign(ch,{hat:st.h??0,hatCol:COL((OUTFIT.hats[st.h]||OUTFIT.hats[0])[1]).slice(0,3),shirtCol:COL((OUTFIT.shirts[st.sh]||OUTFIT.shirts[0])[1]).slice(0,3),pantsCol:COL('#3a4458').slice(0,3),shirtStyle:st.sh||0,skinC:ch.skinC||SRGB([.96,.8,.68]),hair:st.hr||0,hairCol:COL(['#3a2414','#141010','#8a5a2a','#c89a50','#6a2a18','#8a8a86'][st.hc||0]).slice(0,3),beard:!!st.bd,shadow:dd<70,refl:dd<120});
+  const a={t:t+p.uid.length,walk:0,phase:(p.phase=(p.phase||0)+dt*Math.abs(st.sp||0)*2.1),sit:0};
+  if(st.m===1){const type=ACT.boats[st.b]?st.b:'kayak',m=ACT.boats[type];const bob=waveY(D.x,D.z,t)*.8;
+   boatDraw({type,x:D.x,y:bob,z:D.z,rot:D.r,pitch:-Math.min(.08,Math.abs(st.sp||0)*.004),roll:Math.sin(t+D.x)*.02},out,st.bp||null);
+   const cs=Math.cos(D.r),sn=Math.sin(D.r),sx=m.seatX||0,sz=m.seatZ||0;ch.x=D.x+cs*sx+sn*sz;ch.z=D.z-sn*sx+cs*sz;ch.y=bob+(m.float||0)+(m.seatY||0)+(m.deckY||0)-.37;ch.rot=D.r;a.sit=1;
+   if(Math.abs(st.sp)>.5&&Math.random()<dt*15){const bx=D.x-Math.sin(D.r)*m.len*.5,bz=D.z-Math.cos(D.r)*m.len*.5;spawn({x:bx,y:.03,z:bz,life:2,size:.2,grow:.8,col:[.92,.96,.97,.45]});}}
+  else{ch.x=D.x;ch.y=D.y;ch.z=D.z;ch.rot=D.r;a.walk=clamp(Math.abs(st.sp||0)/3.6,0,1.5);if((st.air||0)>.05){a.walk=0;a.crouch=.9;a.larm=[-2.4,-.25,-.3];a.rarm=[-2.4,.25,-.3];}}
+  const f=st.f;if(f===1){a.rarm=[-2.6,-.15,-.5];a.larm=[-1.3,.3,-.9];}else if(f===2){a.rarm=[-1.05,-.12,-.55];a.larm=[-1.15,.35,-1.05];}else if(f===3){a.rarm=[-1.55,-.12,-.75];a.larm=[-1.15+Math.sin(t*14)*.18,.35,-1.05];a.lean=-.2;}else if(f===4){a.rarm=[-.62,-.18,-1.25];a.larm=[-.62,.18,-1.25];}
+  if((f===2||f===3)&&st.m!==1)ch.rot=Math.atan2(st.lx-D.x,st.lz-D.z);
+  ch.anim=a;poseCharacter(ch,out);
+  // rod + line + bobber / fish
+  if(f>=1&&f<=3&&ch.handR){const h=ch.handR,hp=[h[12],h[13],h[14]];const ry=ch.rot+(st.m===1&&(f===2||f===3)?wrapAngle(Math.atan2(st.lx-D.x,st.lz-D.z)-ch.rot):0),rx=Math.PI/2-(f===3?.9:f===1?1.6:.55);out.push({mesh:ACT.rod,model:T(hp[0],hp[1],hp[2],ry,rx),prog:'lit',moving:true,refl:true});
+   const L=ACT.rodLen,tip=[hp[0]+Math.sin(ry)*Math.sin(rx)*L,hp[1]+Math.cos(rx)*L,hp[2]+Math.cos(ry)*Math.sin(rx)*L];
+   if(f>=2&&dd<160){const wl=waterLevelAt(st.lx,st.lz)+waveY(st.lx,st.lz,t);const pts=[];for(let i=0;i<=8;i++){const u2=i/8;pts.push([lerp(tip[0],st.lx,u2),lerp(tip[1],wl+.05,u2)-Math.sin(u2*Math.PI)*.4,lerp(tip[2],st.lz,u2)]);}FX.lines.push({pts,col:[.9,.9,.85,.45]});
+    if(f===2)out.push({mesh:ACT.bobber,model:T(st.lx,wl,st.lz),prog:'lit',moving:true});else if(FISH[st.lf]){out.push({mesh:fishMesh(FISH[st.lf]),model:T(st.lx,wl-.3,st.lz,t*1.3,0,0,.5),prog:'fish',anim:[.2,t*12],moving:true,twoSided:true});if(Math.random()<dt*3)spawn({x:st.lx,y:.05,z:st.lz,life:1,size:.25,grow:.8,col:[.9,.95,.95,.5]});}}}
+  if(f===4&&FISH[st.lf]&&ch.handR&&ch.handL){const h=ch.handR,hl=ch.handL;out.push({mesh:fishMesh(FISH[st.lf]),model:T((h[12]+hl[12])/2,(h[13]+hl[13])/2+.04,(h[14]+hl[14])/2,ch.rot+Math.PI/2,0,0,.45),prog:'fish',anim:[.05,t*8],moving:true,twoSided:true});}
+ }};
+NET.labels=function(L){const now=performance.now();for(const p of Object.values(NET.players)){if(p.hidden)continue;const D=p.disp;const d=Math.hypot(D.x-PL.x,D.z-PL.z);if(d>150)continue;const y=(p.st.m===1?D.y+.6:D.y)+2.15;
+  if(p.bubble&&p.bubble.until>now)L.unshift({x:D.x,y:y+.45,z:D.z,t:'💬 '+p.bubble.msg,c:'q'});L.unshift({x:D.x,y,z:D.z,t:'🌐 '+(p.st.n||'Angler')+' · Lv '+(p.st.lv||1),c:'npc'});}};
+NET.count=()=>Object.values(NET.players).filter(p=>!p.hidden).length+1;
+// ---------------- Leaderboards ----------------
+NET.lbCats=[['biggest','Biggest catch'],['catches','Most fish'],['species','Species caught'],['earned','Money earned'],['xp','Top level'],['wins','Derby & tournament wins']];
+NET.pushScores=async function(force){if(!myName()||!await NET.connect())return;const now=Date.now();if(!force&&now-(NET._lbPush||0)<45000)return;NET._lbPush=now;
+ const recs=Object.entries(S.records);let big={lb:0,f:-1};for(const [id,r] of recs)if(r.best>big.lb)big={lb:Math.round(r.best*100)/100,f:+id};
+ const row={name:myName(),catches:S.stats.catches|0,species:recs.length,earned:Math.round(S.stats.earned),xp:S.xp|0,level:levelOf(),wins:(S.stats.tournWins|0)+(S.stats.derbyWins|0),biggest:big.lb,bigFish:big.f,updated:firebase.database.ServerValue.TIMESTAMP};
+ try{await NET.ref('lb/players/'+NET.uid).set(row);}catch(e){NET.err=String(e.message||e);}};
+NET.pushFishRecord=async function(f,lb){if(!myName()||!await NET.connect())return;try{const r=NET.ref('lb/fish/'+f.id+'/'+NET.uid);const cur=(await r.once('value')).val();if(!cur||lb>cur.lb)await r.set({name:myName(),lb:Math.round(lb*100)/100,t:firebase.database.ServerValue.TIMESTAMP});}catch(e){}};
+NET.fetchLb=async function(cat,force){const key=cat;if(!force&&NET.lb[key]&&Date.now()-(NET.lbAt[key]||0)<30000)return NET.lb[key];if(!await NET.connect())return null;
+ try{let rows;if(cat.startsWith('fish:')){const fid=+cat.slice(5);const s=await NET.ref('lb/fish/'+fid).orderByChild('lb').limitToLast(10).once('value');rows=[];s.forEach(c=>{rows.push({uid:c.key,...c.val(),v:c.val().lb});});}
+  else{const s=await NET.ref('lb/players').orderByChild(cat).limitToLast(20).once('value');rows=[];s.forEach(c=>{const v=c.val();rows.push({uid:c.key,...v,v:v[cat]});});}
+  rows.sort((a,b)=>b.v-a.v);NET.lb[key]=rows;NET.lbAt[key]=Date.now();return rows;}catch(e){NET.err=String(e.message||e);return null;}};
+NET.fmtCat=(cat,r)=>cat==='biggest'?fmtW(r.v||0)+(FISH[r.bigFish]?' '+FISH[r.bigFish].n:''):cat==='earned'?fmtMoney(r.v||0):cat==='xp'?'Level '+(r.level||1):cat.startsWith('fish:')?fmtW(r.v||0):(r.v||0).toLocaleString();
+// hooks from gameplay
+NET.onCatch=function(f,lb){if(NET.room)NET.emit({type:'catch',f:f.id,lb:Math.round(lb*100)/100});if(myName()){NET.pushFishRecord(f,lb);NET.pushScores();}};
+// ---------------- Town-square scoreboard (3D, canvas texture) ----------------
+const BOARD={tex:null,cv:null,item:null,at:-1e9,rows:null};
+function buildBoard(){const V=POI.village,x=V.x+15,z=V.z-27,g=terrainHeight(x,z),rot=-.35;
+ const b=new GB();const M=(lx,ly,lz,ry=0,rx=0,rz=0)=>{const c=Math.cos(rot),s=Math.sin(rot);return T(x+c*lx+s*lz,g+ly,z-s*lx+c*lz,rot+ry,rx,rz);};
+ for(const s of [-1.9,1.9])b.add(PRIM.box(.25,4.4,.25,{y0:true}),M(s,-.2,0),'#4a3626');b.add(PRIM.box(4.2,2.7,.18,{y0:true}),M(0,1.45,-.06),'#5a4230');b.add(PRIM.box(4.6,.22,.5,{y0:true}),M(0,4.2,0),'#3a4a3a');b.add(PRIM.box(4.4,.12,.3,{y0:true}),M(0,1.35,.08),'#6a5040');
+ b.add(PRIM.box(1.2,.35,.08,{y0:true}),M(0,4.42,.05),'#d8a830');R.items.push({mesh:b.build(),prog:'lit',refl:true,mat:[.05,16,0,0]});addCollider(x,z,4.4,.6,rot,4);addBlock(x,z,4);
+ // face quad with uv in colour.xy
+ const W=3.9,H=2.45,p=[],c=[],nrm=[];const corners=[[-W/2,0,0,1],[W/2,0,1,1],[W/2,H,1,0],[-W/2,H,0,0]];for(const [lx,ly,u,v] of corners){const P=M4.xform(M(0,1.58,.05),lx,ly,0);p.push(...P);c.push(u,v,0,1);nrm.push(Math.sin(rot),0,Math.cos(rot));}
+ const mesh=makeMesh({pos:new Float32Array(p),nrm:new Float32Array(nrm),col:new Float32Array(c),idx:new Uint16Array([0,1,2,0,2,3])});
+ BOARD.cv=document.createElement('canvas');BOARD.cv.width=1024;BOARD.cv.height=640;BOARD.tex=texFromCanvas(drawBoardCanvas(null));BOARD.item={mesh,prog:'board',refl:false,shadow:false,mat:[.05,10,0,0]};R.items.push(BOARD.item);BOARD.pos=[x,z];
+ STRUCT.buildings.push({id:'leaders',name:'Lake Leaderboard',icon:'🏆',x,z,door:[x+Math.sin(rot)*2.2,z+Math.cos(rot)*2.2],gy:g,labelY:g+5});}
+function drawBoardCanvas(rows){const cv=BOARD.cv,c=cv.getContext('2d'),W=cv.width,H=cv.height;
+ const gr=c.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#1f3a32');gr.addColorStop(1,'#14261f');c.fillStyle=gr;c.fillRect(0,0,W,H);c.strokeStyle='#d8a830';c.lineWidth=10;c.strokeRect(14,14,W-28,H-28);
+ c.fillStyle='#ffd98a';c.font='700 60px Fraunces, Georgia, serif';c.textAlign='center';c.fillText('Lantern Lake Legends',W/2,92);c.font='800 30px Nunito, Arial, sans-serif';c.fillStyle='#b4c8bc';c.fillText('BIGGEST CATCHES',W/2,140);
+ c.textAlign='left';if(!rows){c.fillStyle='#d8e0d8';c.font='700 34px Nunito, Arial, sans-serif';c.textAlign='center';c.fillText(myName()?'Loading scores…':'Set your angler name in Menu → Online',W/2,330);c.fillText('to join the leaderboard!',W/2,380);return cv;}
+ if(!rows.length){c.textAlign='center';c.fillStyle='#d8e0d8';c.font='700 36px Nunito, Arial, sans-serif';c.fillText('No records yet — be the first!',W/2,330);return cv;}
+ rows.slice(0,7).forEach((r,i)=>{const y=200+i*60;c.fillStyle=i===0?'#ffd98a':i<3?'#f0e2c0':'#d8e0d8';c.font='800 38px Nunito, Arial, sans-serif';c.fillText((i+1)+'.',70,y);c.fillText(String(r.name||'Angler').slice(0,16),130,y);c.textAlign='right';c.fillText(fmtW(r.v||0),W-70,y);c.font='700 26px Nunito, Arial, sans-serif';c.fillStyle='#9ab4a8';c.fillText(FISH[r.bigFish]?FISH[r.bigFish].n:'',W-260,y);c.textAlign='left';});return cv;}
+NET.updateBoard=async function(){if(!BOARD.item)return;const d=Math.hypot(BOARD.pos[0]-PL.x,BOARD.pos[1]-PL.z);if(d>120||Date.now()-BOARD.at<60000)return;BOARD.at=Date.now();if(!myName()){BOARD.tex=texFromCanvas(drawBoardCanvas(null));return;}
+ const rows=await NET.fetchLb('biggest');if(rows){const gl=GL.gl;gl.deleteTexture(BOARD.tex);BOARD.tex=texFromCanvas(drawBoardCanvas(rows));}};
+
+// ---- 20-netui.js ----
+// ===== Online UI: menu tabs, HUD chip, derby HUD =====
+UI.onlineView=function(){const nm=myName();let h='';
+ const statusTxt=NET.status==='on'?'<span style="color:var(--green)">● Online</span>':NET.status==='connecting'?'<span style="color:var(--gold2)">● Connecting…</span>':NET.status==='error'?'<span style="color:var(--red)">● Offline</span>':'<span style="color:var(--muted)">● Not connected</span>';
+ h+=`<div class="sect">Your angler name <small style="font-family:Nunito;font-size:12px;margin-left:8px">${statusTxt}</small></div><div class="netrow"><input id="nameInput" maxlength="16" placeholder="Pick a name" value="${esc(nm)}" autocomplete="off"><button class="btn gold" data-a="saveName">Save</button></div>`;
+ if(NET.status==='error')h+=`<p style="color:#ffc3b5;font-size:13px">Couldn't connect to the online service${/claude/.test(location.hostname)?'. Online play works on your GitHub site (deskjoky.github.io/lantern-lake)':' — check your internet connection'}.</p>`;
+ if(!nm)return h+`<p style="color:var(--muted)">Choose a name to play with friends and appear on the leaderboards.</p>`;
+ if(!NET.room){h+=`<div class="sect">Host a room</div><p style="color:var(--muted);margin:0 0 8px">Get a code to share. Friends who join fish on your lake, at your time of day and weather.</p><div class="seg" style="margin-bottom:10px">${[4,6,8,10].map(n=>`<button class="${(UI._roomMax||8)===n?'on':''}" data-a="roomMax" data-v="${n}">${n} players</button>`).join('')}</div><button class="btn gold" data-a="hostRoom">Create room</button>
+  <div class="sect">Join a room</div><div class="netrow"><input id="codeInput" maxlength="12" placeholder="e.g. TROUT-42" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase" value="${esc(UI._codeDraft||'')}"><button class="btn teal" data-a="joinRoom">Join</button></div>${S.lastRoom?`<p style="color:var(--muted);font-size:12.5px">Last room: <button class="btn" style="min-height:34px;padding:0 10px" data-a="joinLast">${esc(S.lastRoom)}</button></p>`:''}`;return h;}
+ const R2=NET.room,others=Object.values(NET.players).filter(p=>!p.hidden);
+ h+=`<div class="sect">Room</div><div class="roomcode"><div><small>ROOM CODE</small><b>${esc(R2.code)}</b></div><button class="btn" data-a="copyCode">Copy</button></div>`;
+ h+=`<div class="sect">On the lake · ${others.length+1}/${(R2.meta&&R2.meta.max)||R2.max||8}</div><div class="row2"><div class="l"><b>${esc(nm)} (you)${R2.host?' · host':''}</b><small>Level ${levelOf()}</small></div></div>`+others.map(p=>{const d=Math.hypot(p.disp.x-PL.x,p.disp.z-PL.z);const z=zoneAt(p.disp.x,p.disp.z);return `<div class="row2"><div class="l"><b>${esc(p.st.n||'Angler')}${R2.meta&&R2.meta.host===p.uid?' · host':''}</b><small>Level ${p.st.lv||1} · ${Math.round(d)} m away${z?' · '+esc(z.name):''}${p.st.m===1?' · on a boat':''}</small></div></div>`;}).join('');
+ // derby
+ const d=NET.derby,live=d&&NET.now()<d.end;h+=`<div class="sect">Room derby</div>`;
+ if(live){h+=`<p style="color:var(--muted);margin:0 0 8px">Heaviest single fish wins · ${Math.ceil((d.end-NET.now())/60000)} min left</p>`+NET.derbyStandings().map((r,i)=>`<div class="row2" style="${r.me?'border:1px solid var(--gold)':''}"><div class="l"><b>${i+1}. ${esc(r.n||'Angler')}</b></div><b>${r.lb?fmtW(r.lb):'—'}</b></div>`).join('');}
+ else h+=R2.host?`<p style="color:var(--muted);margin:0 0 8px">Five minutes, heaviest single fish wins. The winner earns ${fmtMoney(250)}.</p><button class="btn gold" data-a="startDerby">Start a derby</button>`:`<p style="color:var(--muted)">The host can start a 5-minute derby.</p>`;
+ // chat
+ h+=`<div class="sect">Chat</div><div class="chatlog">${NET.chatLog.slice(-12).map(m=>`<div class="${m.mine?'me':''}"><b>${esc(m.n||'Angler')}:</b> ${esc(m.msg)}</div>`).join('')||'<div style="color:var(--muted)">No messages yet.</div>'}</div>
+ <div class="chips">${['Nice catch! 🎣','Over here!','Follow me','What lure?','Let\'s hit the falls','GG 👋'].map(t=>`<button class="pill glass" data-a="quickChat" data-v="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+ <div class="netrow"><input id="chatInput" maxlength="80" placeholder="Say something…" autocomplete="off"><button class="btn teal" data-a="sendChat">Send</button></div>
+ <div style="margin-top:16px"><button class="btn red" data-a="leaveRoom">Leave room</button></div>`;
+ return h;};
+UI.leadersView=function(){const cat=UI._lbCat||'biggest';let h=`<div class="seg" style="margin-bottom:10px">${NET.lbCats.map(([k,n])=>`<button class="${cat===k?'on':''}" data-a="lbCat" data-v="${k}">${n}</button>`).join('')}<button class="${cat.startsWith('fish:')?'on':''}" data-a="lbCat" data-v="fish:${UI._lbFish??6}">By species</button></div>`;
+ if(cat.startsWith('fish:'))h+=`<div class="netrow" style="margin-bottom:10px"><select id="lbFish">${FISH.map(f=>`<option value="${f.id}" ${+cat.slice(5)===f.id?'selected':''}>${esc(f.legend&&!S.records[f.id]?'??? Legend':f.n)}</option>`).join('')}</select></div>`;
+ if(!myName())h+=`<p style="color:var(--gold2)">Set your angler name in the Online tab to put your scores on the board.</p>`;
+ const rows=NET.lb[cat];
+ if(!rows){h+=`<p style="color:var(--muted)">${NET.status==='error'?'Could not load the leaderboard'+(/claude/.test(location.hostname)?'. Leaderboards work on your GitHub site.':'. Check your connection.'):'Loading…'}</p>`;NET.fetchLb(cat).then(()=>{if(UI.modal&&UI.tab.menu==='leaders')UI.refresh();});return h;}
+ if(!rows.length)return h+`<p style="color:var(--muted)">No scores yet. Go set a record!</p>`;
+ h+=rows.map((r,i)=>`<div class="row2" style="${r.uid===NET.uid?'border:1px solid var(--gold)':''}"><div class="l"><b>${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'} ${esc(r.name||'Angler')}${r.uid===NET.uid?' (you)':''}</b>${r.level&&!cat.startsWith('fish:')?`<small>Level ${r.level}</small>`:''}</div><b>${NET.fmtCat(cat,r)}</b></div>`).join('');
+ return h+`<button class="btn" data-a="lbRefresh" style="margin-top:8px">↻ Refresh</button>`;};
+Object.assign(UI.A,{
+ saveName:()=>{const v=cleanName($('#nameInput').value);if(!v){UI.toast('Names can use letters, numbers and spaces.','warn');return;}S.profile=S.profile||{};S.profile.name=v;saveGame();UI.toast('Name saved: '+v,'good');NET.connect().then(ok=>{if(ok)NET.pushScores(true);UI.refresh();});UI.refresh();},
+ roomMax:v=>{UI._roomMax=+v;UI.refresh();},
+ hostRoom:()=>{NET.host(UI._roomMax||8).then(()=>UI.refresh());UI.refresh();},
+ joinRoom:()=>{const v=$('#codeInput').value;UI._codeDraft=v;NET.join(v).then(()=>UI.refresh());},
+ joinLast:()=>NET.join(S.lastRoom).then(()=>UI.refresh()),
+ copyCode:()=>{const c=NET.room&&NET.room.code;if(!c)return;try{navigator.clipboard.writeText(c).then(()=>UI.toast('Copied '+c,'good'),()=>UI.toast('Room code: '+c,'info'));}catch(e){UI.toast('Room code: '+c,'info');}},
+ leaveRoom:()=>NET.leave(),startDerby:()=>NET.startDerby().then(()=>UI.refresh()),
+ quickChat:v=>{NET.chat(v);},sendChat:()=>{const i=$('#chatInput');NET.chat(i.value);i.value='';},
+ lbCat:v=>{UI._lbCat=v;UI.refresh();},lbRefresh:()=>{NET.fetchLb(UI._lbCat||'biggest',true).then(()=>UI.refresh());},
+ openOnline:()=>UI.openMenu('online'),
+});
+document.addEventListener('change',e=>{if(e.target.id==='lbFish'){UI._lbFish=+e.target.value;UI._lbCat='fish:'+e.target.value;UI.refresh();}});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id==='chatInput')UI.A.sendChat();else if(e.target.id==='codeInput')UI.A.joinRoom();else if(e.target.id==='nameInput')UI.A.saveName();});
+UI.netHud=function(){const chip=$('#netChip');if(!chip)return;if(NET.room){const txt='🌐 '+NET.room.code+' · '+NET.count();if(chip._t!==txt){chip.textContent=txt;chip._t=txt;}chip.classList.remove('hide');}else chip.classList.add('hide');};
+
 // ---- 99-main.js ----
 // ===== Main: boot, game loop, glue =====
 const GAME={started:false,last:0,saveT:0,cabinItems:[],titleT:0};
@@ -2972,7 +3161,7 @@ function update(dt){
  if(PL.mode==='boat'&&boatDef().paddle&&F.state==='idle'&&PLCHAR.handR){const h=PLCHAR.handR,hl=PLCHAR.handL;R.dyn.push({mesh:ACT.paddle,model:T((h[12]+hl[12])/2,(h[13]+hl[13])/2,(h[14]+hl[14])/2,BOAT.rot+Math.PI/2+Math.sin(BOAT.paddlePhase)*.3,0,Math.PI/2+Math.sin(BOAT.paddlePhase)*.5),prog:'lit',moving:true});}
  // boat lights
  if(GAME.boatLight){GAME.boatLight.i=S.boat.up.lights&&ENV.night>.2&&PL.mode==='boat'?2.4*ENV.night:0;GAME.boatLight.p=[BOAT.x+Math.sin(BOAT.rot)*7,BOAT.y+1.5,BOAT.z+Math.cos(BOAT.rot)*7];}
- F.draw(R.dyn);if(GAME.extraDraw)GAME.extraDraw(R.dyn);
+ F.draw(R.dyn);try{NET.update(dt,R.dyn);NET.updateBoard();}catch(e){console.warn(e);}if(GAME.extraDraw)GAME.extraDraw(R.dyn);
  updateNPCs(dt,R.dyn);
  // aquarium
  if(GAME.aqFish&&GAME.aqFish.length&&STRUCT.cabin){const C=STRUCT.cabin,s=C.slots.aquarium;GAME.aqFish.forEach((q,i)=>{const lx=s[0]+Math.sin(R.time*.6+q.ph)*.5,lz=s[1]+Math.cos(R.time*.4+q.ph)*.12;const [x,z]=C.local(lx,lz);R.dyn.push({mesh:fishMesh(q.f),model:T(x,C.gy+.14+1.05+Math.sin(R.time+q.ph)*.12,z,C.rot+Math.PI/2+Math.cos(R.time*.6+q.ph)*.4,0,0,.16),prog:'fish',anim:[.15,R.time*8],moving:true,twoSided:true,refl:false,shadow:false});});}
@@ -3009,14 +3198,14 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&S&&GAME.st
  setLoad(.02,'Carving the valley…');await sleep(30);
  await buildTerrain(p=>setLoad(.02+p*.45));
  setLoad(.5,'Filling the lake…');await sleep(10);makePaths();buildTextures();buildTerrainMeshes();buildWaters();
- setLoad(.62,'Building Lantern Cove…');await sleep(10);buildVegetationModels();buildCharacterParts();buildBoats();buildItemModels();buildStructures();
+ setLoad(.62,'Building Lantern Cove…');await sleep(10);buildVegetationModels();buildCharacterParts();buildBoats();buildItemModels();buildStructures();buildBoard();
  setLoad(.75,'Growing the forest…');await sleep(10);scatterVegetation();
  setLoad(.9,'Waking the locals…');await sleep(10);initFX();initNPCs();initInput();UI.init();
  GAME.boatLight={p:[0,0,0],r:30,c:[1,.95,.85],i:0};R.lights.push(GAME.boatLight);
  R.afterWater=drawFX;
  updateEnv(0,S.minutes);if(!hasSave()){S.minutes=17.6*60;}
  setLoad(1,'Ready');
- window.DBG={ICON,ITEMS,pickSpecies,zoneAt,render:()=>renderFrame(GAME.started?[PL.x,PL.y,PL.z]:R.look),step:(n,dt=.033)=>{for(let i=0;i<n;i++){R.time+=dt;update(dt);}},GLS:GL.stats,S:()=>S,R,ENV,PL,BOAT,CAM,F,UI,GAME,STRUCT,NPC,TOURN,updateEnv,setWeatherNow,terrainHeight,FISH,T,COL,fishMesh,poseCharacter,boatDraw,readRT:(rt)=>{const gl=GL.gl;gl.bindFramebuffer(gl.FRAMEBUFFER,rt.fb);const px=new Uint8Array(rt.w*rt.h*4);gl.readPixels(0,0,rt.w,rt.h,gl.RGBA,gl.UNSIGNED_BYTE,px);gl.bindFramebuffer(gl.FRAMEBUFFER,null);return {w:rt.w,h:rt.h,px:Array.from(px)};},
+ window.DBG={NET,BOARD,ZONES,ICON,ITEMS,pickSpecies,zoneAt,render:()=>renderFrame(GAME.started?[PL.x,PL.y,PL.z]:R.look),step:(n,dt=.033)=>{for(let i=0;i<n;i++){R.time+=dt;update(dt);}},GLS:GL.stats,S:()=>S,R,ENV,PL,BOAT,CAM,F,UI,GAME,STRUCT,NPC,TOURN,updateEnv,setWeatherNow,terrainHeight,FISH,T,COL,fishMesh,poseCharacter,boatDraw,readRT:(rt)=>{const gl=GL.gl;gl.bindFramebuffer(gl.FRAMEBUFFER,rt.fb);const px=new Uint8Array(rt.w*rt.h*4);gl.readPixels(0,0,rt.w,rt.h,gl.RGBA,gl.UNSIGNED_BYTE,px);gl.bindFramebuffer(gl.FRAMEBUFFER,null);return {w:rt.w,h:rt.h,px:Array.from(px)};},
   setView:(cam,look,hour,weather)=>{GAME.freeCam={cam,look};if(weather)setWeatherNow(weather);if(hour!=null)S.minutes=Math.floor(S.minutes/1440)*1440+hour*60;}};
  let last=performance.now();
  const frame=now=>{GAME.rawDt=(now-last)/1000;let dt=Math.min(.05,GAME.rawDt);last=now;R.time+=dt;try{update(dt);if(GAME.freeCam){R.cam=GAME.freeCam.cam;R.look=GAME.freeCam.look;}renderFrame(GAME.started?[PL.x,PL.y,PL.z]:[R.look[0],R.look[1],R.look[2]]);}catch(e){console.error(e);if(!window.ERR)window.ERR=String(e.stack||e);}requestAnimationFrame(frame);};

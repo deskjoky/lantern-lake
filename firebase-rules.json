@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "lb": {
+      ".read": true,
+      "players": {
+        ".indexOn": ["biggest", "catches", "species", "earned", "xp", "wins"],
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('catches').isNumber() && newData.child('biggest').isNumber() && newData.child('biggest').val() < 1000"
+        }
+      },
+      "fish": {
+        "$fish": {
+          ".indexOn": ["lb"],
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('lb').isNumber() && newData.child('lb').val() < 1000"
+          }
+        }
+      }
+    },
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        "meta": {
+          ".write": "auth != null && (!data.exists() || data.child('host').val() === auth.uid || now - data.child('created').val() > 43200000)"
+        },
+        "p": {
+          "$uid": { ".write": "auth != null && auth.uid === $uid" }
+        },
+        "ev": {
+          ".indexOn": ["t"],
+          "$e": { ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid" }
+        },
+        "derby": {
+          ".write": "auth != null && root.child('rooms').child($code).child('meta/host').val() === auth.uid"
+        }
+      }
+    }
+  }
+}
