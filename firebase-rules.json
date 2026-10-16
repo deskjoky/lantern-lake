@@ -77,6 +77,20 @@
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.val() === 'YOUR-ADMIN-CODE'"
       }
+    },
+    "saves": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.child('data').isString() && newData.child('data').val().length < 1000000"
+      }
+    },
+    "transfers": {
+      "$code": {
+        ".read": true,
+        ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid",
+        ".validate": "newData.child('data').isString() && newData.child('data').val().length < 1000000"
+      }
     }
   }
 }
