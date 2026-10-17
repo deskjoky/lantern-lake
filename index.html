@@ -3392,7 +3392,7 @@ gh.nibble=function(){const w_a=document.getElementById('primary');if(!w_a)return
 function mh(y_a,z_a){if(!y_a||y_a.legend)return false;if(jk(y_a)&&!['squid','crab','crayfish'].includes(y_a.shape))return false;return z_a<=(y_a.salt?12:4);}
 Object.assign(gh.A,{rLive:()=>{const A_a=Vg.catch;if(!A_a||!A_a.f)return;const B_a=wf.gear;B_a.live=B_a.live||[];if(B_a.live.length>=6){gh.toast('Your bait bucket is full (6).','warn');return;}B_a.live.push({f:A_a.f.id,lb:A_a.lb});B_a.lures[qf]=B_a.live.length;B_a.lure=qf;gh.toast('🪝 '+A_a.f.n+' ('+Uf(A_a.lb)+') is in the bait bucket and on your hook. Only something much bigger will take it.','good');Vg.reset();Vg.catch=null;gh.closeReveal();gh.actSig='';Ff();},
 equipHook:C_a=>{wf.gear.hook=+C_a;gh.toast('Tied on '+pf[+C_a].n.replace(/s$/,'').toLowerCase(),'info');gh.refresh();Ff();}});
-gh.canQuit=()=>!gh.touchMode||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+gh.canQuit=()=>!gh.touchMode;
 gh.openPause=function(){gh.openModal('Paused',null,()=>`<div class="pauseMenu">
  <button class="btn gold" data-a="modalClose">▶ Resume<kbd class="kbk">Esc</kbd></button>
  <button class="btn" data-a="pauseTo" data-v="settings">⚙️ Settings</button>
@@ -3873,10 +3873,11 @@ netRetry:()=>{$h.status='off';$h._conn=null;$h.connect().then(()=>gh.refresh());
 document.addEventListener('change',ofb=>{if(ofb.target.id==='lbFish'){gh._lbFish=+ofb.target.value;gh._lbCat='fish:'+ofb.target.value;gh.refresh();}});
 document.addEventListener('keydown',pfb=>{if(pfb.key!=='Enter')return;if(pfb.target.id==='chatInput')gh.A.sendChat();else if(pfb.target.id==='codeInput')gh.A.joinRoom();else if(pfb.target.id==='nameInput')gh.A.saveName();});
 gh.netHud=function(){const qfb=fh('#netChip');if(!qfb)return;if($h.room){const rfb='🌐 '+$h.room.code+' · '+$h.count();if(qfb._t!==rfb){qfb.textContent=rfb;qfb._t=rfb;}qfb.classList.remove('hide');}else qfb.classList.add('hide');};
-const ki='LLVER@0.3.1@',mi=ki.split('@')[1];
+const ki='LLVER@0.3.2@',mi=ki.split('@')[1];
 const ni=[
-{v:'0.3.1',date:'October 2026',title:'Hands on the key',items:[
-['Fixed','The engine can only be started or shut off from the driver\'s seat. The Start engine button shows up once you are sitting at the helm']]},
+{v:'0.3.2',date:'October 2026',title:'Hands on the key',items:[
+['Fixed','The engine can only be started or shut off from the driver\'s seat. The Start engine button shows up once you are sitting at the helm'],
+['Improved','No Quit game button on phones and tablets, where you just swipe the app away']]},
 {v:'0.3.0',date:'October 2026',title:'Shipshape',items:[
 ['Fixed','Steering wheels, gauges and the dash now face the driver on every console boat instead of poking out the front'],
 ['Improved','Every console has a foot well under the dash, so the driver\'s feet tuck in instead of going through it'],
