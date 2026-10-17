@@ -3873,8 +3873,10 @@ netRetry:()=>{$h.status='off';$h._conn=null;$h.connect().then(()=>gh.refresh());
 document.addEventListener('change',ofb=>{if(ofb.target.id==='lbFish'){gh._lbFish=+ofb.target.value;gh._lbCat='fish:'+ofb.target.value;gh.refresh();}});
 document.addEventListener('keydown',pfb=>{if(pfb.key!=='Enter')return;if(pfb.target.id==='chatInput')gh.A.sendChat();else if(pfb.target.id==='codeInput')gh.A.joinRoom();else if(pfb.target.id==='nameInput')gh.A.saveName();});
 gh.netHud=function(){const qfb=fh('#netChip');if(!qfb)return;if($h.room){const rfb='🌐 '+$h.room.code+' · '+$h.count();if(qfb._t!==rfb){qfb.textContent=rfb;qfb._t=rfb;}qfb.classList.remove('hide');}else qfb.classList.add('hide');};
-const ki='LLVER@0.3.2@',mi=ki.split('@')[1];
+const ki='LLVER@0.3.3@',mi=ki.split('@')[1];
 const ni=[
+{v:'0.3.3',date:'October 2026',title:'Paddle straight',items:[
+['Fixed','The kayak paddle is held across your body, side to side, instead of pointing along the kayak. Paddling now dips a blade on each side in turn']]},
 {v:'0.3.2',date:'October 2026',title:'Hands on the key',items:[
 ['Fixed','The engine can only be started or shut off from the driver\'s seat. The Start engine button shows up once you are sitting at the helm'],
 ['Improved','No Quit game button on phones and tablets, where you just swipe the app away']]},
@@ -5427,7 +5429,7 @@ if(wf.veh&&wf.veh.use&&ud.veh){if(!ui.on){ui.id=wf.veh.use;const p5b=xg(ui.x,ui.
 if(J.gag&&Ch.handL){const q5b=J.gag,r5b=Ch.handL,s5b=ae(q5b.f,q5b.lb),t5b=da(.25,.6,q5b.t),u5b=1-da(.62,1.22,q5b.t);if(u5b>.01){const v5b=r5b[12],w5b=r5b[13],x5b=r5b[14];Yb.dyn.push({mesh:$d(q5b.f),model:hb(v5b,w5b,x5b,mg.rot+Math.PI/2*(1-t5b),0,Math.sin(Yb.time*20)*.2*t5b,s5b*u5b),prog:'fish',anim:[.22*u5b,Yb.time*20],moving:true,twoSided:true,mat:[.5,60,0,0]});}}
 if(mg.mode==='boat'&&Fg().paddle&&Vg.state==='idle'&&Ch.handR){const y5b=Ch.handR,z5b=Ch.handL,A5b=ng.paddlePhase,B5b=Math.abs(ng.speed)>.1?1:0;
 if(ng.type==='kayak'){
-Yb.dyn.push({mesh:ud.paddle,model:hb((y5b[12]+z5b[12])/2,(y5b[13]+z5b[13])/2-.02,(y5b[14]+z5b[14])/2,ng.rot+Math.PI/2+Math.cos(A5b)*.42*B5b,0,Math.PI/2+Math.sin(A5b)*.62*B5b),prog:'lit',moving:true});}
+Yb.dyn.push({mesh:ud.paddle,model:hb((y5b[12]+z5b[12])/2,(y5b[13]+z5b[13])/2-.02,(y5b[14]+z5b[14])/2,ng.rot+Math.cos(A5b)*.42*B5b,0,Math.PI/2+Math.sin(A5b)*.62*B5b),prog:'lit',moving:true});}
 else{
 const C5b=ng.cSide||1,D5b=((A5b%ea)+ea)%ea/ea,E5b=Math.cos(ng.rot),F5b=Math.sin(ng.rot);let G5b,H5b,I5b;
 if(!B5b){G5b=.1;H5b=.15;I5b=0;}else if(D5b<.6){const Z5b=D5b/.6;G5b=ca(.55,-.45,Z5b);H5b=-.42;I5b=0;}else{const _5b=(D5b-.6)/.4;G5b=ca(-.45,.55,_5b);H5b=-.42+Math.sin(_5b*Math.PI)*.5+.08;I5b=Math.PI/2*Math.sin(_5b*Math.PI)+(_5b>.85?(_5b-.85)/.15*-.25:0);}
