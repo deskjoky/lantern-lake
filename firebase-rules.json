@@ -166,6 +166,17 @@
         ".write": "auth != null && root.child('owner').val() === auth.uid",
         ".validate": "newData.isNumber() && newData.val() > 0"
       }
+    },
+    "crashes": {
+      ".read": "auth != null && root.child('owner').val() === auth.uid",
+      ".write": "auth != null && root.child('owner').val() === auth.uid",
+      ".indexOn": [
+        "t"
+      ],
+      "$id": {
+        ".write": "auth != null && ((!data.exists() && newData.child('u').val() === auth.uid) || (data.exists() && !newData.exists() && root.child('owner').val() === auth.uid))",
+        ".validate": "!newData.exists() || (newData.child('d').isString() && newData.child('d').val().length <= 12000 && newData.child('title').isString() && newData.child('title').val().length <= 80 && newData.child('why').isString() && newData.child('why').val().length <= 600 && newData.child('t').val() === now)"
+      }
     }
   }
 }
