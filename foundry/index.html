@@ -130,6 +130,90 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 #modal .notes{width:min(520px,90vw)}#modal .nscroll{max-height:min(52vh,340px);overflow:auto;margin:4px 0 14px;padding-right:6px}
 #modal .nv{margin-bottom:12px}#modal .nv b{color:#ffd27a;font-size:14px}#modal ul{margin:6px 0 0;padding-left:18px;color:#d4cfc6;font-size:13.5px;line-height:1.45}#modal li{margin:3px 0}
 #updpill{position:fixed;left:50%;bottom:calc(14px + var(--safe-b,0px));transform:translateX(-50%);z-index:45;border:0;border-radius:22px;padding:11px 18px;font:800 14px system-ui;color:#1a1006;background:linear-gradient(#ffd27a,#f08a32);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+/* ===== terminal-style panels ===== */
+#sheet{background:#1b1d22;border-radius:10px;border:1px solid #33363e;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+#sheet.wide{width:min(980px,96vw);height:min(600px,90vh)}
+#sheet .sh{background:linear-gradient(#26282e,#202227);border-bottom:2px solid var(--orange);padding:8px 10px}
+#sheet .tabs button{border-radius:4px;text-transform:uppercase;letter-spacing:.06em;font-size:12px;padding:8px 12px}#sheet .tabs button.on{background:var(--orange);color:#1a1006}
+#sheet .ttl{text-transform:uppercase;letter-spacing:.08em}
+#sheet .x{border-radius:6px}
+#sheet .body:has(>.two),#sheet .body:has(>.bm){overflow:hidden;padding:0}
+#sheet h5{margin:12px 0 7px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);font-weight:800}
+#sheet h3{margin:6px 0 4px;font-size:19px}.kick{color:var(--orange);font-weight:800;letter-spacing:.12em;font-size:10.5px}
+.two{display:grid;grid-template-columns:minmax(170px,38%) 1fr;height:100%}.two>.col{overflow-y:auto;padding:10px 14px 16px;-webkit-overflow-scrolling:touch}.two>.col:first-child{background:#17191d;border-right:1px solid #2c2f36}
+.det{position:relative}
+/* tiles */
+.tl{display:inline-flex;flex-direction:column;align-items:center;gap:3px;width:74px;vertical-align:top}.tl .tp{position:relative;width:64px;height:64px;background:radial-gradient(circle at 50% 35%,#3a3e47,#25282e);border:1px solid #444955;border-radius:6px;display:grid;place-items:center;overflow:hidden}
+.tl .tp img{width:118%;height:118%;object-fit:contain}.tl .tp .sw{width:32px;height:32px;border-radius:6px}
+.tl em{position:absolute;right:3px;bottom:2px;font-style:normal;font-weight:900;font-size:12px;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000}.tl em.short{color:#ff7a6a}
+.tl span{font-size:11px;text-align:center;line-height:1.15;color:#c9ccd2}.tl.sm{width:64px}.tl.sm .tp{width:54px;height:54px}.tl.xs{width:auto}.tl.xs .tp{width:38px;height:38px;border-radius:5px}.tl.xs em{font-size:10px}
+.tl.big .tp{width:76px;height:76px}.tl.big.out .tp{border-color:var(--orange);box-shadow:0 0 0 1px rgba(240,138,50,.3) inset}
+.tls{display:flex;flex-wrap:wrap;gap:8px}
+/* build menu */
+.bm{display:grid;grid-template-columns:118px 1fr minmax(220px,34%);height:100%}
+.bcats{background:#15171b;border-right:1px solid #2c2f36;overflow-y:auto;padding:8px 6px;display:flex;flex-direction:column;gap:4px}
+.bcats button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px;border-radius:6px;color:#aab0b8;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border:1px solid transparent}
+.bcats button i{width:56px;height:40px;display:block}.bcats button i img{width:100%;height:100%;object-fit:contain}.bcats button.on{background:#2a2d34;color:#fff;border-color:var(--orange)}
+.bgrid{overflow-y:auto;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;align-content:start}
+.bt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px 8px;background:#24272d;border:1px solid #3a3e47;border-radius:7px;color:#e6e8eb;font-weight:700;font-size:11.5px;line-height:1.15;text-align:center}
+.bt .bp{position:relative;width:100%;aspect-ratio:4/3;background:radial-gradient(circle at 50% 30%,#3c414b,#23262c);border-radius:5px;display:grid;place-items:center;overflow:hidden}.bt .bp img{width:100%;height:100%;object-fit:contain}
+.bt.sel{border-color:var(--orange);background:#2d2a26;box-shadow:0 0 0 2px rgba(240,138,50,.35)}.bt.lock{opacity:.45}.bt.poor span{color:#e8a39a}.bt .lk{position:absolute;right:4px;top:3px;font-style:normal;font-size:13px}
+.bdet{overflow-y:auto;padding:10px 14px 16px;border-left:1px solid #2c2f36;background:#17191d}.bbig{width:100%;aspect-ratio:16/10;background:radial-gradient(circle at 50% 40%,#3c414b,#1e2025);border-radius:8px;display:grid;place-items:center;overflow:hidden;border:1px solid #33363e}.bbig img{width:100%;height:100%;object-fit:contain}
+.bdet p{color:#b9bec6;font-size:12.5px;line-height:1.4;margin:6px 0}.bst{display:flex;flex-wrap:wrap;gap:6px}.bst span{background:#262930;border-radius:4px;padding:3px 7px;font-size:11.5px;font-weight:800}.bst i{font-style:normal;color:var(--orange);margin-right:4px}
+.bigbtn{display:block;width:100%;margin-top:12px;padding:13px;border-radius:6px;background:linear-gradient(#ffb15e,#e8742a);color:#1a1006;font-weight:900;font-size:15px;letter-spacing:.06em;text-transform:uppercase;border:0}.bigbtn.dis,.bigbtn:disabled{background:#3a3d44;color:#80858d}
+.locked{margin-top:10px;padding:10px;border-radius:6px;background:#2a2326;color:#e8a39a;font-weight:700;font-size:13px}.okb{margin-top:8px;padding:10px;border-radius:6px;background:#1f2e2a;color:#6fe0c8;font-weight:800}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;font-weight:700;font-size:13.5px}.tog small{display:block;color:var(--muted);font-weight:500;font-size:11.5px}
+.sw2{width:46px;height:26px;border-radius:13px;background:#3a3d44;position:relative;flex:none;border:0}.sw2 i{position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#ccc;transition:left .15s}.sw2.on{background:var(--orange)}.sw2.on i{left:23px;background:#fff}
+/* inventory */
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}.sl{position:relative;aspect-ratio:1;background:radial-gradient(circle at 50% 35%,#353941,#22252b);border:1px solid #3c404a;border-radius:5px;display:grid;place-items:center;overflow:hidden;padding:0}
+.sl img{width:115%;height:115%;object-fit:contain}.sl em{position:absolute;right:3px;bottom:1px;font-style:normal;font-weight:900;font-size:12px;text-shadow:0 1px 2px #000,0 0 4px #000}.sl.empty{background:#1e2025;border-style:dashed;border-color:#2c2f36}.sl.sel{border-color:var(--orange);box-shadow:0 0 0 2px rgba(240,138,50,.35)}
+.ibig{width:120px;height:120px;margin:4px auto 0;background:radial-gradient(circle at 50% 35%,#3c414b,#22252b);border-radius:10px;border:1px solid #444955;display:grid;place-items:center;overflow:hidden}.ibig img{width:120%;height:120%;object-fit:contain}.det h3{text-align:center}.det>.mut{text-align:center}
+.rrow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:6px;background:#22252b;border-radius:6px;margin-bottom:6px}.rrow>b{color:var(--orange)}.rrow small{flex:1;min-width:90px;font-size:11px;color:var(--muted);line-height:1.3;text-align:right}
+/* workbench */
+.rlist{display:flex;flex-direction:column;gap:5px}.ri{display:flex;align-items:center;gap:9px;padding:5px;border-radius:6px;background:#22252b;border:1px solid #33363e;text-align:left;color:#e6e8eb;font-weight:700;font-size:13px}.ri .tp{width:44px;height:44px;flex:none;background:#2c3037;border-radius:5px;display:grid;place-items:center;overflow:hidden}.ri .tp img{width:115%;height:115%;object-fit:contain}
+.ri small{display:block;font-size:11px;color:#6fe0c8;font-weight:600}.ri.off small{color:#8a8f97}.ri.off{opacity:.7}.ri.sel{border-color:var(--orange);background:#2d2a26}
+.craftv{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 6px;background:#15171b;border-radius:8px;border:1px solid #2c2f36;flex-wrap:wrap}.cin{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.carr{font-size:26px;color:var(--orange)}
+.holdbtn{position:relative;display:block;width:100%;margin-top:10px;height:52px;border-radius:6px;background:#3a2a1c;border:1px solid var(--orange);overflow:hidden;color:#fff;font-weight:900;font-size:15px;letter-spacing:.06em;text-transform:uppercase;touch-action:none;user-select:none;-webkit-user-select:none}
+.holdbtn i{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#e8742a,#ffb15e)}.holdbtn span{position:relative}.holdbtn.holding i{animation:hfill .42s linear infinite}.holdbtn.dis{opacity:.5;border-color:#555}
+@keyframes hfill{from{width:0}to{width:100%}}
+.qrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.qrow .btn{flex:1}
+/* hub terminal */
+.subt{display:flex;gap:4px;padding:8px 12px 0;background:#1b1d22}.subt button{padding:7px 14px;border-radius:5px 5px 0 0;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9aa0a8;background:#22252b;border:0}.subt button.on{background:#2a2d34;color:#fff;box-shadow:inset 0 2px 0 var(--orange)}.subt .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--orange);vertical-align:middle}
+#sheet .body:has(>.subt){display:flex;flex-direction:column;overflow:hidden;padding:0}#sheet .body:has(>.subt)>.two{flex:1;min-height:0}.rsv{flex:1;overflow-y:auto;padding:12px 16px}
+.mlist{display:flex;flex-direction:column;gap:5px}.mi{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;background:#22252b;border:1px solid #33363e;text-align:left;color:#e6e8eb;font-weight:800;font-size:13px}.mi b{width:30px;height:30px;border-radius:5px;display:grid;place-items:center;background:#33363e;flex:none}
+.mi small{display:block;font-size:11px;font-weight:600;color:#8a8f97}.mi.done b{background:#1f4a40;color:#6fe0c8}.mi.cur b{background:var(--orange);color:#1a1006}.mi.cur small{color:#ffb15e}.mi.lock{opacity:.6}.mi.sel{border-color:var(--orange);background:#2d2a26}
+.needs{display:flex;flex-direction:column;gap:8px}.nd{display:flex;align-items:center;gap:10px;background:#22252b;border-radius:6px;padding:6px}.nd>div:last-child{flex:1}.nd b{font-size:13px}.nd small{font-size:11px;color:var(--muted)}.nd .bar{height:7px;margin:4px 0}
+.unl{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}.un{background:#22252b;border-radius:6px;padding:5px;text-align:center;font-size:10.5px;color:#c9ccd2;line-height:1.2}.un img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block;background:radial-gradient(circle,#353941,#22252b);border-radius:4px;margin-bottom:3px}
+.rshead{display:flex;gap:14px;align-items:center}.rbig{position:relative;width:96px;height:96px;flex:none;background:radial-gradient(circle,#3c414b,#22252b);border-radius:10px;display:grid;place-items:center;overflow:hidden;border:1px solid #444955}.rbig img{width:120%;height:120%;object-fit:contain}.rbig em{position:absolute;right:6px;bottom:3px;font-style:normal;font-weight:900;font-size:18px;text-shadow:0 1px 3px #000}
+.alts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.alt{display:flex;flex-direction:column;gap:5px;padding:10px;border-radius:8px;background:#22252b;border:1px solid #3c404a;text-align:left;color:#fff}.alt:hover,.alt:active{border-color:var(--orange)}.alt small{color:var(--muted)}
+/* production */
+.pw{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.pwb{background:#22252b;border-radius:6px;padding:9px;text-align:center}.pwb b{display:block;font-size:22px;color:#fff}.pwb small{color:var(--muted);font-size:11px}
+.prows{display:flex;flex-direction:column;gap:4px}.pr{display:grid;grid-template-columns:auto minmax(80px,1fr) 2fr 48px 48px 52px;align-items:center;gap:8px;background:#22252b;border-radius:6px;padding:4px 8px;font-size:12.5px}.pr em{font-style:normal;text-align:right;font-weight:800}.pr em.pos{color:#6fe0c8}.pr em.neg{color:#ff7a6a}
+.pb{position:relative;height:12px;background:#17191d;border-radius:3px;overflow:hidden}.pb i{position:absolute;left:0;height:50%;border-radius:2px}.pb .m{top:0;background:#3fc4ae}.pb .u{bottom:0;background:#f08a32}.lg{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 8px;vertical-align:middle}.lg.m{background:#3fc4ae}.lg.u{background:#f08a32}
+/* settings and help */
+.setg{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}.sc{background:#22252b;border-radius:8px;padding:4px 12px 8px;border:1px solid #2c2f36}.slotcur{display:flex;gap:10px;align-items:center}.slotcur img{width:48px;height:48px;object-fit:contain}.slotcur small{display:block;color:var(--muted);font-size:11.5px}
+.seg{display:flex;background:#17191d;border-radius:6px;padding:3px}.seg button{flex:1;padding:8px;border-radius:4px;font-weight:800;font-size:12.5px;color:#9aa0a8;border:0;background:none}.seg button.on{background:var(--orange);color:#1a1006}.ctr{text-align:center}
+.helpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.hc{background:#22252b;border-radius:8px;padding:8px 10px 10px;border:1px solid #2c2f36}.hp{height:90px;background:radial-gradient(circle,#3c414b,#1e2025);border-radius:6px;display:grid;place-items:center;overflow:hidden;margin-bottom:6px}.hp img{height:100%;width:100%;object-fit:contain}.hc b{font-size:14px}.hc p{margin:4px 0 0;font-size:12px;color:#b9bec6;line-height:1.4}
+/* machine panel */
+.mh{display:flex;gap:12px;align-items:center;margin-bottom:6px}.mhp{width:92px;height:70px;flex:none;background:radial-gradient(circle,#3c414b,#1e2025);border-radius:8px;overflow:hidden;border:1px solid #33363e}.mhp img{width:100%;height:100%;object-fit:contain}.mh>div:nth-child(2){flex:1}.mh h3{margin:0 0 4px}.mh .status{margin:0;display:inline-block;padding:3px 8px;font-size:12px}.mpw{background:#22252b;border-radius:5px;padding:6px 10px;font-weight:800;font-size:13px;color:#ffd27a;white-space:nowrap}
+.mrec{display:flex;justify-content:space-between;align-items:center;background:#22252b;border-radius:6px;padding:7px 10px;margin:8px 0;font-size:13px}
+.prodv{display:flex;align-items:center;gap:10px;padding:12px;background:#15171b;border:1px solid #2c2f36;border-radius:8px;margin:6px 0}.pin,.pout,.fuels{display:flex;gap:8px;flex-wrap:wrap}.pslot{display:flex;flex-direction:column;align-items:center;gap:4px}.pslot small{font-size:10.5px;color:var(--muted);text-align:center;max-width:90px}
+.parr{flex:1;min-width:60px;text-align:center}.pbar{height:10px;background:#2c2f36;border-radius:5px;overflow:hidden;position:relative}.pbar:after{content:'';position:absolute;right:-1px;top:-3px;border:8px solid transparent;border-left-color:#2c2f36}.pbar i{display:block;height:100%;background:linear-gradient(90deg,#e8742a,#ffd27a);transition:width .25s}.parr span{font-size:11px;color:var(--muted)}
+.recg{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}.rc{display:flex;flex-direction:column;gap:5px;padding:8px;border-radius:7px;background:#22252b;border:1px solid #3c404a;text-align:left;color:#fff;font-size:13px}.rc .tp{position:relative;height:60px;background:radial-gradient(circle,#3c414b,#1e2025);border-radius:5px;display:grid;place-items:center;overflow:hidden}.rc .tp img{height:120%;object-fit:contain}.rc.sel{border-color:var(--orange)}.rc.lock{opacity:.5}.rc small{color:#e8a39a}.rc .rrow{background:none;padding:0;margin:0}
+.altb{position:absolute;left:5px;top:4px;font-style:normal;font-size:10px;font-weight:900;background:#8a5ad0;color:#fff;border-radius:3px;padding:1px 5px}
+/* main menu wizard and slots */
+.wiz{width:min(560px,92vw)!important}.wdots{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:8px}.wdots i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:12px;background:#2a2d34;color:#888}.wdots i.on{background:var(--orange);color:#1a1006}.wdots b{width:40px;height:2px;background:#33363e}
+.slots3{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px}.slot3{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border-radius:8px;background:#22252b;border:1px solid #3a3e47!important;text-align:left;color:#fff;position:relative}.slot3.sel{border-color:var(--orange)!important;box-shadow:0 0 0 2px rgba(240,138,50,.3)}
+.slot3 .sn{width:38px;height:38px;border-radius:6px;display:grid;place-items:center;background:#33363e;font-weight:900;font-size:18px;flex:none}.slot3.sel .sn{background:var(--orange);color:#1a1006}.slot3 small{display:block;color:var(--muted);font-size:11.5px}.slot3 .tagc{position:absolute;right:10px;top:8px;font-style:normal;font-size:10px;font-weight:900;color:#6fe0c8;letter-spacing:.08em}
+.srow{display:flex;gap:6px;align-items:stretch}.srow .slot3{flex:1}.delb{background:#2a2326!important;color:#e8a39a!important;border-radius:8px;padding:0 12px!important;font-size:12px!important;width:92px}.delb.arm{background:#a33!important;color:#fff!important}
+#wname{width:100%;box-sizing:border-box;padding:12px;border-radius:8px;border:1px solid #444955;background:#101216;color:#fff;font:700 16px system-ui;margin:4px 0 10px}
+.warnb{background:#2e2222;border:1px solid #8a3a3a;color:#f2c2bb;border-radius:8px;padding:10px;font-size:13px;line-height:1.4;margin-bottom:8px}.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:12px}.chk input{width:20px;height:20px;accent-color:#f08a32}
+#modal .mbox .go.dis{opacity:.4}
+.holdl{position:relative;display:block;width:100%;height:58px;border-radius:10px;border:1px solid var(--orange)!important;background:#2a1e14!important;overflow:hidden;margin:6px 0 12px;touch-action:none;user-select:none;-webkit-user-select:none}.holdl i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#e8742a,#ffd27a)}.holdl.hold i{width:100%;transition:width 1.5s linear}.holdl span{position:relative;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#fff;font-size:15px}
+@media (max-height:500px){#sheet.wide{height:94vh;width:97vw}.bm{grid-template-columns:96px 1fr minmax(200px,34%)}.bcats button i{width:44px;height:30px}.bgrid{grid-template-columns:repeat(auto-fill,minmax(82px,1fr))}.two{grid-template-columns:minmax(150px,36%) 1fr}.tl .tp{width:54px;height:54px}.tl{width:62px}.ibig{width:90px;height:90px}.mh .mhp{width:70px;height:54px}.alts{grid-template-columns:1fr}.pr{grid-template-columns:auto minmax(70px,1fr) 1.4fr 40px 40px 44px;font-size:11.5px}.slots3{gap:5px}.slot3{padding:6px 10px}#modal .mbox{max-height:92vh;overflow:auto;padding:14px 16px}}
+.rc .tp img{height:100%;width:100%;object-fit:contain}.tl.big{width:86px}.fuels .pslot{width:86px}
+#modal .slot3 small{color:#9aa3ad;font-weight:600;letter-spacing:0;font-size:11.5px}#modal .slot3 .tagc{color:#6fe0c8}
+@media (max-height:500px){.tcol{gap:6px!important}.tlogo{margin-bottom:2px}.tlogo svg{width:44px;height:44px}.tlogo b{font-size:18px}.tbtn{padding:8px 14px;font-size:14px;border-radius:12px}.tbtn:not(.main) small{display:none}.tfoot{display:none}#title .tcol{max-height:96vh}}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1330,12 +1414,18 @@ function spotUnderAim(o,d){let best=null;for(const b of FAC.b.values()){const D=
 function updateHand(dt,holding){const t=handTarget();HAND.what=t;if(holding&&t&&t.kind==='creature'){zap(t.c);HAND.t=0;return;}if(!holding||!t||t.kind==='building'||t.kind==='spot'||t.kind==='pod'||t.kind==='creature'){HAND.t=0;return;}
  if(t.kind==='core'){HAND.t+=dt;if(HAND.t>=1.2){HAND.t=0;takeCore(t.c);}return;}
  HAND.t+=dt;const need=t.kind==='node'?.55/(t.nd.purity===2?1.4:1):.9;if(HAND.t>=need){HAND.t=0;
-  if(t.kind==='node'){addInv(t.nd.type,1);AUDIO.mine();FX.chips(t.nd,ITEMS[t.nd.type].c);UI.pop('+1 '+ITEMS[t.nd.type].n);}
-  else{const f=t.f;f.alive=false;S.chopped.push(f.i);refreshFlora();if(f.kind==='slug'){addInv('slug',1);UI.pop('+1 Power slug');AUDIO.fanfare();FX.puff(f.x,f.y+.5,f.z,COL('#ffd04a',1));return;}if(f.kind==='bush'){addInv('leaves',6);UI.pop('+6 Leaves');}else{addInv('wood',4);addInv('leaves',10);UI.pop('+4 Wood · +10 Leaves');}AUDIO.chop();FX.puff(f.x,f.y+1,f.z,COL(f.pal[f.pal.length-1]));}}}
+  if(t.kind==='node'){addInv(t.nd.type,1);TOOL.impact('rock');FX.chips(t.nd,ITEMS[t.nd.type].c);UI.pop('+1 '+ITEMS[t.nd.type].n);}
+  else{const f=t.f;f.alive=false;S.chopped.push(f.i);refreshFlora();if(f.kind==='slug'){addInv('slug',1);UI.pop('+1 Power slug');AUDIO.fanfare();FX.puff(f.x,f.y+.5,f.z,COL('#ffd04a',1));return;}if(f.kind==='bush'){addInv('leaves',6);UI.pop('+6 Leaves');}else{addInv('wood',4);addInv('leaves',10);UI.pop('+4 Wood · +10 Leaves');}AUDIO.chop();TOOL.impact('plant');FX.puff(f.x,f.y+1,f.z,COL(f.pal[f.pal.length-1]));}}}
 
 // ---- 09-game.js ----
 // ===== Game state, progression, crafting, saving, sound, effects =====
-const SAVE_KEY='ff_save_v1';
+const SLOT_KEYS=['ff_save_v1','nf_save_2','nf_save_3'];
+let SLOT=(()=>{try{return clamp(+(localStorage.getItem('nf_slot')||0)|0,0,2);}catch(e){return 0;}})();
+let SAVE_KEY=SLOT_KEYS[SLOT];
+function slotInfo(i){let d=null;try{d=JSON.parse(localStorage.getItem(SLOT_KEYS[i])||'null');}catch(e){}if(!d)return null;
+ return {name:d.name||('Expedition '+(i+1)),tier:d.tier||0,play:d.playTime||0,time:d.time||0,blds:(d.b||[]).filter(b=>b.k!=='hub').length,landed:d.landed!==false};}
+function gotoSlot(i,fresh,name){if(fresh){GAME.wiping=true;clearTimeout(_saveT);}else saveGame();try{localStorage.setItem('nf_slot',String(i));if(fresh){localStorage.removeItem(SLOT_KEYS[i]);sessionStorage.setItem('ff_new','1');sessionStorage.setItem('nf_name',name||'');}else sessionStorage.setItem('nf_cont','1');}catch(e){}location.reload();}
+function deleteSlot(i){try{localStorage.removeItem(SLOT_KEYS[i]);}catch(e){}if(i===SLOT){GAME.wiping=true;location.reload();}}
 let S=null;
 function newState(){return {v:2,landed:false,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true,autoWire:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
 // ---- milestones ----
@@ -1377,6 +1467,9 @@ const AUDIO={ctx:null,init(){if(this.ctx||!S.settings.sound)return;try{this.ctx=
  mine(){this.noise(.08,{freq:2200,vol:.16});this.tone(140+Math.random()*60,.08,{type:'triangle',vol:.08});},chop(){this.noise(.25,{freq:500,vol:.2});},craft(){this.tone(520,.08,{type:'triangle',vol:.07});this.tone(780,.1,{type:'triangle',vol:.07,when:.07});},
  fuse(){this.noise(.4,{freq:3000,vol:.25});this.tone(90,.6,{type:'sawtooth',vol:.12,slide:.4});},flip(){this.tone(300,.05,{type:'square',vol:.08});this.tone(600,.05,{type:'square',vol:.06,when:.05});},
  thump(){this.tone(60,.7,{type:'sine',vol:.35,slide:.5});this.noise(.8,{freq:300,vol:.4});},zap(){this.tone(1400,.18,{type:'sawtooth',vol:.06,slide:.2});this.noise(.1,{freq:4000,vol:.1});},hurt(){this.tone(180,.25,{type:'square',vol:.08,slide:.6});},zip(){this.tone(400,.4,{type:'triangle',vol:.05,slide:2});},
+ strike(){const c=this.ctx;if(!c||!S.settings.sound)return;this.noise(.14,{freq:2600,vol:.22});this.tone(110+Math.random()*30,.16,{type:'triangle',vol:.16,slide:.55});this.tone(2200+Math.random()*600,.07,{type:'sine',vol:.035,when:.005});this.noise(.3,{freq:500,vol:.08,when:.03});},
+ chopHit(){this.noise(.18,{freq:1400,vol:.2});this.tone(180,.12,{type:'triangle',vol:.1,slide:.6});this.noise(.35,{freq:3500,vol:.05,when:.05});},
+ whir(kind){this.tone(kind==='flora'?260:200,.42,{type:'sawtooth',vol:.018,slide:2.2});},
  fanfare(){[523,659,784,1047].forEach((f,i)=>this.tone(f,.32,{type:'triangle',vol:.1,when:i*.12}));}};
 // ---- particles ----
 FX.parts=[];
@@ -1559,6 +1652,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.6.0',t:'New menus and save slots',items:['Every menu is redesigned with pictures: build menu, inventory, workbench, HUB terminal, research, machines, storage, production stats, settings and help.','Build menu: pick a category, tap a building to see its picture, stats and cost, then tap Build.','Workbench: hold the Craft button to keep crafting, or craft ×1, ×5 or all at once.','HUB terminal: see every milestone, what it costs and the pictures of what it unlocks.','Main menu has a Continue button and 3 save slots with Load game.','Starting a new game is now 3 steps: pick a slot, name it (and confirm if it overwrites a save), then hold to launch.','Your hand tool now has a spinning drill: it winds up, strikes and throws sparks when you mine, with new mining sounds.']},
  {v:'0.5.4',t:'HUB stairs',items:['The HUB now sits on a solid foundation with stairs up to the front door, so you walk up onto it instead of sinking into the floor.','New app icon files so phones pick up the Novaforge icon.']},
  {v:'0.5.3',t:'Update notes',items:['Patch notes now pop up after every update so you know you have the newest version.','Updates download more reliably on phones and home-screen apps.']},
  {v:'0.5.2',t:'Novaforge',items:['The game has a new name: Novaforge.','New app icon, logo and loading screen.']},
@@ -1755,7 +1849,7 @@ const START={};
 START.begin=function(){const L={x:2,z:-8};const gy=ground(L.x,L.z);GAME.landing={t:0,L,gy,obj:{mesh:podMesh(false,true),model:M4.create()}};R.objects.push(GAME.landing.obj);
  document.body.classList.add('cine');UI.closePanel();AUDIO.init();AUDIO.noise(4.2,{freq:500,vol:.18});
  let sk=document.getElementById('skipcine');if(!sk){sk=document.createElement('button');sk.id='skipcine';sk.textContent='Skip ›';document.body.appendChild(sk);sk.addEventListener('pointerdown',e=>{e.stopPropagation();if(GAME.landing)GAME.landing.t=Math.max(GAME.landing.t,6.4);});}sk.style.display='';};
-START.update=function(dt){const G=GAME.landing;if(!G)return;G.t+=dt;const t=G.t,L=G.L;const off=[-48,150,-74];
+START.update=function(dt){if(TOOL.shake>0&&!GAME.freeCam){TOOL.shake-=dt;const k=TOOL.shake*.25;R.cam=[R.cam[0]+(Math.random()-.5)*k,R.cam[1]+(Math.random()-.5)*k,R.cam[2]+(Math.random()-.5)*k];}const G=GAME.landing;if(!G)return;G.t+=dt;const t=G.t,L=G.L;const off=[-48,150,-74];
  const k=clamp(t/4,0,1),e=Math.pow(k,1.25);const p=[L.x+off[0]*(1-e),G.gy+off[1]*(1-e)+1.1,L.z+off[2]*(1-e)];
  if(t>=4&&!G.landedMesh){G.landedMesh=1;G.obj.mesh=podMesh(true);}G.obj.model=t<4?T(p[0],p[1]-1.1,p[2],Math.atan2(off[0],off[2])+Math.PI/2,0,-1.15):T(L.x,G.gy,L.z,.6);G.obj.c=null;
  if(t<4){for(let i=0;i<3;i++)FX.burst(p[0]-off[0]*.004,p[1]+1.5,p[2]-off[2]*.004,COL(i?'#ff9a3a':'#ffe08a',2),1,2);
@@ -1809,26 +1903,43 @@ function toolMeshes(){const g=new GB();
  g.add(RB(.06,.04,.08,.015),T(0,.065,-.12),C_DARK);g.add(PRIM.box(.05,.002,.06,{y0:true}),T(0,.106,-.12),COL('#58e0c8',1.2));
  for(const s of [-1,1])g.add(PRIM.cyl(.012,.012,.2,6),T(s*.06,-.04,-.08,0,Math.PI/2),'#8a929c');
  const body=g.build();const em={};for(const [k,c] of [['idle','#58e0c8'],['build','#ffb84a'],['del','#ff5a4a']]){const e=new GB();e.add(PRIM.cyl(.035,.035,.02,12),T(0,0,.122,0,Math.PI/2),COL(c,2.2));for(let i=0;i<3;i++){const a=i/3*TAU;e.add(PRIM.box(.012,.012,.05),T(Math.cos(a)*.05,Math.sin(a)*.05,.12),COL(c,1.6));}em[k]=e.build();}
- const bg=new GB();bg.add(PRIM.box(.025,.025,1),T(0,0,.5),COL('#9af8ff',2.6));return {body,em,beam:bg.build()};}
+ const bg=new GB();bg.add(PRIM.box(.025,.025,1),T(0,0,.5),COL('#9af8ff',2.6));
+ const dg=new GB();dg.add(PRIM.cyl(.03,.03,.04,10),T(0,0,.125,0,Math.PI/2),C_DARK);for(let i=0;i<3;i++){const a2=i/3*TAU;dg.add(PRIM.box(.012,.03,.09),T(Math.cos(a2)*.018,Math.sin(a2)*.018,.18,0,0,a2),'#c8ccd2');}dg.add(PRIM.cone(.028,.11,8),T(0,0,.15,0,Math.PI/2),'#e8eef4');
+ const sg=new GB();for(let i=0;i<6;i++)sg.add(PRIM.box(.01,.01,.12),T(0,0,0,i,i*1.3,0),COL('#ffe08a',3));sg.add(PRIM.sphere(.025,6,4),null,COL('#fff4c0',3));
+ return {body,em,beam:bg.build(),drill:dg.build(),spark:sg.build()};}
 function toolObjects(){if(GAME.mode!=='play'||GAME.freeCam||GAME.landing||PL.dead)return [];if(!TOOL.m)TOOL.m=toolMeshes();const M=TOOL.m;
  const dt=Math.min(.05,R.time-(TOOL.t||R.time));TOOL.t=R.time;TOOL.kick=Math.max(0,TOOL.kick-dt*5);
  const f=camDir(),Lv=v3.norm([f[2],0,-f[0]]),u=[f[1]*Lv[2]-f[2]*Lv[1],f[2]*Lv[0]-f[0]*Lv[2],f[0]*Lv[1]-f[1]*Lv[0]];// up = forward × left
  const dy=PL.yaw-TOOL.last[0],dp=PL.pitch-TOOL.last[1];TOOL.last=[PL.yaw,PL.pitch];TOOL.sway[0]=lerp(TOOL.sway[0],clamp(dy*3,-.06,.06),Math.min(1,dt*10));TOOL.sway[1]=lerp(TOOL.sway[1],clamp(dp*3,-.05,.05),Math.min(1,dt*10));
- const bobS=Math.sin(PL.bobPh||0)*(PL.bobK||0),bobC=Math.cos((PL.bobPh||0)*.5)*(PL.bobK||0);const working=INPUT.act&&HAND.what&&!BUILD.mode;const jit=working?(Math.random()-.5)*.006:0;
- const ox=-.2+TOOL.sway[0]+bobC*.012+jit,oy=-.165-TOOL.sway[1]+Math.abs(bobS)*.012+jit-(UI.panel?.12:0),oz=.42-TOOL.kick*.06;
+ const bobS=Math.sin(PL.bobPh||0)*(PL.bobK||0),bobC=Math.cos((PL.bobPh||0)*.5)*(PL.bobK||0);
+ // mode swap: the tool dips out of view and comes back when you switch between building and mining
+ const mode=BUILD.mode==='dismantle'?'del':BUILD.mode?'build':'idle';if(TOOL.mode!==mode){TOOL.mode=mode;TOOL.swap=1;AUDIO.tone(mode==='idle'?520:340,.12,{type:'triangle',vol:.04,slide:mode==='idle'?1.5:.7});}TOOL.swap=Math.max(0,(TOOL.swap||0)-dt*3.2);const sw=Math.sin(TOOL.swap*Math.PI);
+ // mining swing: wind up, strike exactly when the ore comes loose, recover
+ const H=HAND.what,mining=INPUT.act&&H&&!BUILD.mode&&(H.kind==='node'||H.kind==='flora'||H.kind==='core');const need=!H?1:H.kind==='node'?.55/(H.nd.purity===2?1.4:1):H.kind==='core'?1.2:.9;
+ const ph=mining?clamp(HAND.t/need,0,1):0;let wind=0,strike=0;if(mining){if(ph<.15)strike=1-ph/.15;else if(ph<.8)wind=smooth(0,1,(ph-.15)/.65);else{const q=(ph-.8)/.2;wind=1-q*q;strike=q*q;}
+  if(TOOL.lastPh!=null&&TOOL.lastPh<.15&&ph>=.15)AUDIO.whir(H.kind);}TOOL.lastPh=mining?ph:null;
+ TOOL.anim=lerp(TOOL.anim||0,mining?1:0,Math.min(1,dt*10));const A=TOOL.anim;
+ TOOL.spin=(TOOL.spin||0)+dt*(mining?(8+wind*30):1.2);
+ const ox=-.2+TOOL.sway[0]+bobC*.012+A*(.05*strike+.02*wind),oy=-.165-TOOL.sway[1]+Math.abs(bobS)*.012-(UI.panel?.12:0)-sw*.22+A*(.03*wind-.02*strike),oz=.42-TOOL.kick*.06+A*(-.07*wind+.13*strike);
  const c=R.cam,P=[c[0]+Lv[0]*ox+u[0]*oy+f[0]*oz,c[1]+Lv[1]*ox+u[1]*oy+f[1]*oz,c[2]+Lv[2]*ox+u[2]*oy+f[2]*oz];
- // aim the tool slightly toward the screen centre
- const ff=v3.norm([f[0]+Lv[0]*.07,f[1]+.04,f[2]+Lv[2]*.07]);const LL=v3.norm([ff[2],0,-ff[0]]),uu=[ff[1]*LL[2]-ff[2]*LL[1],ff[2]*LL[0]-ff[0]*LL[2],ff[0]*LL[1]-ff[1]*LL[0]];
- const k=.62;const m=new Float32Array([LL[0]*k,LL[1]*k,LL[2]*k,0,uu[0]*k,uu[1]*k,uu[2]*k,0,ff[0]*k,ff[1]*k,ff[2]*k,0,P[0],P[1],P[2],1]);
- const mode=BUILD.mode==='dismantle'?'del':BUILD.mode?'build':'idle';const out=[{mesh:M.body,model:m},{mesh:M.em[mode],model:m}];
- if(working&&HAND.what.kind!=='spot'&&HAND.what.kind!=='building'&&HAND.what.kind!=='pod'){const tip=[P[0]+ff[0]*.08,P[1]+ff[1]*.08,P[2]+ff[2]*.08];const H=HAND.what;let q=null;
-  if(H.kind==='node')q=[H.nd.x,H.nd.y+.8,H.nd.z];else if(H.kind==='flora')q=[H.f.x,H.f.y+(H.f.kind==='bush'||H.f.kind==='slug'?.4:1.6)*H.f.s,H.f.z];else if(H.kind==='creature')q=[H.c.x,H.c.y+.8,H.c.z];else if(H.kind==='core')q=[H.c.x,H.c.y+2.1,H.c.z];
-  if(q){const dx=q[0]-tip[0],dy2=q[1]-tip[1],dz=q[2]-tip[2],L=Math.hypot(dx,dy2,dz);const w=.7+Math.random()*.6;out.push({mesh:M.beam,model:T(tip[0],tip[1],tip[2],Math.atan2(dx,dz),-Math.atan2(dy2,Math.hypot(dx,dz)),R.time*20,w,w,L)});TOOL.kick=Math.max(TOOL.kick,.25+Math.random()*.2);}}
+ // aim the tool toward the screen centre, then tilt it for the swing
+ let ff=v3.norm([f[0]+Lv[0]*.07,f[1]+.04,f[2]+Lv[2]*.07]);let LL=v3.norm([ff[2],0,-ff[0]]),uu=[ff[1]*LL[2]-ff[2]*LL[1],ff[2]*LL[0]-ff[0]*LL[2],ff[0]*LL[1]-ff[1]*LL[0]];
+ const pitch=A*(.55*wind-.3*strike)+sw*.6,roll=A*(.25*wind-.15*strike);
+ {const cp=Math.cos(pitch),sp=Math.sin(pitch);const f2=[ff[0]*cp+uu[0]*sp,ff[1]*cp+uu[1]*sp,ff[2]*cp+uu[2]*sp],u2=[uu[0]*cp-ff[0]*sp,uu[1]*cp-ff[1]*sp,uu[2]*cp-ff[2]*sp];ff=f2;uu=u2;}
+ {const cr=Math.cos(roll),sr=Math.sin(roll);const L2=[LL[0]*cr+uu[0]*sr,LL[1]*cr+uu[1]*sr,LL[2]*cr+uu[2]*sr],u2=[uu[0]*cr-LL[0]*sr,uu[1]*cr-LL[1]*sr,uu[2]*cr-LL[2]*sr];LL=L2;uu=u2;}
+ const k=.62,mat=(L,U,F)=>new Float32Array([L[0]*k,L[1]*k,L[2]*k,0,U[0]*k,U[1]*k,U[2]*k,0,F[0]*k,F[1]*k,F[2]*k,0,P[0],P[1],P[2],1]);const m=mat(LL,uu,ff);
+ // the drill bit spins around the tool's forward axis
+ const a=TOOL.spin,ca=Math.cos(a),sa=Math.sin(a);const Ls=[LL[0]*ca+uu[0]*sa,LL[1]*ca+uu[1]*sa,LL[2]*ca+uu[2]*sa],Us=[uu[0]*ca-LL[0]*sa,uu[1]*ca-LL[1]*sa,uu[2]*ca-LL[2]*sa];
+ const out=[{mesh:M.body,model:m},{mesh:M.em[mode],model:m},{mesh:M.drill,model:mat(Ls,Us,ff)}];
+ if(INPUT.act&&H&&!BUILD.mode&&H.kind==='creature'){const tip=[P[0]+ff[0]*.12,P[1]+ff[1]*.12,P[2]+ff[2]*.12];const q=[H.c.x,H.c.y+.8,H.c.z];const dx=q[0]-tip[0],dy2=q[1]-tip[1],dz=q[2]-tip[2],L=Math.hypot(dx,dy2,dz);const w=.7+Math.random()*.6;out.push({mesh:M.beam,model:T(tip[0],tip[1],tip[2],Math.atan2(dx,dz),-Math.atan2(dy2,Math.hypot(dx,dz)),R.time*20,w,w,L)});}
+ if(TOOL.flash>0){TOOL.flash-=dt;const tip=[P[0]+ff[0]*.16,P[1]+ff[1]*.16,P[2]+ff[2]*.16];const s=.4+TOOL.flash*6;out.push({mesh:M.spark,model:T(tip[0],tip[1],tip[2],Math.random()*6,Math.random()*6,0,s)});}
  return out;}
+// called when a swing lands: sound, sparks, a little camera kick
+TOOL.impact=function(kind){TOOL.flash=.09;TOOL.shake=.12;if(kind==='rock'){AUDIO.strike();}else if(kind==='plant'){AUDIO.chopHit();}else AUDIO.strike();};
 // ---- walk-up stations ----
 START.useSpot=function(H){const k=H.s.k;AUDIO.click();
- if(k==='bench'){UI.atBench=true;UI.open('inv');}
- else if(k==='terminal'){UI.atTerminal=true;UI.open('hub');}
+ if(k==='bench'){UI.atBench=true;UI.open('bench');}
+ else if(k==='terminal'){UI.atTerminal=true;UI.sel.hsub='ms';UI.sel.ms=null;UI.open('hub');}
  else if(k==='bed'){if(ENV.dayK>.55){UI.toast('You are not tired yet. Sleep at night to skip to morning.','info');return;}START.sleep();}};
 START.sleep=function(){let f=document.getElementById('fade');if(!f){f=document.createElement('div');f.id='fade';document.body.appendChild(f);}f.classList.add('on');
  setTimeout(()=>{S.tod=.03;PL.hp=100;UI.toast('Good morning, pioneer','good');saveSoon();setTimeout(()=>f.classList.remove('on'),300);},900);};
@@ -1838,9 +1949,158 @@ START.hud=function(){let el=document.getElementById('vitals');if(!el){el=documen
  const hp=PL.hp??100,jet=PL.jet??1;el.classList.toggle('hide',GAME.mode!=='play'||(hp>=99.5&&(jet>=.995||!jetUnlocked())));el.firstChild.firstChild.style.width=hp+'%';el.firstChild.classList.toggle('low',hp<35);
  el.lastChild.style.display=jetUnlocked()?'':'none';el.lastChild.firstChild.style.width=(jet*100)+'%';};
 
+// ---- 14-ui2.js ----
+// ===== Menus, second pass: picture-first panels in the style of a factory terminal =====
+const bIcon=k=>UI.icons[k]?`<img src="${UI.icons[k]}" alt="">`:'';
+const iIcon=k=>UI.icons['item:'+k]?`<img src="${UI.icons['item:'+k]}" alt="">`:`<i class="sw" style="background:${(ITEMS[k]||{}).c||'#888'}"></i>`;
+// a square item tile: picture, count in the corner, optional label under it
+const tile=(k,n,o={})=>`<div class="tl ${o.cls||''}" ${o.a?`data-a="${o.a}" data-v="${o.v}"`:''} title="${esc(ITEMS[k].n)}"><div class="tp">${iIcon(k)}${n!=null?`<em class="${o.short?'short':''}">${n}</em>`:''}</div>${o.label!==false?`<span>${esc(o.label||ITEMS[k].n)}</span>`:''}</div>`;
+const costTiles=(cost,mult=1)=>`<div class="tls">${Object.entries(cost).map(([k,v])=>{const have=S.inv[k]||0,need=v*mult;return tile(k,`${fmt(Math.min(have,need))}/${fmt(need)}`,{short:have<need,cls:'sm'});}).join('')}</div>`;
+const tierName=t=>t>0&&MILESTONES[t-1]?'Milestone '+t+': '+MILESTONES[t-1].n:'';
+UI.sel={};
+// ---------- BUILD ----------
+const BCATS=[['production','Production','miner'],['logistics','Logistics','belt1'],['power','Power','burner'],['structure','Structures','foundation'],['special','Special','hub']];
+function buildList(c){const out=[];
+ if(c==='logistics'){for(const [k,B] of Object.entries(BELTS))out.push({k,n:B.n,desc:B.desc,cost:B.cost,tier:B.tier,ok:unlocked(B),per:B.per});for(const [k,B] of Object.entries(PIPES))out.push({k,n:B.n,desc:B.desc,cost:B.cost,tier:B.tier,ok:unlocked(B),per:B.per});}
+ if(c==='power')out.push({k:'wireTool',n:'Power Line',desc:'Run power by hand between poles, generators and machines. Up to 30 m per line.',cost:{wire:1},tier:0,ok:true,per:6,icon:'item:wire'});
+ for(const [k,D] of Object.entries(BUILDINGS))if(D.cat===c&&(k!=='hub'||!hubB()))out.push({k,n:D.n,desc:D.desc||'',cost:D.cost,tier:tierOf(D),ok:unlocked(D),D});return out;}
+UI.views.build=function(){const cat=UI.sel.bcat||'production';const list=buildList(cat);let sel=list.find(x=>x.k===UI.sel.b)||list.find(x=>x.ok)||list[0];
+ let h=`<div class="bm"><div class="bcats">${BCATS.map(([k,n,ic])=>`<button class="${k===cat?'on':''}" data-a="bcat" data-v="${k}"><i>${k==='special'&&hubB()?bIcon('workbench'):bIcon(ic)}</i><span>${n}</span></button>`).join('')}</div>`;
+ h+=`<div class="bgrid">${list.map(x=>{const aff=canAfford(x.cost);return `<button class="bt ${x.ok?'':'lock'} ${sel&&x.k===sel.k?'sel':''} ${x.ok&&!aff?'poor':''}" data-a="bsel" data-v="${x.k}"><div class="bp">${x.icon?`<img src="${UI.icons[x.icon]}">`:bIcon(x.k)}${x.ok?'':'<i class="lk">🔒</i>'}</div><span>${esc(x.n)}</span></button>`;}).join('')}</div>`;
+ if(sel){const x=sel,D=x.D||{};const stats=[];if(D.power)stats.push(['⚡',D.power+' MW']);if(D.gen)stats.push(['⚡','+'+D.gen+' MW']);if(D.rate&&!D.makes)stats.push(['⛏',D.rate+'/min']);if(BELTS[x.k])stats.push(['➜',BELTS[x.k].rate+'/min']);if(PIPES[x.k])stats.push(['➜',PIPES[x.k].rate+' m³/min']);if(D.w)stats.push(['▣',D.w+' × '+D.d+' m']);
+  h+=`<div class="bdet"><div class="bbig">${x.icon?`<img src="${UI.icons[x.icon]}">`:bIcon(x.k)}</div><h3>${esc(x.n)}</h3>${stats.length?`<div class="bst">${stats.map(([a,b])=>`<span><i>${a}</i>${b}</span>`).join('')}</div>`:''}<p>${esc(x.desc)}</p>`;
+  if(x.ok){h+=`<h5>Cost${x.per?' per '+x.per+' m':''}</h5>`+costTiles(x.cost)+`<button class="bigbtn" data-a="${x.k==='wireTool'?'wireTool':'pick'}" data-v="${x.k}">${x.k==='hub'?'Place HUB':'Build'}</button>`;if(cat==='power')h+=`<label class="tog"><span>Auto-wire new machines</span><button class="sw2 ${S.settings.autoWire?'on':''}" data-a="autoWire"><i></i></button></label>`;}
+  else h+=`<div class="locked">🔒 Unlocks at ${esc(tierName(x.tier))}</div>`;h+='</div>';}
+ return h+'</div>';};
+UI.A.bcat=v=>{UI.sel.bcat=v;UI.sel.b=null;AUDIO.click();UI.refresh();};
+UI.A.bsel=v=>{if(UI.sel.b===v){const x=buildList(UI.sel.bcat||'production').find(q=>q.k===v);if(x&&x.ok){if(v==='wireTool')UI.A.wireTool();else UI.A.pick(v);return;}}UI.sel.b=v;AUDIO.click();UI.refresh();};
+// ---------- INVENTORY ----------
+UI.views.inv=function(){const items=Object.entries(S.inv).filter(([,v])=>v>0).sort((a,b)=>Object.keys(ITEMS).indexOf(a[0])-Object.keys(ITEMS).indexOf(b[0]));const cap=Math.max(24,Math.ceil(items.length/6)*6);
+ let sel=UI.sel.item&&S.inv[UI.sel.item]>0?UI.sel.item:items.length?items[0][0]:null;
+ let h=`<div class="two"><div class="col"><h5>Inventory · ${items.length} kinds</h5><div class="slots">`;for(let i=0;i<cap;i++){const it=items[i];h+=it?`<button class="sl ${it[0]===sel?'sel':''}" data-a="isel" data-v="${it[0]}">${iIcon(it[0])}<em>${fmt(it[1])}</em></button>`:'<div class="sl empty"></div>';}h+='</div></div><div class="col det">';
+ if(sel){const used=RECIPES.filter(r=>r.in[sel]&&unlocked(r)).slice(0,6),made=RECIPES.filter(r=>r.out[sel]&&unlocked(r)).slice(0,4);
+  h+=`<div class="ibig">${iIcon(sel)}</div><h3>${esc(ITEMS[sel].n)}</h3><p class="mut">You carry <b>${fmt(S.inv[sel])}</b>${FUEL[sel]?' · burns for '+FUEL[sel]+' MJ':''}</p>`;
+  if(made.length)h+=`<h5>Made by</h5>`+made.map(r=>recipeRow(r)).join('');if(used.length)h+=`<h5>Used in</h5>`+used.map(r=>recipeRow(r)).join('');}
+ else h+=`<p class="mut">Empty. Mine ore nodes and harvest plants to get started.</p>`;
+ return h+(UI.atBench?'':`<p class="mut">${hubB()?'To craft, walk up to a workbench (one is inside your HUB).':'Place your HUB first. It has a workbench inside.'}</p>`)+'</div></div>';};
+function recipeRow(r){const where=r.bench?'Workbench':BUILDINGS[r.m]?BUILDINGS[r.m].n:'';return `<div class="rrow">${Object.entries(r.in).map(([k,v])=>tile(k,v,{label:false,cls:'xs'})).join('')}<b>➜</b>${Object.entries(r.out).map(([k,v])=>tile(k,v,{label:false,cls:'xs'})).join('')}<small>${esc(recipeName(r))}<br>${esc(where)}</small></div>`;}
+UI.A.isel=v=>{UI.sel.item=v;AUDIO.click();UI.refresh();};
+// ---------- WORKBENCH ----------
+UI.views.bench=function(){const rs=benchRecipes();let sel=rs.find(r=>r.id===UI.sel.rec)||rs[0];
+ let h=`<div class="two"><div class="col"><h5>Workbench recipes</h5><div class="rlist">${rs.map(r=>{const out=Object.keys(r.out)[0];const max=Math.min(...Object.entries(r.in).map(([k,v])=>Math.floor((S.inv[k]||0)/v)));return `<button class="ri ${r===sel?'sel':''} ${max>0?'':'off'}" data-a="rsel" data-v="${r.id}"><div class="tp">${iIcon(out)}</div><span>${esc(recipeName(r))}<small>${max>0?'can make '+max:'missing parts'}</small></span></button>`;}).join('')}</div></div><div class="col det">`;
+ if(sel){const out=Object.entries(sel.out)[0];const max=Math.min(...Object.entries(sel.in).map(([k,v])=>Math.floor((S.inv[k]||0)/v)));
+  h+=`<div class="craftv"><div class="cin">${Object.entries(sel.in).map(([k,v])=>tile(k,`${fmt(Math.min(S.inv[k]||0,v))}/${v}`,{short:(S.inv[k]||0)<v})).join('')}</div><div class="carr">➜</div><div class="cout">${tile(out[0],'×'+out[1],{cls:'big'})}</div></div>
+  <h3>${esc(recipeName(sel))}</h3><p class="mut">You have ${fmt(S.inv[out[0]]||0)} · enough parts for ${max}</p>
+  <button class="holdbtn ${max>0?'':'dis'} ${UI.hold==='craft:'+sel.id?'holding':''}" data-hold="craft:${sel.id}"><i></i><span>${max>0?'Hold to craft':'Not enough parts'}</span></button>
+  <div class="qrow"><button class="btn" data-a="craft" data-v="${sel.id}:1" ${max>0?'':'disabled'}>×1</button><button class="btn" data-a="craftN" data-v="${sel.id}:5" ${max>=2?'':'disabled'}>×5</button><button class="btn" data-a="craftN" data-v="${sel.id}:${max}" ${max>=2?'':'disabled'}>All (${max})</button></div>`;}
+ return h+'</div></div>';};
+UI.A.rsel=v=>{UI.sel.rec=v;AUDIO.click();UI.refresh();};
+UI.A.craftN=v=>{const [id,n]=v.split(':');const r=RECIPE[id];const m=craft(r,Math.max(1,+n));if(m)UI.pop('+'+Object.entries(r.out).map(([k,c])=>c*m+' '+ITEMS[k].n).join(' '));UI.refresh();saveSoon();};
+// press-and-hold buttons (crafting): one item every few tenths of a second while held
+document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('[data-hold]');if(!b||b.classList.contains('dis'))return;e.preventDefault();const [a,id]=b.dataset.hold.split(':');UI.hold=b.dataset.hold;b.classList.add('holding');AUDIO.init();
+ let n=0;const step=()=>{if(UI.hold!==a+':'+id)return;const r=RECIPE[id];const m=craft(r,1);if(!m){UI.hold=null;UI.refresh();return;}n++;UI.pop('+'+Object.entries(r.out).map(([k,c])=>c+' '+ITEMS[k].n).join(' '));UI.refresh();saveSoon();UI._ht=setTimeout(step,Math.max(140,420-n*30));};UI._ht=setTimeout(step,350);},true);
+const holdEnd=()=>{if(!UI.hold)return;UI.hold=null;clearTimeout(UI._ht);document.querySelectorAll('.holding').forEach(x=>x.classList.remove('holding'));};
+document.addEventListener('pointerup',holdEnd,true);document.addEventListener('pointercancel',holdEnd,true);
+// ---------- HUB TERMINAL ----------
+function milestoneUnlocks(i){const t=i+1,out=[];for(const [k,D] of Object.entries(BUILDINGS))if(tierOf(D)===t&&k!=='hub')out.push({ic:UI.icons[k],n:D.n});for(const [k,B] of Object.entries(BELTS))if(B.tier===t)out.push({ic:UI.icons[k],n:B.n});for(const [k,B] of Object.entries(PIPES))if(B.tier===t)out.push({ic:UI.icons[k],n:B.n});
+ for(const r of RECIPES)if(!r.alt&&tierOf(r)===t){const o=Object.keys(r.out)[0];out.push({ic:UI.icons['item:'+o],n:recipeName(r)+' recipe'});}if(t===2)out.push({ic:UI.icons['item:fuel'],n:'Jetpack'});return out;}
+UI.views.hub=function(){const sub=UI.sel.hsub||'ms';let h=`<div class="subt"><button class="${sub==='ms'?'on':''}" data-a="hsub" data-v="ms">Milestones</button><button class="${sub==='rs'?'on':''}" data-a="hsub" data-v="rs">Research${(S.inv.hard_drive||0)>0||S.research?' <i class="dot"></i>':''}</button></div>`;
+ if(sub==='rs')return h+`<div class="rsv">${UI.researchView2()}</div>`;
+ const cur=S.tier;let i=UI.sel.ms!=null?UI.sel.ms:Math.min(cur,MILESTONES.length-1);const M=MILESTONES[i];
+ h+=`<div class="two hubv"><div class="col"><div class="mlist">${MILESTONES.map((m,j)=>`<button class="mi ${j<cur?'done':j===cur?'cur':'lock'} ${j===i?'sel':''}" data-a="msel" data-v="${j}"><b>${j<cur?'✓':j+1}</b><span>${esc(m.n)}<small>${j<cur?'Complete':j===cur?'In progress':'Locked'}</small></span></button>`).join('')}</div></div><div class="col det">`;
+ h+=`<small class="kick">MILESTONE ${i+1} OF ${MILESTONES.length}</small><h3>${esc(M.n)}</h3>`;
+ if(i===cur){const hb=hubB(),near=UI.atTerminal||(hb&&Math.hypot(hb.x-PL.x,hb.z-PL.z)<14);const can=near&&Object.keys(M.need).some(k=>hubWants(k)>0&&(S.inv[k]||0)>0);
+  h+=`<h5>Cost</h5><div class="needs">${Object.entries(M.need).map(([k,v])=>{const g=S.hub[k]||0;return `<div class="nd">${tile(k,null,{label:false})}<div><b>${esc(ITEMS[k].n)}</b><div class="bar"><i style="width:${Math.min(100,g/v*100)}%"></i></div><small>${fmt(g)} / ${fmt(v)} delivered · you carry ${fmt(S.inv[k]||0)}</small></div></div>`;}).join('')}</div>
+  <button class="bigbtn ${can?'':'dis'}" data-a="deliver" data-v="hub" ${can?'':'disabled'}>Submit parts</button><p class="mut">${near?'Belts into the HUB delivery dock submit parts automatically.':'Go to your HUB terminal to submit parts.'}</p>`;}
+ else if(i<cur)h+=`<div class="okb">✓ Completed</div>`;else h+=`<div class="locked">🔒 Complete milestone ${cur+1} first</div>`;
+ const un=milestoneUnlocks(i);h+=`<h5>Unlocks</h5><div class="unl">${un.map(u=>`<div class="un">${u.ic?`<img src="${u.ic}">`:''}<span>${esc(u.n)}</span></div>`).join('')}</div>`;
+ if(cur>=MILESTONES.length)h+=`<p>All milestones complete. Build the Skyhook (Build → Special).</p>`;return h+'</div></div>';};
+UI.A.hsub=v=>{UI.sel.hsub=v;AUDIO.click();UI.refresh();};UI.A.msel=v=>{UI.sel.ms=+v;AUDIO.click();UI.refresh();};
+UI.researchView2=function(){const hd=S.inv.hard_drive||0,found=Object.keys(S.alts||{}).length,tot=RECIPES.filter(r=>r.alt).length;
+ let h=`<div class="rshead"><div class="rbig">${iIcon('hard_drive')}<em>${hd}</em></div><div><h3>Hard drive research</h3><p class="mut">Crash sites (orange light beams) hold hard drives. Each one reveals two alternate recipes: pick one. ${found} of ${tot} found.</p>${S.research&&S.research.length?'':`<button class="bigbtn ${hd?'':'dis'}" data-a="research" ${hd?'':'disabled'}>Analyze hard drive</button>`}</div></div>`;
+ if(S.research&&S.research.length)h+=`<h5>Choose one</h5><div class="alts">${S.research.map(id=>{const x=RECIPE[id];return `<button class="alt" data-a="pickAlt" data-v="${id}"><div class="rrow">${Object.entries(x.in).map(([k,v])=>tile(k,v,{label:false,cls:'xs'})).join('')}<b>➜</b>${Object.entries(x.out).map(([k,v])=>tile(k,v,{label:false,cls:'xs'})).join('')}</div><b>${esc(recipeName(x))}</b><small>${BUILDINGS[x.m]?esc(BUILDINGS[x.m].n):''}${tierOf(x)>S.tier?' · usable from milestone '+tierOf(x):''}</small></button>`;}).join('')}</div>`;
+ const got=RECIPES.filter(r=>r.alt&&(S.alts||{})[r.id]);if(got.length)h+=`<h5>Unlocked alternates</h5>`+got.map(r=>recipeRow(r)).join('');return h;};
+// ---------- PRODUCTION STATS ----------
+UI.views.stats=function(){const ks=[...new Set([...Object.keys(FAC.rate),...Object.keys(FAC.rateIn)])].filter(k=>(FAC.rate[k]||0)>.05||(FAC.rateIn[k]||0)>.05);const mx=Math.max(1,...ks.map(k=>Math.max(FAC.rate[k]||0,FAC.rateIn[k]||0)));
+ let h=`<div class="pw"><div class="pwb"><b>${Math.round(FAC.power?FAC.power.use:0)}</b><small>MW used</small></div><div class="pwb"><b>${Math.round(FAC.power?FAC.power.cap:0)}</b><small>MW capacity</small></div><div class="pwb"><b>${FAC.b.size}</b><small>buildings</small></div><div class="pwb"><b>${FAC.belts.size}</b><small>belts</small></div></div>${FAC.power&&FAC.power.tripped?'<div class="status bad">A fuse has blown: reset it at a generator</div>':''}`;
+ h+=`<h5>Items per minute (whole factory)</h5>`+(ks.length?`<div class="prows">${ks.map(k=>{const p=FAC.rate[k]||0,c=FAC.rateIn[k]||0,n=p-c;return `<div class="pr">${tile(k,null,{label:false,cls:'xs'})}<span>${esc(ITEMS[k].n)}</span><div class="pb"><i class="m" style="width:${p/mx*100}%"></i><i class="u" style="width:${c/mx*100}%"></i></div><em>${p.toFixed(1)}</em><em>${c.toFixed(1)}</em><em class="${n<-.05?'neg':n>.05?'pos':''}">${n>0?'+':''}${n.toFixed(1)}</em></div>`;}).join('')}</div><p class="mut"><i class="lg m"></i>made <i class="lg u"></i>used · net per minute on the right</p>`:'<p class="mut">Nothing is being made yet.</p>');
+ return h+`<h5>Power</h5><canvas class="pgraph" width="600" height="150"></canvas>`;};
+// ---------- SETTINGS ----------
+UI.views.menu=function(){const sw=(a,on)=>`<button class="sw2 ${on?'on':''}" data-a="${a}"><i></i></button>`;const si=slotInfo(SLOT);
+ return `<div class="setg"><div class="sc"><h5>Save</h5><div class="slotcur">${iIcon('hard_drive')}<div><b>Slot ${SLOT+1} · ${esc(S.name||'Expedition '+(SLOT+1))}</b><small>${si?'Milestone '+(si.tier+1)+' · '+fmtTime(si.play):'Not saved yet'} · saves automatically</small></div></div><div class="qrow"><button class="btn" data-a="save">Save now</button><button class="btn" data-a="loadMenu">Save slots</button><button class="btn red" data-a="reset">New game…</button></div></div>
+ <div class="sc"><h5>Controls</h5><label class="tog"><span>Look sensitivity</span><input type="range" min="0.3" max="2.5" step="0.1" value="${S.settings.sens}" oninput="this.dispatchEvent(new CustomEvent('ff',{bubbles:true}))" data-s="sens"></label><p class="mut">${touchMode?'Left thumb: move. Right thumb: look. Big button: mine, harvest, use, place. Arrow button: jump (hold in the air for the jetpack).':'WASD move · Mouse look · Space jump (hold for jetpack) · Shift run · Click: mine, place · E use · B build · R rotate · X dismantle · Tab inventory · M map · Esc pause'}</p></div>
+ <div class="sc"><h5>Audio</h5><label class="tog"><span>Sound effects</span>${sw('sound',S.settings.sound)}</label><label class="tog"><span>Music</span>${sw('music',S.settings.music!==false)}</label></div>
+ <div class="sc"><h5>Gameplay</h5><label class="tog"><span>Auto-wire power<small>Connect new machines to the nearest pole</small></span>${sw('autoWire',S.settings.autoWire)}</label><label class="tog"><span>Peaceful creatures<small>Creatures never attack</small></span>${sw('peace',S.settings.peaceful)}</label><label class="tog"><span>Tutorial</span><button class="btn sm" data-a="tutRestart">${S.tut>=0?'Running':'Restart'}</button></label></div>
+ <div class="sc"><h5>Graphics</h5><div class="seg">${['auto','low','high'].map(q=>`<button class="${S.settings.quality===q?'on':''}" data-a="qualSet" data-v="${q}">${{auto:'Auto',low:'Fast',high:'Sharp'}[q]}</button>`).join('')}</div></div></div>
+ <p class="mut ctr">${GAME_NAME} · version ${VERSION}</p>`;};
+UI.A.qualSet=v=>{S.settings.quality=v;applyQuality();UI.refresh();saveSoon();};UI.A.loadMenu=()=>MENU.slots();
+// ---------- HELP ----------
+UI.views.help=()=>{const cards=[['hub','Your HUB','Your base. Place it first. Inside: a bed, the workbench for hand crafting, and the terminal for milestones.'],['item:iron_ore','Mine and harvest','Aim your hand tool at ore nodes or plants and hold the action button.'],['workbench','Craft','Walk up to a workbench and hold Craft to turn ore into ingots, plates and rods.'],['miner','Automate','Miners dig ore by themselves. Smelters and constructors turn it into parts.'],['belt1','Conveyor belts','Tap an output, then an input. Build a faster tier over an old belt to upgrade it.'],['burner','Power','Generators power everything wired to them. Too much demand blows the fuse.'],['item:hard_drive','Explore','Orange light beams mark crash sites with hard drives that unlock alternate recipes.'],['item:res_core','Artifacts','Resonance cores on high ground double a machine\'s output.'],['skyhook','The goal','Finish all 8 milestones, then build the Skyhook and send the final shipments to orbit.']];
+ return `<div class="helpg">${cards.map(([ic,t,d])=>`<div class="hc"><div class="hp">${ic.startsWith('item:')?iIcon(ic.slice(5)):bIcon(ic)}</div><b>${t}</b><p>${d}</p></div>`).join('')}</div>`;};
+// ---------- MACHINE PANEL ----------
+const _oldBld=UI.bldView;
+UI.bldView=function(b){const D=BUILDINGS[b.k];const [st,cls]=bStatus(b);const pw=D.power?(D.power*Math.pow(b.clock||1,1.6)*(b.amp?2:1)).toFixed(1)+' MW':D.gen?'up to '+D.gen+' MW':'';
+ let h=`<div class="mh"><div class="mhp">${bIcon(b.k)}</div><div><small class="kick">${esc(({production:'PRODUCTION',logistics:'LOGISTICS',power:'POWER',structure:'STRUCTURE',special:'SPECIAL'})[D.cat]||'')}</small><h3>${esc(D.n)}</h3>${st?`<div class="status ${cls}">${esc(st)}</div>`:''}</div>${pw?`<div class="mpw">⚡ ${pw}</div>`:''}</div>`;
+ if(D.machine){const r=RECIPE[b.recipe];const show=!r||UI.sel.chg===b.id;
+  if(r&&!show){const pct=(b.prog/r.t*100).toFixed(0);h+=`<div class="mrec"><span>Recipe: <b>${esc(recipeName(r))}</b></span><button class="btn sm" data-a="chgRec" data-v="${b.id}">Change</button></div>
+   <div class="prodv"><div class="pin">${Object.keys(r.in).map(k=>{const n=b.inb[k]||0;return `<div class="pslot">${tile(k,isFluid(k)?n.toFixed(0)+' m³':fmt(n),{label:false,cls:'big'})}<small>${(r.in[k]*60/r.t*(b.clock||1)).toFixed(1)}/min</small>${!isFluid(k)&&(S.inv[k]||0)>0?`<button class="btn sm" data-a="put" data-v="${k}">Add</button>`:''}</div>`;}).join('')}</div>
+   <div class="parr"><div class="pbar"><i style="width:${pct}%"></i></div><span>${(r.t/(b.clock||1)).toFixed(1)} s</span></div>
+   <div class="pout">${Object.keys(r.out).map(k=>{const n=b.out[k]||0;return `<div class="pslot">${tile(k,isFluid(k)?n.toFixed(0)+' m³':fmt(Math.floor(n)),{label:false,cls:'big out'})}<small>${(r.out[k]*60/r.t*(b.clock||1)*(b.amp?2:1)).toFixed(1)}/min</small>${!isFluid(k)&&n>=1?`<button class="btn sm gold" data-a="take" data-v="${k}">Take</button>`:''}</div>`;}).join('')}</div></div>`;}
+  else{h+=`<h5>Choose a recipe</h5><div class="recg">${RECIPES.filter(x=>x.m===D.machine&&(!x.alt||(S.alts||{})[x.id])).map(x=>{const ok=unlocked(x),o=Object.keys(x.out)[0];return `<button class="rc ${b.recipe===x.id?'sel':''} ${ok?'':'lock'}" ${ok?`data-a="recipe" data-v="${x.id}"`:''}><div class="tp">${iIcon(o)}${x.alt?'<i class="altb">ALT</i>':''}</div><b>${esc(recipeName(x))}</b><div class="rrow">${Object.entries(x.in).map(([k,v])=>tile(k,(v*60/x.t).toFixed(v*60/x.t%1?1:0),{label:false,cls:'xs'})).join('')}<b>➜</b>${Object.entries(x.out).map(([k,v])=>tile(k,(v*60/x.t).toFixed(v*60/x.t%1?1:0),{label:false,cls:'xs'})).join('')}</div>${ok?'':`<small>🔒 ${esc(tierName(tierOf(x)))}</small>`}</button>`;}).join('')}</div>`;}
+  return h+UI.clockView(b)+UI.ampView(b);}
+ if(D.gen){h+=`<h5>Fuel</h5><div class="fuels">${D.fuels.map(k=>`<div class="pslot">${tile(k,fmt(b.fuel[k]||0),{label:false,cls:'big'})}<small>${esc(ITEMS[k].n)} · ${Math.round(FUEL[k]/D.gen)} s</small>${(S.inv[k]||0)>0?`<button class="btn sm gold" data-a="fuel" data-v="${k}">Add all</button>`:''}</div>`).join('')}</div><p class="mut">A generator only burns what your machines need.</p>`+UI.gridView(b);return h;}
+ if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];h+=`<div class="prodv"><div class="pin"><div class="pslot">${nd?tile(nd.type,PURITY[nd.purity].n,{label:false,cls:'big'}):''}<small>node</small></div></div><div class="parr"><div class="pbar"><i style="width:${b.run?60:0}%"></i></div><span>${nd?D.rate*PURITY[nd.purity].k*(b.clock||1):0}/min</span></div><div class="pout">${Object.keys(b.out).map(k=>`<div class="pslot">${tile(k,fmt(b.out[k]),{label:false,cls:'big out'})}${b.out[k]>0?`<button class="btn sm gold" data-a="take" data-v="${k}">Take</button>`:''}</div>`).join('')}</div></div>`+UI.clockView(b)+UI.ampView(b).replace(/<h4>Amplify[\s\S]*$/,'');return h;}
+ if(b.k==='storage'){const it=Object.entries(b.store).filter(([,v])=>v>0);const tot=it.reduce((a,[,v])=>a+v,0);h+=`<div class="bar"><i style="width:${tot/D.cap*100}%"></i></div><p class="mut">${fmt(tot)} / ${fmt(D.cap)} items · tap a slot to take it</p><div class="slots">${it.map(([k,v])=>`<button class="sl" data-a="takeS" data-v="${k}">${iIcon(k)}<em>${fmt(v)}</em></button>`).join('')}${'<div class="sl empty"></div>'.repeat(Math.max(0,12-it.length))}</div><div class="qrow"><button class="btn gold" data-a="takeAll">Take all</button><button class="btn" data-a="putAll">Store everything</button></div>`;return h;}
+ // everything else keeps its specific panel, minus the status line we already show
+ return h+_oldBld(b).replace(/^<div class="status[^"]*">[^<]*<\/div>/,'');};
+UI.A.chgRec=v=>{UI.sel.chg=+v;UI.refresh();};
+{const _r=UI.A.recipe;UI.A.recipe=v=>{UI.sel.chg=null;_r(v);};}
+// ---------- tabs: the workbench gets its own tab while you stand at one ----------
+UI.refresh=function(){if(!UI.panel)return;const tabs=[['build','Build'],['inv','Inventory'],['hub','HUB'],['map','Map'],['stats','Production'],['menu','Settings'],['help','Help']];if(UI.atBench)tabs.splice(1,0,['bench','Workbench']);
+ $('#sheet .tabs').innerHTML=UI.bld?`<b class="ttl">${esc(BUILDINGS[UI.bld.k].n)}</b>`:UI.tab==='pod'?'<b class="ttl">Crash site</b>':tabs.map(([k,n])=>`<button class="${UI.tab===k?'on':''}" data-a="tab" data-v="${k}">${n}</button>`).join('');
+ const body=$('#sheet .body');const st=body.scrollTop;const keep=[...body.querySelectorAll('.col')].map(c=>c.scrollTop);body.innerHTML=UI.bld?UI.bldView(UI.bld):(UI.views[UI.tab]||(()=>''))();body._h=body.innerHTML;body.scrollTop=st;[...body.querySelectorAll('.col')].forEach((c,i)=>{if(keep[i])c.scrollTop=keep[i];});
+ $('#sheet').classList.toggle('wide',!UI.bld&&['build','bench','hub','inv'].includes(UI.tab));if(UI.tab==='map'&&!UI.bld)UI.drawMap();UI.drawGraphs();};
+UI.liveRefresh=function(){if(UI.hold)return;if(UI.bld||UI.tab==='hub'||UI.tab==='stats'){const body=$('#sheet .body');const h=UI.bld?UI.bldView(UI.bld):UI.views[UI.tab]();if(body._h!==h){const st=body.scrollTop;const keep=[...body.querySelectorAll('.col')].map(c=>c.scrollTop);body.innerHTML=h;body._h=body.innerHTML;body.scrollTop=st;[...body.querySelectorAll('.col')].forEach((c,i)=>{if(keep[i])c.scrollTop=keep[i];});}UI.drawGraphs();}};
+// ---------- crash site panel ----------
+UI.podView=function(){const p=UI.pod;if(!p)return '';if(S.pods[p.id])return '<p>This crash site has already been looted.</p>';const ok=Object.entries(p.cost).every(([k,v])=>(S.inv[k]||0)>=v);
+ return `<div class="two"><div class="col"><div class="ibig">${iIcon('hard_drive')}</div><h3>Crashed supply pod</h3><p class="mut">The hatch is jammed. Patch it with parts to get inside.</p></div><div class="col det"><h5>Repair cost</h5>${costTiles(p.cost)}<h5>Inside</h5><div class="tls">${tile('hard_drive',1,{cls:'sm'})}${Object.entries(p.loot).map(([k,v])=>tile(k,v,{cls:'sm'})).join('')}</div><button class="bigbtn ${ok?'':'dis'}" data-a="openPod" ${ok?'':'disabled'}>Open the pod</button></div></div>`;};
+// ---------- MAIN MENU: continue, new game wizard, save slots ----------
+MENU.title=function(){GAME.mode='title';document.body.classList.add('intitle');UI.closePanel();BUILD.cancel();let el=document.getElementById('title');if(!el){el=document.createElement('div');el.id='title';document.body.appendChild(el);}
+ const si=slotInfo(SLOT);const any=[0,1,2].some(i=>slotInfo(i));
+ el.innerHTML=`<div class="tcol"><div class="tlogo">${LOGO_SVG}<b>NOVA<span>FORGE</span></b></div>
+  ${si?`<button class="tbtn main" data-m="play"><span>Continue<small>${esc(si.name)} · ${si.tier<MILESTONES.length?'Milestone '+(si.tier+1):'Skyhook'} · ${fmtTime(si.play)}</small></span><span>▶</span></button>`:''}
+  <button class="tbtn ${si?'':'main'}" data-m="new"><span>New game<small>Land on a fresh planet</small></span>${si?'':'<span>▶</span>'}</button>
+  ${any?`<button class="tbtn" data-m="load"><span>Load game<small>3 save slots</small></span></button>`:''}
+  <div class="prow"><button class="tbtn" data-m="settings"><span>Settings</span></button><button class="tbtn" data-m="help"><span>How to play</span></button></div>
+  <button class="tbtn" data-m="notes"><span>What's new<small>Version ${VERSION}</small></span></button>
+  <div class="tfoot">${GAME_NAME} · v${VERSION}${navigator.standalone||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches?'':' · Add to your home screen to play like an app'}</div></div>`;
+ el.classList.remove('out');el.onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;AUDIO.init();AUDIO.click();MENU.act(b.dataset.m);};GAME.orbit={a:0};};
+MENU.act=function(m){if(m==='notes'){MENU.notes(true);return;}if(m==='play')MENU.play();else if(m==='new')MENU.confirmNew();else if(m==='load')MENU.slots();else if(m==='settings')UI.open('menu');else if(m==='help')UI.open('help');};
+function slotCard(i,o={}){const s=slotInfo(i);return `<button class="slot3 ${o.sel?'sel':''} ${i===SLOT?'cur':''}" data-w="${o.act||'pick'}" data-v="${i}"><div class="sn">${i+1}</div><div class="sinfo">${s?`<b>${esc(s.name)}</b><small>${s.tier<MILESTONES.length?'Milestone '+(s.tier+1)+' · '+esc(MILESTONES[s.tier].n):'Skyhook'}</small><small>${s.blds} buildings · ${fmtTime(s.play)}${s.time?' · '+new Date(s.time).toLocaleDateString():''}</small>`:'<b class="mut">Empty slot</b><small>Ready for a new expedition</small>'}</div>${i===SLOT&&s?'<i class="tagc">CURRENT</i>':''}</button>`;}
+function modal(){let el=document.getElementById('modal');if(!el){el=document.createElement('div');el.id='modal';document.body.appendChild(el);}el.classList.add('on');return el;}
+// three steps so a new game is never started by accident: pick a slot, name it (and confirm overwriting), then hold to launch
+MENU.confirmNew=function(){const W={step:1,slot:[0,1,2].find(i=>!slotInfo(i))??null,name:'',ok:false};const el=modal();
+ const dots=()=>`<div class="wdots">${[1,2,3].map(n=>`<i class="${n<=W.step?'on':''}">${n}</i>`).join('<b></b>')}</div>`;
+ const render=()=>{let h=`<div class="mbox wiz">${dots()}`;const s=W.slot!=null?slotInfo(W.slot):null;
+  if(W.step===1)h+=`<small>NEW GAME · STEP 1 OF 3</small><h3>Choose a save slot</h3><div class="slots3">${[0,1,2].map(i=>slotCard(i,{sel:W.slot===i})).join('')}</div><div class="mbtn"><button data-w="cancel">Cancel</button><button class="go ${W.slot==null?'dis':''}" data-w="next">Next</button></div>`;
+  else if(W.step===2)h+=`<small>NEW GAME · STEP 2 OF 3</small><h3>Name your expedition</h3><input id="wname" maxlength="24" value="${esc(W.name||'Expedition '+(W.slot+1))}" autocomplete="off">${s?`<div class="warnb">⚠ Slot ${W.slot+1} already holds <b>${esc(s.name)}</b> (${s.tier<MILESTONES.length?'milestone '+(s.tier+1):'Skyhook'}, ${s.blds} buildings, ${fmtTime(s.play)}). It will be erased forever.</div><label class="chk"><input type="checkbox" id="wok" ${W.ok?'checked':''}> I understand this save will be erased</label>`:''}<div class="mbtn"><button data-w="back">Back</button><button class="go ${s&&!W.ok?'dis':''}" data-w="next">Next</button></div>`;
+  else h+=`<small>NEW GAME · STEP 3 OF 3</small><h3>Ready for planetfall</h3><p>Slot ${W.slot+1} · <b>${esc(W.name)}</b><br>You will ride a drop pod to the surface with nothing but your hand tool.</p><button class="holdl" id="wlaunch"><i></i><span>Hold to launch drop pod</span></button><div class="mbtn"><button data-w="back">Back</button></div>`;
+  el.innerHTML=h+'</div>';
+  const ok=el.querySelector('#wok');if(ok)ok.onchange=()=>{W.ok=ok.checked;render();};
+  const lb=el.querySelector('#wlaunch');if(lb){let t=null;const down=e=>{e.preventDefault();lb.classList.add('hold');AUDIO.init();AUDIO.tone(220,1.4,{type:'sawtooth',vol:.05,slide:3});t=setTimeout(()=>{lb.classList.add('done');lb.querySelector('span').textContent='Launching…';AUDIO.fanfare();setTimeout(()=>gotoSlot(W.slot,true,W.name),500);},1500);};const up=()=>{if(lb.classList.contains('done'))return;clearTimeout(t);lb.classList.remove('hold');};lb.addEventListener('pointerdown',down);lb.addEventListener('pointerup',up);lb.addEventListener('pointerleave',up);lb.addEventListener('pointercancel',up);}};
+ el.onclick=e=>{const b=e.target.closest('[data-w]');if(!b){if(e.target===el)el.classList.remove('on');return;}AUDIO.click();const a=b.dataset.w;
+  if(a==='cancel'){el.classList.remove('on');return;}if(a==='pick'){W.slot=+b.dataset.v;W.ok=false;render();return;}
+  if(a==='back'){if(W.step===2){const i=el.querySelector('#wname');if(i)W.name=i.value;}W.step--;render();return;}
+  if(a==='next'){if(b.classList.contains('dis'))return;if(W.step===2){const i=el.querySelector('#wname');W.name=(i&&i.value.trim())||('Expedition '+(W.slot+1));}W.step++;render();}};
+ render();};
+MENU.slots=function(){const el=modal();let pend=null;const render=()=>{el.innerHTML=`<div class="mbox wiz"><small>SAVE SLOTS</small><h3>Load game</h3><div class="slots3">${[0,1,2].map(i=>{const s=slotInfo(i);return `<div class="srow">${slotCard(i,{act:s?'load':'newin'})}${s?`<button class="delb ${pend===i?'arm':''}" data-w="del" data-v="${i}">${pend===i?'Tap again to delete':'Delete'}</button>`:''}</div>`;}).join('')}</div><div class="mbtn"><button data-w="close">Close</button></div></div>`;};
+ el.onclick=e=>{const b=e.target.closest('[data-w]');if(!b){if(e.target===el)el.classList.remove('on');return;}AUDIO.click();const a=b.dataset.w,i=+b.dataset.v;
+  if(a==='close'){el.classList.remove('on');return;}if(a==='load'){if(i===SLOT&&GAME.mode==='play'){el.classList.remove('on');return;}gotoSlot(i,false);return;}if(a==='newin'){el.classList.remove('on');MENU.confirmNew();return;}
+  if(a==='del'){if(pend===i){deleteSlot(i);pend=null;UI.toast('Slot '+(i+1)+' deleted','info');if(GAME.mode==='title')MENU.title();}else pend=i;render();}};render();};
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.5.4',VERSION_MARK='FFVER@0.5.4@';
+const VERSION='0.6.0',VERSION_MARK='FFVER@0.6.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -1873,9 +2133,9 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
  initWorld();setLoad(.6,'Unpacking the HUB…');await sleep(20);initModels();FX.init();R.extra=()=>animObjects().concat(toolObjects());
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
- setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false;try{nw=sessionStorage.getItem('ff_new')==='1';sessionStorage.removeItem('ff_new');}catch(e){}if(window.__AUTOPLAY||(nw&&!S.landed))MENU.play();else setTimeout(()=>MENU.notes(false),600);
+ setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
