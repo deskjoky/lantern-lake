@@ -127,6 +127,9 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 #modal .mbox{width:min(420px,88vw);background:#16191f;border:1px solid rgba(240,138,50,.5);border-radius:16px;padding:20px 22px;color:#ece6da;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 #modal small{color:#f08a32;font-weight:800;letter-spacing:.1em;font-size:11px}#modal h3{margin:4px 0 8px;font-size:20px}#modal p{margin:0 0 16px;color:#c8c2b6;font-size:14px;line-height:1.45}
 #modal .mbtn{display:flex;gap:10px;justify-content:flex-end}#modal button{border:0;border-radius:10px;padding:11px 16px;font:700 14px system-ui;background:#2a2f38;color:#ece6da}#modal button.go{background:linear-gradient(#ffb46a,#e0602a);color:#1a1006}
+#modal .notes{width:min(520px,90vw)}#modal .nscroll{max-height:min(52vh,340px);overflow:auto;margin:4px 0 14px;padding-right:6px}
+#modal .nv{margin-bottom:12px}#modal .nv b{color:#ffd27a;font-size:14px}#modal ul{margin:6px 0 0;padding-left:18px;color:#d4cfc6;font-size:13.5px;line-height:1.45}#modal li{margin:3px 0}
+#updpill{position:fixed;left:50%;bottom:calc(14px + var(--safe-b,0px));transform:translateX(-50%);z-index:45;border:0;border-radius:22px;padding:11px 18px;font:800 14px system-ui;color:#1a1006;background:linear-gradient(#ffd27a,#f08a32);box-shadow:0 8px 24px rgba(0,0,0,.4)}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1553,16 +1556,29 @@ let _tipI=0;function nextTip(){const t=document.getElementById('ltip');if(t){t.t
 const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc27a"/><stop offset=".55" stop-color="#f08a32"/><stop offset="1" stop-color="#c8461a"/></linearGradient><radialGradient id="ec2" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff"/><stop offset=".25" stop-color="#bff8ee"/><stop offset=".6" stop-color="#3fc4ae" stop-opacity=".55"/><stop offset="1" stop-color="#3fc4ae" stop-opacity="0"/></radialGradient></defs><path fill="url(#eg2)" d="M60 10l8.5 10.5 13-3.2 3.2 13 12.8 4.2-3.2 12.8 9.7 9.7-9.7 9.7 3.2 12.8-12.8 4.2-3.2 13-13-3.2L60 110l-8.5-10.5-13 3.2-3.2-13-12.8-4.2 3.2-12.8L16 60l9.7-9.7-3.2-12.8 12.8-4.2 3.2-13 13 3.2z"/><circle cx="60" cy="60" r="27" fill="#0d0f1a"/><circle cx="60" cy="60" r="27" fill="none" stroke="#2a2040" stroke-width="2"/><circle cx="60" cy="60" r="24" fill="url(#ec2)"/><path fill="#fff" d="M60 36 Q62.5 57.5 84 60 Q62.5 62.5 60 84 Q57.5 62.5 36 60 Q57.5 57.5 60 36z"/><path fill="#eafffb" opacity=".85" d="M60 48 Q61 59 72 60 Q61 61 60 72 Q59 61 48 60 Q59 59 60 48z" transform="rotate(45 60 60)"/><ellipse cx="60" cy="60" rx="46" ry="11" fill="none" stroke="#58e0c8" stroke-width="2.4" transform="rotate(-28 60 60)" opacity=".9"/></svg>';
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
+const PATCH_NOTES=[
+ {v:'0.5.3',t:'Update notes',items:['Patch notes now pop up after every update so you know you have the newest version.','Updates download more reliably on phones and home-screen apps.']},
+ {v:'0.5.2',t:'Novaforge',items:['The game has a new name: Novaforge.','New app icon, logo and loading screen.']},
+ {v:'0.5.1',t:'Planetfall fix',items:['New game now wipes your save properly and drops you onto the planet in a drop pod.','New "Start a new game?" screen.']},
+ {v:'0.5.0',t:'Planetfall',items:['Start with nothing but your hand tool: ride a drop pod down and place your HUB wherever you like.','Brand new walk-in HUB with living quarters, a bed, a workbench and the milestone terminal.','You can see your hand tool, and it fires a beam when you mine.','A step-by-step tutorial with a marker that shows you where to go.','Day and night with stars and a headlamp, plus rain, overcast skies and dust storms.','Crash sites with hard drives that unlock alternate recipes.','Resonance cores: alien artifacts that double a machine\'s output.','Spinehog creatures (zap them) and glowing jellyfish. Peaceful mode in Settings.','Jetpack (hold jump in the air) and ziplines along power lines.','Ambient music, rain, wind and machine sounds.','Fixed the camera jitter when you start walking.']},
+ {v:'0.4.0',t:'Oil and water',items:['Water and oil extractors, pipelines, refinery, fluid buffer and fuel generator.','Plastic, rubber, fuel, computers and heavy frames.']},
+];
+MENU.notes=function(all){const seen=(()=>{try{return localStorage.getItem('nf_seen_ver')||'';}catch(e){return '';}})();
+ const cmp=(a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0);}return 0;};
+ let list=all?PATCH_NOTES:PATCH_NOTES.filter(n=>!seen||cmp(n.v,seen)>0);if(!all&&!seen){let had=false;try{had=!!localStorage.getItem(SAVE_KEY);}catch(e){}list=PATCH_NOTES.slice(0,had?4:1);}if(!list.length)return;
+ let el=document.getElementById('modal');if(!el){el=document.createElement('div');el.id='modal';document.body.appendChild(el);}
+ el.innerHTML=`<div class="mbox notes"><small>${all?'PATCH NOTES':'UPDATED TO VERSION '+VERSION}</small><h3>What's new</h3><div class="nscroll">${list.map(n=>`<div class="nv"><b>v${n.v} · ${esc(n.t)}</b><ul>${n.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}</div><div class="mbtn"><button data-m="ok" class="go">Let's go</button></div></div>`;el.classList.add('on');
+ el.onclick=e=>{const b=e.target.closest('[data-m]');if(!b&&e.target!==el)return;el.classList.remove('on');try{localStorage.setItem('nf_seen_ver',VERSION);}catch(_){}};};
 MENU.title=function(){GAME.mode='title';document.body.classList.add('intitle');UI.closePanel();BUILD.cancel();let el=document.getElementById('title');if(!el){el=document.createElement('div');el.id='title';document.body.appendChild(el);}
  const has=!!localStorage.getItem(SAVE_KEY)&&(S.tier>0||FAC.b.size>1||Object.keys(S.inv).length);const M=curMilestone();
  el.innerHTML=`<div class="tcol"><div class="tlogo">${LOGO_SVG}<b>NOVA<span>FORGE</span></b></div>
   ${has?`<button class="tbtn main" data-m="play"><span>Continue<small>${M?'Milestone '+(S.tier+1)+' · '+esc(M.n):'Skyhook'} · ${FAC.b.size-1} buildings · ${fmtTime(S.playTime)}</small></span><span>▶</span></button>`:`<button class="tbtn main" data-m="play"><span>Start your factory<small>Land on a new world</small></span><span>▶</span></button>`}
   ${has?`<button class="tbtn" data-m="new"><span>New game<small>Start over on a fresh planet</small></span></button>`:''}
-  <button class="tbtn" data-m="settings"><span>Settings</span></button><button class="tbtn" data-m="help"><span>How to play</span></button>
+  <button class="tbtn" data-m="settings"><span>Settings</span></button><button class="tbtn" data-m="help"><span>How to play</span></button><button class="tbtn" data-m="notes"><span>What's new<small>Version ${VERSION}</small></span></button>
   <div class="tfoot">${GAME_NAME} · v${VERSION}${navigator.standalone||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches?'':' · Add to your home screen to play like an app'}</div></div>`;
  el.classList.remove('out');el.onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;AUDIO.init();AUDIO.click();MENU.act(b.dataset.m);};
  GAME.orbit={a:0};};
-MENU.act=function(m){if(m==='play')MENU.play();else if(m==='new')MENU.confirmNew();
+MENU.act=function(m){if(m==='notes'){MENU.notes(true);return;}if(m==='play')MENU.play();else if(m==='new')MENU.confirmNew();
  else if(m==='settings'){UI.open('menu');}else if(m==='help'){UI.open('help');}};
 MENU.play=function(){const el=document.getElementById('title');el.classList.add('out');GAME.mode='play';GAME.orbit=null;GAME.freeCam=null;document.body.classList.remove('intitle');UI.closePanel();
  if(!S.landed){START.begin();return;}TUT.show();};
@@ -1821,9 +1837,9 @@ START.hud=function(){let el=document.getElementById('vitals');if(!el){el=documen
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.5.2',VERSION_MARK='FFVER@0.5.2@';
+const VERSION='0.5.3',VERSION_MARK='FFVER@0.5.3@';
 // ---- update check: a small pill appears when a newer version is online ----
-const UPD={start(){setTimeout(()=>this.check(),20000);setInterval(()=>this.check(),7*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION)UI.toast('Update '+m[1]+' ready: reopen the game to get it','good');}catch(e){}}};
+const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
 const setLoad=(f,m)=>{const b=document.getElementById('lbar');if(b)b.style.width=(f*100)+'%';const l=document.getElementById('lmsg');if(l&&m)l.textContent=m;};
 GAME.primary=function(down){AUDIO.init();if(!down){INPUT.act=false;return;}if(UI.panel)return;
@@ -1854,11 +1870,11 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
  initWorld();setLoad(.6,'Unpacking the HUB…');await sleep(20);initModels();FX.init();R.extra=()=>animObjects().concat(toolObjects());
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
- setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false;try{nw=sessionStorage.getItem('ff_new')==='1';sessionStorage.removeItem('ff_new');}catch(e){}if(window.__AUTOPLAY||(nw&&!S.landed))MENU.play();
+ setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false;try{nw=sessionStorage.getItem('ff_new')==='1';sessionStorage.removeItem('ff_new');}catch(e){}if(window.__AUTOPLAY||(nw&&!S.landed))MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
  window.FW={S:()=>S,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
- if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});UPD.start();
+ if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
 
 })();</script></body></html>
