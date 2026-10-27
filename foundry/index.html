@@ -1,0 +1,1098 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Frontier Foundry</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#14161b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<style>:root{--ink:#eef1f4;--muted:#9aa3ad;--panel:rgba(20,23,28,.82);--line:rgba(255,255,255,.1);--orange:#f08a32;--teal:#3fc4ae;--red:#e0574a;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--safe-r:env(safe-area-inset-right,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#14161b;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+#loading{position:fixed;inset:0;background:#14161b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50}
+#loading .lt{font-weight:900;letter-spacing:.2em;font-size:22px;color:var(--orange)}#loading .lb{width:220px;height:6px;background:#2a2e36;border-radius:3px;overflow:hidden}#loading .lb i{display:block;height:100%;width:0;background:var(--orange)}#lmsg{color:var(--muted);font-size:13px}
+.hide{display:none!important}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:5}
+#ui button,#ui input,#ui .slot,#ui canvas,#sheet,#ms,#tr,#pad{pointer-events:auto}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+#cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%)}#cross i{position:absolute;left:9px;top:9px;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.45)}
+#look{position:absolute;left:50%;top:calc(50% + 22px);transform:translateX(-50%);background:rgba(16,18,22,.6);padding:4px 10px;border-radius:10px;font-size:12.5px;font-weight:600;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+#hint{position:absolute;left:50%;top:calc(10px + var(--safe-t));transform:translateX(-50%);background:rgba(240,138,50,.92);color:#1a1006;font-weight:800;padding:6px 14px;border-radius:14px;font-size:12.5px;max-width:min(560px,70vw);text-align:center}
+#toasts{position:absolute;left:50%;top:calc(46px + var(--safe-t));transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center}
+.toast{background:rgba(16,18,22,.85);padding:7px 14px;border-radius:12px;font-weight:700;font-size:13px;transition:opacity .4s;border-left:4px solid var(--teal)}.toast.warn{border-color:#f0b432}.toast.bad{border-color:var(--red)}.toast.good{border-color:#5ad06a}
+#pops{position:absolute;left:50%;top:44%;transform:translateX(-50%)}.pop{position:absolute;left:0;transform:translateX(-50%);white-space:nowrap;font-weight:900;font-size:15px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.6);animation:popup .9s ease-out forwards}
+@keyframes popup{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-46px)}}
+#banner{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(240,138,50,.96),rgba(224,96,60,.96));color:#fff;padding:14px 22px;border-radius:20px;text-align:center;max-width:min(560px,86vw);box-shadow:0 10px 30px rgba(0,0,0,.35)}#banner b{display:block;font-size:19px;margin-bottom:4px}#banner span{font-size:13.5px;font-weight:600;opacity:.95}
+.card{background:rgba(18,21,26,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#ms{position:absolute;left:calc(10px + var(--safe-l));top:calc(10px + var(--safe-t));width:210px;padding:9px 12px;text-align:left}#ms small{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--orange);font-weight:800}#ms b{display:block;font-size:14px;margin-bottom:4px}
+.mr{position:relative;display:flex;align-items:center;gap:6px;font-size:11.5px;padding:2px 0 4px}.mr span{flex:1;color:#d6dbe0}.mr em{font-style:normal;font-weight:800;font-size:11px}.mr i{position:absolute;left:0;bottom:0;height:2px;background:var(--teal);border-radius:2px}.mr u{text-decoration:none;color:#ffd27a;font-size:10px;font-weight:800}
+.sw{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.3);flex:none}
+#tr{position:absolute;right:calc(10px + var(--safe-r));top:calc(10px + var(--safe-t));display:flex;gap:8px;align-items:center}
+.pill{background:rgba(18,21,26,.78);padding:8px 12px;border-radius:14px;font-weight:800;font-size:12.5px}.pill.bad{background:rgba(224,87,74,.9)}
+.rb{width:44px;height:44px;border-radius:14px;background:rgba(18,21,26,.78);display:grid;place-items:center}.rb svg{width:22px;height:22px}.rb:active{background:var(--orange);color:#1a1006}
+.rb.tier{width:auto;padding:0 12px;font-weight:800;font-size:12px}
+#pad{position:absolute;right:calc(18px + var(--safe-r));bottom:calc(18px + var(--safe-b));display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;gap:12px;align-items:end;justify-items:center}
+#modeBtns{grid-column:1/3;display:flex;gap:8px;justify-self:end}
+#act{grid-column:2;grid-row:2;position:relative;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffc07a,#f08a32 60%,#c8641a);color:#1a1006;font-weight:900;font-size:15px;letter-spacing:.04em;box-shadow:0 8px 22px rgba(240,138,50,.35),inset 0 -5px 0 rgba(0,0,0,.18)}
+#act.red{background:radial-gradient(circle at 35% 30%,#ff9a8a,#e0574a 60%,#a83a30)}#act.on{transform:scale(.95)}
+#act svg{position:absolute;inset:0;transform:rotate(-90deg)}#act circle{fill:none;stroke:#fff;stroke-width:5;stroke-dasharray:289;stroke-dashoffset:289;stroke-linecap:round;opacity:.9}
+#jump{grid-column:1;grid-row:2;width:58px;height:58px;border-radius:50%;background:rgba(18,21,26,.7);display:grid;place-items:center;margin-bottom:6px}#jump svg{width:24px;height:24px}
+body.pc #jump,body.pc #joyHint{display:none}body.pc #act{display:none}
+#joy{position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06)}#joy i{position:absolute;left:36px;top:36px;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.55)}
+#joyHint{position:absolute;left:calc(40px + var(--safe-l));bottom:calc(50px + var(--safe-b));width:110px;height:110px;border-radius:50%;border:2px dashed rgba(255,255,255,.3);display:grid;place-items:center;color:rgba(255,255,255,.55);font-size:11px;font-weight:800;letter-spacing:.1em}
+#sheet{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,94vw);height:min(560px,88vh);background:rgba(22,25,31,.95);border-radius:22px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+#sheet .sh{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}#sheet .tabs{flex:1;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}#sheet .tabs::-webkit-scrollbar{display:none}
+#sheet .tabs button{padding:8px 13px;border-radius:12px;font-weight:800;font-size:13px;color:var(--muted);white-space:nowrap}#sheet .tabs button.on{background:var(--orange);color:#1a1006}#sheet .ttl{font-size:17px;padding:4px 6px}
+#sheet .x{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.08);font-size:16px;font-weight:900}
+#sheet .body{flex:1;overflow-y:auto;padding:12px 16px 18px;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+h4{margin:14px 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange)}h3{margin:4px 0}.mut{color:var(--muted);font-size:12.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.bcard{background:rgba(255,255,255,.05);border-radius:14px;padding:8px;text-align:left;display:flex;flex-direction:column;gap:4px;border:2px solid transparent}.bcard.sel{border-color:var(--orange)}.bcard.lock{opacity:.4}
+.bcard .bi{height:74px;border-radius:10px;background:linear-gradient(160deg,#3a4a5a,#232a33);display:grid;place-items:center;overflow:hidden}.bcard .bi img{width:100%;height:100%;object-fit:contain}
+.bcard b{font-size:13px}.bcard small{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:11px;color:#cfd5db}.bcard small .no{color:#ff8a7a}.bcard small.lk{color:var(--muted)}.bcard p{margin:0;font-size:11px;color:var(--muted)}
+.inv{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:6px}.slot{background:rgba(255,255,255,.06);border-radius:12px;padding:7px;display:flex;flex-direction:column;gap:2px;text-align:left}.slot b{font-size:16px}.slot span{font-size:11px;color:var(--muted)}.slot .sw{width:18px;height:18px}
+.crafts{display:flex;flex-direction:column;gap:6px}.craft{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border-radius:12px;padding:8px 10px}.craft.off{opacity:.55}.cr{flex:1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:12.5px}.cr i{color:var(--muted);font-style:normal;font-weight:900}.cb{display:flex;gap:6px}
+.it{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn{padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.1);font-weight:800;font-size:13px}.btn:disabled{opacity:.35}.btn.gold{background:var(--orange);color:#1a1006}.btn.red{background:var(--red)}.btn.big{padding:12px 18px;font-size:14px}.btn.sm{padding:5px 10px;font-size:12px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.msh{background:linear-gradient(135deg,rgba(240,138,50,.18),rgba(63,196,174,.12));border-radius:16px;padding:12px 14px}.msh small{color:var(--orange);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:10.5px}.msh p{margin:4px 0 0;font-size:12.5px;color:#d6dbe0}
+.need{display:grid;grid-template-columns:1fr 1.4fr auto;align-items:center;gap:4px 10px;padding:8px 2px;border-bottom:1px solid var(--line)}.need small{grid-column:1/4;color:var(--muted);font-size:11px}.need em{font-style:normal;font-weight:800}
+.bar,.prog{height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}.bar i,.prog i{display:block;height:100%;background:var(--teal);border-radius:4px}.prog{margin:8px 0}
+.mrow{display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);opacity:.55}.mrow.cur{opacity:1}.mrow.done{opacity:.8}.mrow b{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center;flex:none}.mrow.done b{background:#3a9a5a}.mrow.cur b{background:var(--orange);color:#1a1006}.mrow span{display:flex;flex-direction:column;font-weight:700}.mrow small{font-weight:500;color:var(--muted);font-size:11.5px}
+.status{padding:8px 12px;border-radius:12px;font-weight:800;background:rgba(255,255,255,.08)}.status.good{background:rgba(90,208,106,.2);color:#9af0a8}.status.warn{background:rgba(240,180,50,.18);color:#ffd27a}.status.bad{background:rgba(224,87,74,.22);color:#ffaa9a}
+.recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}.rec{text-align:left;background:rgba(255,255,255,.05);border-radius:12px;padding:8px 10px;border:2px solid transparent;display:flex;flex-direction:column;gap:3px}.rec.on{border-color:var(--teal);background:rgba(63,196,174,.12)}.rec.lock{opacity:.35}.rec span{font-size:11.5px;color:#cfd5db;display:flex;align-items:center;gap:4px;flex-wrap:wrap}.rec small{color:var(--muted);font-size:11px}
+.bufs{display:flex;flex-direction:column;gap:6px}.buf{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border-radius:12px;padding:7px 10px}.buf .it{flex:1}
+.st{width:100%;border-collapse:collapse;font-size:13px}.st th{text-align:left;color:var(--muted);font-size:11px;font-weight:700;padding:4px}.st td{padding:6px 4px;border-bottom:1px solid var(--line)}.pos{color:#8af09a}.neg{color:#ff9a8a}
+.set{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.set input{width:50%}
+#mapc{width:100%;max-width:520px;aspect-ratio:1;border-radius:14px;display:block;margin:0 auto;touch-action:none}
+@media (max-height:500px){#act{width:84px;height:84px}#ms{width:180px;padding:7px 10px}.mr{font-size:10.5px}#sheet{height:92vh;width:96vw}.rb{width:40px;height:40px}}
+@media (orientation:portrait){#ms{width:170px}}
+</style></head><body>
+<canvas id="gl"></canvas>
+<div id="ui"></div>
+<div id="loading"><div class="lt">FRONTIER FOUNDRY</div><div class="lb"><i id="lbar"></i></div><div id="lmsg">Landing…</div></div>
+<script>(()=>{'use strict';
+// ---- 00-core.js ----
+// ===== Core helpers: math, noise, matrices (from the Lantern Lake engine) =====
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);};
+const TAU=Math.PI*2;
+const wrapAngle=a=>Math.atan2(Math.sin(a),Math.cos(a));
+const hexToRgb=h=>{h=h.replace('#','');return [parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255];};
+const mixc=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hash2(x,z,s=0){let h=Math.imul((x|0)^0x27d4eb2d,0x165667b1)^Math.imul((z|0)+s*1013,0x27d4eb2f);h=Math.imul(h^h>>>15,0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);h^=h>>>16;return (h>>>0)/4294967296;}
+// gradient-ish value noise with quintic fade
+const PERM=new Uint8Array(512);(()=>{const r=mulberry(1337),p=[...Array(256).keys()];for(let i=255;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]];}for(let i=0;i<512;i++)PERM[i]=p[i&255];})();
+const GX=new Float32Array([1,-1,1,-1,1,-1,0,0]),GY=new Float32Array([1,1,-1,-1,0,0,1,-1]);
+function noise2(x,y){const X=Math.floor(x),Y=Math.floor(y),xf=x-X,yf=y-Y,xi=X&255,yi=Y&255;
+ const u=xf*xf*xf*(xf*(xf*6-15)+10),v=yf*yf*yf*(yf*(yf*6-15)+10);
+ const pa=PERM[xi],pb=PERM[xi+1],aa=PERM[pa+yi]&7,ab=PERM[pa+yi+1]&7,ba=PERM[pb+yi]&7,bb=PERM[pb+yi+1]&7;
+ const n00=GX[aa]*xf+GY[aa]*yf,n10=GX[ba]*(xf-1)+GY[ba]*yf,n01=GX[ab]*xf+GY[ab]*(yf-1),n11=GX[bb]*(xf-1)+GY[bb]*(yf-1);
+ const x1=n00+(n10-n00)*u,x2=n01+(n11-n01)*u;return (x1+(x2-x1)*v)*.99;}
+function fbm(x,y,oct=5,lac=2,gain=.5){let a=1,f=1,s=0,n=0;for(let i=0;i<oct;i++){s+=noise2(x*f+i*17.3,y*f-i*9.1)*a;n+=a;a*=gain;f*=lac;}return s/n;}
+function ridged(x,y,oct=5){let a=1,f=1,s=0,n=0;for(let i=0;i<oct;i++){let v=1-Math.abs(noise2(x*f+i*7.7,y*f+i*3.1));v*=v;s+=v*a;n+=a;a*=.5;f*=2.03;}return s/n;}
+const smin=(a,b,k)=>{const h=clamp(.5+.5*(b-a)/k,0,1);return lerp(b,a,h)-k*h*(1-h);};
+const smax=(a,b,k)=>-smin(-a,-b,k);
+function segDist(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,t=clamp(((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(px-ax-dx*t,pz-az-dz*t);}
+function polyDist(px,pz,pts){let d=1e9;for(let i=0;i<pts.length-1;i++)d=Math.min(d,segDist(px,pz,pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]));return d;}
+
+// ---- mat4 (column-major, like GL) ----
+const M4={
+ create:()=>{const m=new Float32Array(16);m[0]=m[5]=m[10]=m[15]=1;return m;},
+ identity:(m)=>{m.fill(0);m[0]=m[5]=m[10]=m[15]=1;return m;},
+ mul(out,a,b){const r=new Float32Array(16);for(let c=0;c<4;c++)for(let rr=0;rr<4;rr++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+rr]*b[c*4+k];r[c*4+rr]=s;}out.set(r);return out;},
+ perspective(out,fovy,aspect,near,far){const f=1/Math.tan(fovy/2),nf=1/(near-far);out.fill(0);out[0]=f/aspect;out[5]=f;out[10]=(far+near)*nf;out[11]=-1;out[14]=2*far*near*nf;return out;},
+ ortho(out,l,r,b,t,n,f){out.fill(0);out[0]=2/(r-l);out[5]=2/(t-b);out[10]=-2/(f-n);out[12]=-(r+l)/(r-l);out[13]=-(t+b)/(t-b);out[14]=-(f+n)/(f-n);out[15]=1;return out;},
+ lookAt(out,e,c,up){let zx=e[0]-c[0],zy=e[1]-c[1],zz=e[2]-c[2],l=Math.hypot(zx,zy,zz)||1;zx/=l;zy/=l;zz/=l;let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;l=Math.hypot(xx,xy,xz)||1;xx/=l;xy/=l;xz/=l;const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+  out[0]=xx;out[1]=yx;out[2]=zx;out[3]=0;out[4]=xy;out[5]=yy;out[6]=zy;out[7]=0;out[8]=xz;out[9]=yz;out[10]=zz;out[11]=0;out[12]=-(xx*e[0]+xy*e[1]+xz*e[2]);out[13]=-(yx*e[0]+yy*e[1]+yz*e[2]);out[14]=-(zx*e[0]+zy*e[1]+zz*e[2]);out[15]=1;return out;},
+ invert(out,a){const a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7],a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
+  const b00=a00*a11-a01*a10,b01=a00*a12-a02*a10,b02=a00*a13-a03*a10,b03=a01*a12-a02*a11,b04=a01*a13-a03*a11,b05=a02*a13-a03*a12,b06=a20*a31-a21*a30,b07=a20*a32-a22*a30,b08=a20*a33-a23*a30,b09=a21*a32-a22*a31,b10=a21*a33-a23*a31,b11=a22*a33-a23*a32;
+  let det=b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;if(!det)return null;det=1/det;
+  out[0]=(a11*b11-a12*b10+a13*b09)*det;out[1]=(a02*b10-a01*b11-a03*b09)*det;out[2]=(a31*b05-a32*b04+a33*b03)*det;out[3]=(a22*b04-a21*b05-a23*b03)*det;out[4]=(a12*b08-a10*b11-a13*b07)*det;out[5]=(a00*b11-a02*b08+a03*b07)*det;out[6]=(a32*b02-a30*b05-a33*b01)*det;out[7]=(a20*b05-a22*b02+a23*b01)*det;out[8]=(a10*b10-a11*b08+a13*b06)*det;out[9]=(a01*b08-a00*b10-a03*b06)*det;out[10]=(a30*b04-a31*b02+a33*b00)*det;out[11]=(a21*b02-a20*b04-a23*b00)*det;out[12]=(a11*b07-a10*b09-a12*b06)*det;out[13]=(a00*b09-a01*b07+a02*b06)*det;out[14]=(a31*b01-a30*b03-a32*b00)*det;out[15]=(a20*b03-a21*b01+a22*b00)*det;return out;},
+ // translate * rotY * rotX * rotZ * scale
+ trs(out,x,y,z,ry=0,rx=0,rz=0,sx=1,sy=sx,sz=sx){const cy=Math.cos(ry),sy_=Math.sin(ry),cx=Math.cos(rx),sx_=Math.sin(rx),cz=Math.cos(rz),sz_=Math.sin(rz);
+  // R = Ry*Rx*Rz
+  const m00=cy*cz+sy_*sx_*sz_,m01=cx*sz_,m02=-sy_*cz+cy*sx_*sz_;
+  const m10=-cy*sz_+sy_*sx_*cz,m11=cx*cz,m12=sy_*sz_+cy*sx_*cz;
+  const m20=sy_*cx,m21=-sx_,m22=cy*cx;
+  out[0]=m00*sx;out[1]=m01*sx;out[2]=m02*sx;out[3]=0;out[4]=m10*sy;out[5]=m11*sy;out[6]=m12*sy;out[7]=0;out[8]=m20*sz;out[9]=m21*sz;out[10]=m22*sz;out[11]=0;out[12]=x;out[13]=y;out[14]=z;out[15]=1;return out;},
+ xform(m,x,y,z){return [m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14]];},
+ xformDir(m,x,y,z){return [m[0]*x+m[4]*y+m[8]*z,m[1]*x+m[5]*y+m[9]*z,m[2]*x+m[6]*y+m[10]*z];},
+};
+const v3={norm(a){const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];},cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2]};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+// ---- 01-gl.js ----
+// ===== Minimal WebGL2 layer (adapted from the Lantern Lake engine) =====
+const GL={gl:null,canvas:null,progs:{},w:1,h:1,stats:{draws:0,tris:0}};
+const SRGB=c=>[Math.pow(c[0],2.2),Math.pow(c[1],2.2),Math.pow(c[2],2.2)];
+const COL=(h,e=0)=>{const c=typeof h==='string'?SRGB(hexToRgb(h)):h;return [c[0],c[1],c[2],e];};
+function glInit(canvas){
+ const gl=canvas.getContext('webgl2',{antialias:true,alpha:false,powerPreference:'high-performance',preserveDrawingBuffer:false,stencil:false});
+ if(!gl)throw new Error('WebGL2 is not available on this device.');
+ GL.gl=gl;GL.canvas=canvas;gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);return gl;}
+function compile(name,vs,fs){
+ const gl=GL.gl,pre='#version 300 es\nprecision highp float;precision highp int;precision highp sampler2DShadow;\n';
+ const sh=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,pre+src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const log=gl.getShaderInfoLog(s);console.error(name,log);throw new Error('Shader '+name+': '+log);}return s;};
+ const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));
+ gl.bindAttribLocation(p,0,'aPos');gl.bindAttribLocation(p,1,'aNrm');gl.bindAttribLocation(p,2,'aCol');gl.bindAttribLocation(p,4,'aI0');gl.bindAttribLocation(p,5,'aI1');
+ gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error('Link '+name+': '+gl.getProgramInfoLog(p));
+ const u={},n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const info=gl.getActiveUniform(p,i);u[info.name.replace('[0]','')]=gl.getUniformLocation(p,info.name);}
+ return GL.progs[name]={p,u,name};}
+let _curProg=null;
+function use(prog){if(_curProg!==prog){GL.gl.useProgram(prog.p);_curProg=prog;}return prog;}
+function makeMesh(d){
+ const gl=GL.gl,vao=gl.createVertexArray();gl.bindVertexArray(vao);
+ const buf=(loc,arr,size)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,arr,gl.STATIC_DRAW);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,size,gl.FLOAT,false,0,0);return b;};
+ const m={vao,bufs:{}};m.bufs.pos=buf(0,d.pos,3);if(d.nrm)m.bufs.nrm=buf(1,d.nrm,3);else gl.vertexAttrib3f(1,0,1,0);if(d.col)m.bufs.col=buf(2,d.col,4);else gl.vertexAttrib4f(2,1,1,1,0);
+ if(d.idx){m.ibo=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ibo);const big=d.pos.length/3>65535;const ia=big?new Uint32Array(d.idx):new Uint16Array(d.idx);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,ia,gl.STATIC_DRAW);m.count=ia.length;m.itype=big?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT;}else m.count=d.pos.length/3;
+ gl.bindVertexArray(null);let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];const P=d.pos;for(let i=0;i<P.length;i+=3)for(let k=0;k<3;k++){if(P[i+k]<mn[k])mn[k]=P[i+k];if(P[i+k]>mx[k])mx[k]=P[i+k];}
+ m.center=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];m.radius=Math.hypot(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])/2;m.min=mn;m.max=mx;m.tris=m.count/3;return m;}
+function freeMesh(m){if(!m)return;const gl=GL.gl;gl.deleteVertexArray(m.vao);for(const b of Object.values(m.bufs))gl.deleteBuffer(b);if(m.ibo)gl.deleteBuffer(m.ibo);if(m.ivao){gl.deleteVertexArray(m.ivao);gl.deleteBuffer(m.ibuf);}}
+// a mesh drawn many times in one call: per instance 8 floats = x,y,z,scale, r,g,b,rotY
+function instancer(mesh,max){const gl=GL.gl,vao=gl.createVertexArray();gl.bindVertexArray(vao);
+ const bind=(loc,b,size)=>{gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,size,gl.FLOAT,false,0,0);};
+ bind(0,mesh.bufs.pos,3);if(mesh.bufs.nrm)bind(1,mesh.bufs.nrm,3);if(mesh.bufs.col)bind(2,mesh.bufs.col,4);else gl.vertexAttrib4f(2,1,1,1,0);
+ const ib=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,ib);gl.bufferData(gl.ARRAY_BUFFER,max*32,gl.DYNAMIC_DRAW);
+ gl.enableVertexAttribArray(4);gl.vertexAttribPointer(4,4,gl.FLOAT,false,32,0);gl.vertexAttribDivisor(4,1);gl.enableVertexAttribArray(5);gl.vertexAttribPointer(5,4,gl.FLOAT,false,32,16);gl.vertexAttribDivisor(5,1);
+ if(mesh.ibo)gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.ibo);gl.bindVertexArray(null);
+ return {mesh,vao,ib,max,data:new Float32Array(max*8),n:0};}
+function drawInstances(I){if(!I.n)return;const gl=GL.gl;gl.bindBuffer(gl.ARRAY_BUFFER,I.ib);gl.bufferSubData(gl.ARRAY_BUFFER,0,I.data,0,I.n*8);gl.bindVertexArray(I.vao);
+ if(I.mesh.ibo)gl.drawElementsInstanced(gl.TRIANGLES,I.mesh.count,I.mesh.itype,0,I.n);else gl.drawArraysInstanced(gl.TRIANGLES,0,I.mesh.count,I.n);GL.stats.draws++;GL.stats.tris+=I.mesh.tris*I.n;}
+function drawMesh(m){const gl=GL.gl;gl.bindVertexArray(m.vao);if(m.ibo)gl.drawElements(gl.TRIANGLES,m.count,m.itype,0);else gl.drawArrays(gl.TRIANGLES,0,m.count);GL.stats.draws++;GL.stats.tris+=m.tris;}
+const FRUSTUM=new Float32Array(24);
+function setFrustum(vp){const m=vp,F=FRUSTUM;const rows=[[3,0,1],[3,0,-1],[3,1,1],[3,1,-1],[3,2,1],[3,2,-1]];
+ for(let i=0;i<6;i++){const [w,r,s]=rows[i];let a=m[w]+s*m[r],b=m[w+4]+s*m[r+4],c=m[w+8]+s*m[r+8],d=m[w+12]+s*m[r+12];const l=Math.hypot(a,b,c);F[i*4]=a/l;F[i*4+1]=b/l;F[i*4+2]=c/l;F[i*4+3]=d/l;}}
+function inFrustum(c,r){const F=FRUSTUM;for(let i=0;i<6;i++)if(F[i*4]*c[0]+F[i*4+1]*c[1]+F[i*4+2]*c[2]+F[i*4+3]<-r)return false;return true;}
+class GB{
+ constructor(){this.p=[];this.n=[];this.c=[];this.w=[];this.i=[];}
+ get vcount(){return this.p.length/3;}
+ // geom: {p:[],n:[],i:[]} in local space
+ add(g,m,color,wind=0,opt={}){const base=this.vcount,col=Array.isArray(color)&&color.length===4?color:COL(color||'#ffffff');
+  const nm=m;for(let k=0;k<g.p.length;k+=3){const x=g.p[k],y=g.p[k+1],z=g.p[k+2];const P=m?M4.xform(m,x,y,z):[x,y,z];this.p.push(P[0],P[1],P[2]);
+   let N=m?M4.xformDir(nm,g.n[k],g.n[k+1],g.n[k+2]):[g.n[k],g.n[k+1],g.n[k+2]];N=v3.norm(N);this.n.push(N[0],N[1],N[2]);
+   let c=col;if(opt.srcColors){const q=k/3*4;c=[opt.srcColors[q]*opt.tint[0],opt.srcColors[q+1]*opt.tint[1],opt.srcColors[q+2]*opt.tint[2],opt.srcColors[q+3]];}else if(opt.colorFn)c=opt.colorFn(P,N,[x,y,z],col);if(opt.jitter){const j=1+(Math.random()-.5)*opt.jitter;c=[c[0]*j,c[1]*j,c[2]*j,c[3]];}
+   this.c.push(c[0],c[1],c[2],c[3]);this.w.push(typeof wind==='function'?wind(x,y,z,P):wind);}
+  for(const ix of g.i)this.i.push(ix+base);return this;}
+ merge(o){const base=this.vcount;this.p.push(...o.p);this.n.push(...o.n);this.c.push(...o.c);this.w.push(...o.w);for(const ix of o.i)this.i.push(ix+base);return this;}
+ build(){if(!this.p.length)return null;return makeMesh({pos:new Float32Array(this.p),nrm:new Float32Array(this.n),col:new Float32Array(this.c),idx:this.i});}
+}
+// --- primitives (local geometry) ---
+const PRIM={
+ box(w=1,h=1,d=1,{y0=false}={}){const x=w/2,y=h/2,z=d/2,oy=y0?y:0;const p=[],n=[],i=[];
+  const f=(nx,ny,nz,vs)=>{const b=p.length/3;for(const v of vs){p.push(v[0],v[1]+oy,v[2]);n.push(nx,ny,nz);}i.push(b,b+1,b+2,b,b+2,b+3);};
+  f(0,0,1,[[-x,-y,z],[x,-y,z],[x,y,z],[-x,y,z]]);f(0,0,-1,[[x,-y,-z],[-x,-y,-z],[-x,y,-z],[x,y,-z]]);
+  f(1,0,0,[[x,-y,z],[x,-y,-z],[x,y,-z],[x,y,z]]);f(-1,0,0,[[-x,-y,-z],[-x,-y,z],[-x,y,z],[-x,y,-z]]);
+  f(0,1,0,[[-x,y,z],[x,y,z],[x,y,-z],[-x,y,-z]]);f(0,-1,0,[[-x,-y,-z],[x,-y,-z],[x,-y,z],[-x,-y,z]]);return {p,n,i};},
+ // lathe: profile [[r,y],...] bottom->top
+ lathe(prof,seg=12,{cap=true,flat=false,phase=0}={}){const p=[],n=[],i=[];const rows=prof.length;
+  for(let j=0;j<rows;j++){const [r,y]=prof[j];const pr=prof[Math.max(0,j-1)],nx=prof[Math.min(rows-1,j+1)];let dr=nx[0]-pr[0],dy=nx[1]-pr[1];const l=Math.hypot(dr,dy)||1;const nr=dy/l,ny=-dr/l;
+   for(let s=0;s<=seg;s++){const a=s/seg*TAU+phase,c=Math.cos(a),sn=Math.sin(a);p.push(c*r,y,sn*r);n.push(c*nr,ny,sn*nr);}}
+  for(let j=0;j<rows-1;j++)for(let s=0;s<seg;s++){const a=j*(seg+1)+s,b=a+seg+1;i.push(a,b,a+1,a+1,b,b+1);}
+  if(cap){const top=prof[rows-1];if(top[0]>0.001){const c=p.length/3;p.push(0,top[1],0);n.push(0,1,0);const b=c+1;for(let s=0;s<=seg;s++){const a=s/seg*TAU+phase;p.push(Math.cos(a)*top[0],top[1],Math.sin(a)*top[0]);n.push(0,1,0);}for(let s=0;s<seg;s++)i.push(c,b+s+1,b+s);}
+   const bot=prof[0];if(bot[0]>0.001){const c=p.length/3;p.push(0,bot[1],0);n.push(0,-1,0);const b=c+1;for(let s=0;s<=seg;s++){const a=s/seg*TAU+phase;p.push(Math.cos(a)*bot[0],bot[1],Math.sin(a)*bot[0]);n.push(0,-1,0);}for(let s=0;s<seg;s++)i.push(c,b+s,b+s+1);}}
+  return flat?PRIM.flatten({p,n,i}):{p,n,i};},
+ cyl(rt,rb,h,seg=10,o={}){return PRIM.lathe([[rb,0],[rt,h]],seg,o);},
+ cone(r,h,seg=10,o={}){return PRIM.lathe([[r,0],[0.0001,h]],seg,o);},
+ sphere(r=1,ws=12,hs=8,o={}){const prof=[];for(let j=0;j<=hs;j++){const a=-Math.PI/2+j/hs*Math.PI;prof.push([Math.cos(a)*r+(j===0||j===hs?0.0001:0),Math.sin(a)*r]);}return PRIM.lathe(prof,ws,{cap:false,...o});},
+ ico(r=1,detail=1,{noise=0,seed=1}={}){const t=(1+Math.sqrt(5))/2;let v=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]].map(v3.norm);
+  let f=[[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];
+  for(let d=0;d<detail;d++){const cache={},mid=(a,b)=>{const k=a<b?a+'_'+b:b+'_'+a;if(cache[k]!==undefined)return cache[k];v.push(v3.norm([(v[a][0]+v[b][0])/2,(v[a][1]+v[b][1])/2,(v[a][2]+v[b][2])/2]));return cache[k]=v.length-1;};const nf=[];for(const [a,b,c] of f){const ab=mid(a,b),bc=mid(b,c),ca=mid(c,a);nf.push([a,ab,ca],[b,bc,ab],[c,ca,bc],[ab,bc,ca]);}f=nf;}
+  const rnd=mulberry(seed);const disp=v.map(()=>1+(rnd()-.5)*noise);
+  const p=[],n=[],i=[];for(const [a,b,c] of f){const A=v[a].map(x=>x*r*disp[a]),B=v[b].map(x=>x*r*disp[b]),C=v[c].map(x=>x*r*disp[c]);const N=v3.norm(v3.cross(v3.sub(B,A),v3.sub(C,A)));const k=p.length/3;p.push(...A,...B,...C);n.push(...N,...N,...N);i.push(k,k+1,k+2);}
+  return {p,n,i};},
+ plane(w,d,sx=1,sz=1){const p=[],n=[],i=[];for(let j=0;j<=sz;j++)for(let k=0;k<=sx;k++){p.push((k/sx-.5)*w,0,(j/sz-.5)*d);n.push(0,1,0);}for(let j=0;j<sz;j++)for(let k=0;k<sx;k++){const a=j*(sx+1)+k,b=a+sx+1;i.push(a,b,a+1,a+1,b,b+1);}return {p,n,i};},
+ // double-sided quad in XY plane, base at y=0
+ card(w,h){return {p:[-w/2,0,0,w/2,0,0,w/2,h,0,-w/2,h,0],n:[0,0,1,0,0,1,0,0,1,0,0,1],i:[0,1,2,0,2,3,0,2,1,0,3,2]};},
+ flatten(g){const p=[],n=[],i=[];for(let k=0;k<g.i.length;k+=3){const ids=[g.i[k],g.i[k+1],g.i[k+2]];const V=ids.map(x=>[g.p[x*3],g.p[x*3+1],g.p[x*3+2]]);const N=v3.norm(v3.cross(v3.sub(V[1],V[0]),v3.sub(V[2],V[0])));const b=p.length/3;for(const v of V){p.push(...v);n.push(...N);}i.push(b,b+1,b+2);}return {p,n,i};},
+ // loft through cross-section rings: rings = [{z, pts:[[x,y],...]}] closed rings
+ loft(rings,{closeEnds=true}={}){const p=[],n=[],i=[];const m=rings[0].pts.length;
+  for(const r of rings)for(const [x,y] of r.pts){p.push(x,y,r.z);n.push(0,0,0);}
+  for(let j=0;j<rings.length-1;j++)for(let k=0;k<m;k++){const a=j*m+k,b=j*m+(k+1)%m,c=a+m,d=b+m;i.push(a,c,b,b,c,d);}
+  if(closeEnds){for(const [j,flip] of [[0,1],[rings.length-1,0]]){const cx=rings[j].pts.reduce((s,q)=>s+q[0],0)/m,cy=rings[j].pts.reduce((s,q)=>s+q[1],0)/m;const c=p.length/3;p.push(cx,cy,rings[j].z);n.push(0,0,0);for(let k=0;k<m;k++){const a=j*m+k,b=j*m+(k+1)%m;if(flip)i.push(c,b,a);else i.push(c,a,b);}}}
+  PRIM.computeNormals({p,n,i});return {p,n,i};},
+ computeNormals(g){g.n.fill(0);for(let k=0;k<g.i.length;k+=3){const a=g.i[k]*3,b=g.i[k+1]*3,c=g.i[k+2]*3;const ux=g.p[b]-g.p[a],uy=g.p[b+1]-g.p[a+1],uz=g.p[b+2]-g.p[a+2],vx=g.p[c]-g.p[a],vy=g.p[c+1]-g.p[a+1],vz=g.p[c+2]-g.p[a+2];const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;for(const q of [a,b,c]){g.n[q]+=nx;g.n[q+1]+=ny;g.n[q+2]+=nz;}}for(let k=0;k<g.n.length;k+=3){const l=Math.hypot(g.n[k],g.n[k+1],g.n[k+2])||1;g.n[k]/=l;g.n[k+1]/=l;g.n[k+2]/=l;}return g;},
+};
+const T=(x=0,y=0,z=0,ry=0,rx=0,rz=0,sx=1,sy=sx,sz=sx)=>M4.trs(new Float32Array(16),x,y,z,ry,rx,rz,sx,sy,sz);
+
+// rounded box: a subdivided cube pushed out from a smaller inner box, so every edge gets a soft radius
+PRIM.rbox=function(w,h,d,r=.2,n=4,{y0=true}={}){r=Math.min(r,w/2-.001,h/2-.001,d/2-.001);const ix=w/2-r,iy=h/2-r,iz=d/2-r;const p=[],nn=[],i=[];
+ const face=(ax,s)=>{const b=p.length/3;for(let a=0;a<=n;a++)for(let c=0;c<=n;c++){const u=a/n*2-1,v=c/n*2-1;let q;if(ax===0)q=[s,u*s,v];else if(ax===1)q=[v,s,u*s];else q=[u*s,v,s];
+   // push grid toward the rounded edges: denser near corners
+   const P=[q[0]*(w/2),q[1]*(h/2),q[2]*(d/2)];const C=[clamp(P[0],-ix,ix),clamp(P[1],-iy,iy),clamp(P[2],-iz,iz)];let N=[P[0]-C[0],P[1]-C[1],P[2]-C[2]];const L=Math.hypot(...N);
+   if(L<1e-6){N=ax===0?[s,0,0]:ax===1?[0,s,0]:[0,0,s];}else N=[N[0]/L,N[1]/L,N[2]/L];const R=[C[0]+N[0]*r,C[1]+N[1]*r+(y0?h/2:0),C[2]+N[2]*r];p.push(...R);nn.push(...N);}
+  for(let a=0;a<n;a++)for(let c=0;c<n;c++){const k=b+a*(n+1)+c;if(s>0)i.push(k,k+n+1,k+1,k+1,k+n+1,k+n+2);else i.push(k,k+1,k+n+1,k+1,k+n+2,k+n+1);}};
+ for(const s of [1,-1]){face(0,s);face(1,s);face(2,s);}
+ // make every triangle face outward
+ for(let k=0;k<i.length;k+=3){const A=i[k]*3,B=i[k+1]*3,C=i[k+2]*3;const u=[p[B]-p[A],p[B+1]-p[A+1],p[B+2]-p[A+2]],v=[p[C]-p[A],p[C+1]-p[A+1],p[C+2]-p[A+2]];const c=v3.cross(u,v);if(c[0]*nn[A]+c[1]*nn[A+1]+c[2]*nn[A+2]<0){const t=i[k+1];i[k+1]=i[k+2];i[k+2]=t;}}
+ return {p,n:nn,i};};
+
+// ---- 02-render.js ----
+// ===== Renderer: shaders, camera, sky, draw lists =====
+const R={cam:[0,10,0],yaw:0,pitch:0,fov:72*Math.PI/180,near:.1,far:900,vp:M4.create(),proj:M4.create(),view:M4.create(),inv:M4.create(),
+ sun:v3.norm([.45,.8,.3]),sunCol:[1.55,1.38,1.15],sky:[.42,.58,.85],gnd:[.30,.24,.30],fog:[.66,.76,.90,.0024],time:0,
+ terrain:[],objects:[],inst:[],ghosts:[],dpr:1,scale:1};
+const SH_LIGHT=`
+uniform vec3 uCam,uSun,uSunCol,uSky,uGnd;uniform vec4 uFog;uniform mat4 uSVP;uniform sampler2DShadow uSh;uniform float uShOn;
+float shadowAt(vec3 w,vec3 n){if(uShOn<.5)return 1.;vec4 s=uSVP*vec4(w+n*.12,1.);vec3 q=s.xyz/s.w*.5+.5;if(q.x<0.||q.x>1.||q.y<0.||q.y>1.||q.z>1.)return 1.;
+ float e=1./2048.,b=q.z-.0012,r=0.;r+=texture(uSh,vec3(q.xy+vec2(-e,-e),b));r+=texture(uSh,vec3(q.xy+vec2(e,-e),b));r+=texture(uSh,vec3(q.xy+vec2(-e,e),b));r+=texture(uSh,vec3(q.xy+vec2(e,e),b));
+ float edge=max(abs(q.x-.5),abs(q.y-.5));return mix(r*.25,1.,smoothstep(.42,.5,edge));}
+vec3 shade(vec3 alb,vec3 n,vec3 w,float emis){float d=max(dot(n,uSun),0.)*shadowAt(w,n);vec3 hemi=mix(uGnd,uSky,n.y*.5+.5);
+ vec3 v=normalize(uCam-w);float rim=pow(1.-max(dot(n,v),0.),3.)*.18;
+ vec3 c=alb*(hemi*.62+uSunCol*d*.95)+alb*rim*uSky+alb*emis*2.2;
+ float fd=length(w-uCam);float f=1.-exp(-pow(fd*uFog.w,1.4));c=mix(c,uFog.rgb,clamp(f,0.,1.));
+ c=c/(c+vec3(.82))*1.32;return pow(clamp(c,0.,1.),vec3(1./2.2));}`;
+const VS_LIT=`in vec3 aPos;in vec3 aNrm;in vec4 aCol;uniform mat4 uVP,uModel;out vec3 vW;out vec3 vN;out vec4 vC;
+void main(){vec4 w=uModel*vec4(aPos,1.);vW=w.xyz;vN=mat3(uModel)*aNrm;vC=aCol;gl_Position=uVP*w;}`;
+const VS_INST=`in vec3 aPos;in vec3 aNrm;in vec4 aCol;in vec4 aI0;in vec4 aI1;uniform mat4 uVP;out vec3 vW;out vec3 vN;out vec4 vC;
+void main(){float c=cos(aI1.w),s=sin(aI1.w);vec3 p=aPos*aI0.w;p=vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);vec3 n=vec3(c*aNrm.x+s*aNrm.z,aNrm.y,-s*aNrm.x+c*aNrm.z);
+ vW=p+aI0.xyz;vN=n;vC=vec4(aCol.rgb*aI1.rgb,aCol.a);gl_Position=uVP*vec4(vW,1.);}`;
+const FS_LIT=SH_LIGHT+`in vec3 vW;in vec3 vN;in vec4 vC;uniform vec4 uTint;out vec4 o;
+void main(){vec3 n=normalize(vN);if(!gl_FrontFacing)n=-n;vec3 a=vC.rgb;a=mix(a,uTint.rgb,uTint.a);o=vec4(shade(a,n,vW,vC.a),1.);}`;
+const FS_TERR=SH_LIGHT+`in vec3 vW;in vec3 vN;in vec4 vC;out vec4 o;
+float h12(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h12(i),h12(i+vec2(1,0)),f.x),mix(h12(i+vec2(0,1)),h12(i+vec2(1,1)),f.x),f.y);}
+void main(){vec3 n=normalize(vN);float d=vn(vW.xz*.7)*.5+vn(vW.xz*2.9)*.3+vn(vW.xz*11.)*.2;vec3 a=vC.rgb*(.82+d*.36);
+ float grid=0.;o=vec4(shade(a,n,vW,0.),1.);}`;
+const FS_GHOST=SH_LIGHT+`in vec3 vW;in vec3 vN;in vec4 vC;uniform vec4 uTint;out vec4 o;
+void main(){vec3 n=normalize(vN);float l=max(dot(n,uSun),0.)*.4+.6;float stripe=step(.5,fract((vW.y+vW.x*.3+uFog.w*0.)*2.5));o=vec4(uTint.rgb*l*(.85+stripe*.15),uTint.a);}`;
+const VS_SKY=`in vec3 aPos;out vec2 vP;void main(){vP=aPos.xy;gl_Position=vec4(aPos.xy,.9999,1.);}`;
+const FS_SKY=`in vec2 vP;uniform mat4 uInv;uniform vec3 uSun,uSky;uniform vec4 uFog;uniform float uTime;out vec4 o;
+void main(){vec4 a=uInv*vec4(vP,1.,1.),b=uInv*vec4(vP,-1.,1.);vec3 d=normalize(a.xyz/a.w-b.xyz/b.w);
+ float h=d.y;vec3 top=vec3(.16,.30,.62),hor=uFog.rgb;vec3 c=mix(hor,top,pow(clamp(h,0.,1.),.55));c=mix(c,vec3(.48,.40,.52),clamp(-h*3.,0.,1.));
+ float s=max(dot(d,uSun),0.);c+=vec3(1.,.86,.62)*(pow(s,900.)*6.+pow(s,24.)*.35+pow(s,4.)*.08);
+ // a ringed gas giant and a small moon hang over the horizon
+ vec3 pd=normalize(vec3(-.55,.32,-.77));float pg=dot(d,pd);if(pg>.985){float r=acos(clamp(pg,-1.,1.))/acos(.985);vec3 pc=mix(vec3(.86,.62,.5),vec3(.56,.38,.42),sin(dot(d,vec3(0,1,0))*90.)*.5+.5);c=mix(c,pc*(1.15-r*.6),smoothstep(1.,.97,r));}
+ vec3 ax=normalize(vec3(.25,1.,.12));float pl=dot(d-pd,ax);vec3 q=d-pd-ax*pl;float rr=length(q);if(abs(pl)<.004&&rr>.21&&rr<.33&&dot(d,pd)>.93)c=mix(c,vec3(.9,.82,.72),.55);
+ vec3 md=normalize(vec3(.62,.22,-.4));float mg=dot(d,md);c=mix(c,vec3(.82,.86,.9),smoothstep(.99955,.9997,mg));
+ o=vec4(pow(clamp(c,0.,1.),vec3(1./2.2)),1.);}`;
+const FS_DEPTH=`out vec4 o;void main(){o=vec4(1.);}`;
+function initRenderer(){const gl=GL.gl;
+ compile('dlit',VS_LIT,FS_DEPTH);compile('dinst',VS_INST,FS_DEPTH);
+ R.sh={size:2048,vp:M4.create(),view:M4.create(),proj:M4.create()};{const S=R.sh;S.fb=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,S.fb);S.tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,S.tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT24,S.size,S.size,0,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,null);
+  for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_COMPARE_MODE,gl.COMPARE_REF_TO_TEXTURE],[gl.TEXTURE_COMPARE_FUNC,gl.LEQUAL],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,k,v);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,S.tex,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
+ compile('lit',VS_LIT,FS_LIT);compile('inst',VS_INST,FS_LIT);compile('terr',VS_LIT,FS_TERR);compile('ghost',VS_LIT,FS_GHOST);compile('sky',VS_SKY,FS_SKY);
+ R.quad=makeMesh({pos:new Float32Array([-1,-1,0,3,-1,0,-1,3,0])});R.ident=M4.create();resize();addEventListener('resize',()=>resize());}
+function resize(){const c=GL.canvas,dpr=Math.min(devicePixelRatio||1,R.maxDPR||2)*R.scale;const w=Math.max(1,Math.round(c.clientWidth*dpr)),h=Math.max(1,Math.round(c.clientHeight*dpr));if(c.width!==w||c.height!==h){c.width=w;c.height=h;}GL.w=w;GL.h=h;}
+function camDir(){const cp=Math.cos(R.pitch);return [Math.sin(R.yaw)*cp,Math.sin(R.pitch),Math.cos(R.yaw)*cp];}
+function setupCamera(){const d=camDir();M4.perspective(R.proj,R.fov,Math.max(1,GL.w)/Math.max(1,GL.h),R.near,R.far);M4.lookAt(R.view,R.cam,[R.cam[0]+d[0],R.cam[1]+d[1],R.cam[2]+d[2]],[0,1,0]);M4.mul(R.vp,R.proj,R.view);M4.invert(R.inv,R.vp);setFrustum(R.vp);}
+function frameUniforms(p){const gl=GL.gl,u=p.u;use(p);if(u.uVP)gl.uniformMatrix4fv(u.uVP,false,R.vp);if(u.uCam)gl.uniform3fv(u.uCam,R.cam);if(u.uSun)gl.uniform3fv(u.uSun,R.sun);if(u.uSunCol)gl.uniform3fv(u.uSunCol,R.sunCol);if(u.uSky)gl.uniform3fv(u.uSky,R.sky);if(u.uGnd)gl.uniform3fv(u.uGnd,R.gnd);if(u.uFog)gl.uniform4fv(u.uFog,R.fog);if(u.uTint)gl.uniform4f(u.uTint,0,0,0,0);if(u.uSVP){gl.uniformMatrix4fv(u.uSVP,false,R.sh.vp);gl.uniform1i(u.uSh,1);gl.uniform1f(u.uShOn,R.shadows?1:0);}}
+// screen point → world ray
+function screenRay(sx,sy){const x=sx*2-1,y=1-sy*2;const a=M4.xform4(R.inv,x,y,-1),b=M4.xform4(R.inv,x,y,1);const o=[a[0]/a[3],a[1]/a[3],a[2]/a[3]],e=[b[0]/b[3],b[1]/b[3],b[2]/b[3]];return {o,d:v3.norm(v3.sub(e,o))};}
+M4.xform4=(m,x,y,z)=>[m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14],m[3]*x+m[7]*y+m[11]*z+m[15]];
+function shadowPass(extra){const gl=GL.gl,S=R.sh;const d=camDir();const fx=Math.round(R.cam[0]+d[0]*30),fz=Math.round(R.cam[2]+d[2]*30);const fy=ground(fx,fz);const ext=R.shExt||70;
+ M4.lookAt(S.view,[fx+R.sun[0]*160,fy+R.sun[1]*160,fz+R.sun[2]*160],[fx,fy,fz],[0,1,0]);M4.ortho(S.proj,-ext,ext,-ext,ext,10,340);M4.mul(S.vp,S.proj,S.view);
+ gl.bindFramebuffer(gl.FRAMEBUFFER,S.fb);gl.viewport(0,0,S.size,S.size);gl.clear(gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.colorMask(false,false,false,false);
+ let p=GL.progs.dlit;use(p);gl.uniformMatrix4fv(p.u.uVP,false,S.vp);for(const o of R.objects){if(o.hidden)continue;const c=o.c||(o.c=M4.xform(o.model,o.mesh.center[0],o.mesh.center[1],o.mesh.center[2]));if(Math.abs(c[0]-fx)>ext+o.mesh.radius+20||Math.abs(c[2]-fz)>ext+o.mesh.radius+20)continue;gl.uniformMatrix4fv(p.u.uModel,false,o.model);drawMesh(o.mesh);}
+ for(const o of extra){gl.uniformMatrix4fv(p.u.uModel,false,o.model);drawMesh(o.mesh);}
+ p=GL.progs.dinst;use(p);gl.uniformMatrix4fv(p.u.uVP,false,S.vp);for(const I of R.inst)drawInstances(I);
+ gl.colorMask(true,true,true,true);gl.enable(gl.CULL_FACE);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,S.tex);gl.activeTexture(gl.TEXTURE0);}
+function renderFrame(){const gl=GL.gl;GL.stats.draws=0;GL.stats.tris=0;resize();setupCamera();const extra=R.extra?R.extra():[];if(R.shadows)shadowPass(extra);
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,GL.w,GL.h);gl.clearColor(R.fog[0],R.fog[1],R.fog[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.disable(gl.BLEND);
+ // terrain
+ let p=GL.progs.terr;frameUniforms(p);gl.uniformMatrix4fv(p.u.uModel,false,R.ident);for(const t of R.terrain)if(inFrustum(t.center,t.radius))drawMesh(t);
+ // objects
+ p=GL.progs.lit;frameUniforms(p);for(const o of R.objects){if(o.hidden)continue;const c=o.c||(o.c=M4.xform(o.model,o.mesh.center[0],o.mesh.center[1],o.mesh.center[2]));if(!inFrustum(c,o.mesh.radius*(o.s||1)+.5))continue;gl.uniformMatrix4fv(p.u.uModel,false,o.model);if(o.tint)gl.uniform4fv(p.u.uTint,o.tint);drawMesh(o.mesh);if(o.tint)gl.uniform4f(p.u.uTint,0,0,0,0);}
+ for(const o of extra){gl.uniformMatrix4fv(p.u.uModel,false,o.model);if(o.tint)gl.uniform4fv(p.u.uTint,o.tint);drawMesh(o.mesh);if(o.tint)gl.uniform4f(p.u.uTint,0,0,0,0);}
+ p=GL.progs.inst;frameUniforms(p);for(const I of R.inst)drawInstances(I);
+ // sky
+ p=GL.progs.sky;use(p);gl.uniformMatrix4fv(p.u.uInv,false,R.inv);gl.uniform3fv(p.u.uSun,R.sun);gl.uniform3fv(p.u.uSky,R.sky);gl.uniform4fv(p.u.uFog,R.fog);gl.disable(gl.CULL_FACE);gl.depthFunc(gl.LEQUAL);drawMesh(R.quad);gl.depthFunc(gl.LESS);gl.enable(gl.CULL_FACE);
+ // build ghosts (see-through)
+ if(R.ghosts.length){p=GL.progs.ghost;frameUniforms(p);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.disable(gl.CULL_FACE);
+  for(const g of R.ghosts){gl.uniformMatrix4fv(p.u.uModel,false,g.model);gl.uniform4fv(p.u.uTint,g.tint);drawMesh(g.mesh);}gl.depthMask(true);gl.disable(gl.BLEND);gl.enable(gl.CULL_FACE);}
+}
+
+// ---- 03-data.js ----
+// ===== Game data: items, recipes, buildings, milestones =====
+const GAME_NAME='Frontier Foundry';
+// shape: how the item looks riding a belt
+const ITEMS={
+ iron_ore:{n:'Iron ore',c:'#8c5a48',s:'ore'},copper_ore:{n:'Copper ore',c:'#c8794c',s:'ore'},limestone:{n:'Limestone',c:'#ddd5c0',s:'ore'},coal:{n:'Coal',c:'#2c2b30',s:'ore'},aurite_ore:{n:'Aurite ore',c:'#e4b84c',s:'ore'},
+ leaves:{n:'Leaves',c:'#5ec8a8',s:'bag'},wood:{n:'Wood',c:'#8a5a7a',s:'log'},biomass:{n:'Biomass',c:'#7aa84a',s:'bag'},biofuel:{n:'Solid biofuel',c:'#a8c84a',s:'block'},
+ iron_ingot:{n:'Iron ingot',c:'#9aa0a8',s:'ingot'},copper_ingot:{n:'Copper ingot',c:'#d8864e',s:'ingot'},aurite_ingot:{n:'Aurite ingot',c:'#f2c85a',s:'ingot'},steel_ingot:{n:'Steel ingot',c:'#5e6670',s:'ingot'},
+ iron_plate:{n:'Iron plate',c:'#b8c0c8',s:'plate'},iron_rod:{n:'Iron rod',c:'#a8b0b8',s:'rod'},screw:{n:'Screws',c:'#c8ccd0',s:'small'},wire:{n:'Wire',c:'#e09050',s:'coil'},cable:{n:'Cable',c:'#30343a',s:'coil'},
+ concrete:{n:'Concrete',c:'#b4b0a8',s:'block'},copper_sheet:{n:'Copper sheet',c:'#e0904e',s:'plate'},reinforced_plate:{n:'Reinforced plate',c:'#8a929c',s:'plate2'},rotor:{n:'Rotor',c:'#9c8a5a',s:'rotor'},
+ modular_frame:{n:'Modular frame',c:'#7c8694',s:'frame'},steel_beam:{n:'Steel beam',c:'#58606a',s:'beam'},steel_pipe:{n:'Steel pipe',c:'#6c747e',s:'pipe'},encased_beam:{n:'Encased beam',c:'#a8a49c',s:'beam'},
+ stator:{n:'Stator',c:'#6a7a5a',s:'rotor'},motor:{n:'Motor',c:'#c86a3a',s:'motor'},quickwire:{n:'Quickwire',c:'#f2cc66',s:'coil'},circuit:{n:'Circuit board',c:'#3a8a5a',s:'plate2'},
+};
+// machine: smelter | foundry | constructor | assembler | bench (hand crafting). time in seconds per cycle.
+const RECIPES=[
+ {id:'iron_ingot',m:'smelter',in:{iron_ore:1},out:{iron_ingot:1},t:2,bench:1},
+ {id:'copper_ingot',m:'smelter',in:{copper_ore:1},out:{copper_ingot:1},t:2,bench:1},
+ {id:'aurite_ingot',m:'smelter',in:{aurite_ore:3},out:{aurite_ingot:1},t:4,tier:6},
+ {id:'steel_ingot',m:'foundry',in:{iron_ore:3,coal:3},out:{steel_ingot:3},t:4,tier:5},
+ {id:'iron_plate',m:'constructor',in:{iron_ingot:3},out:{iron_plate:2},t:6,bench:1},
+ {id:'iron_rod',m:'constructor',in:{iron_ingot:1},out:{iron_rod:1},t:4,bench:1},
+ {id:'screw',m:'constructor',in:{iron_rod:1},out:{screw:4},t:6,bench:1},
+ {id:'wire',m:'constructor',in:{copper_ingot:1},out:{wire:2},t:4,bench:1},
+ {id:'cable',m:'constructor',in:{wire:2},out:{cable:1},t:2,bench:1},
+ {id:'concrete',m:'constructor',in:{limestone:3},out:{concrete:1},t:4,bench:1},
+ {id:'copper_sheet',m:'constructor',in:{copper_ingot:2},out:{copper_sheet:1},t:6,bench:1,tier:3},
+ {id:'biomass_l',m:'constructor',in:{leaves:5},out:{biomass:5},t:5,bench:1,name:'Biomass (leaves)'},
+ {id:'biomass_w',m:'constructor',in:{wood:4},out:{biomass:20},t:4,bench:1,name:'Biomass (wood)'},
+ {id:'biofuel',m:'constructor',in:{biomass:8},out:{biofuel:4},t:4,tier:3},
+ {id:'steel_beam',m:'constructor',in:{steel_ingot:4},out:{steel_beam:1},t:4,tier:5},
+ {id:'steel_pipe',m:'constructor',in:{steel_ingot:3},out:{steel_pipe:2},t:6,tier:5},
+ {id:'quickwire',m:'constructor',in:{aurite_ingot:1},out:{quickwire:5},t:5,tier:6},
+ {id:'reinforced_plate',m:'assembler',in:{iron_plate:6,screw:12},out:{reinforced_plate:1},t:12,bench:1,tier:2},
+ {id:'rotor',m:'assembler',in:{iron_rod:5,screw:25},out:{rotor:1},t:15,bench:1,tier:4},
+ {id:'modular_frame',m:'assembler',in:{reinforced_plate:3,iron_rod:12},out:{modular_frame:2},t:60,bench:1,tier:4},
+ {id:'encased_beam',m:'assembler',in:{steel_beam:4,concrete:5},out:{encased_beam:1},t:10,tier:5},
+ {id:'stator',m:'assembler',in:{steel_pipe:3,wire:8},out:{stator:1},t:12,tier:6},
+ {id:'motor',m:'assembler',in:{rotor:2,stator:2},out:{motor:1},t:12,tier:6},
+ {id:'circuit',m:'assembler',in:{copper_sheet:2,quickwire:4},out:{circuit:1},t:8,tier:6},
+];
+const RECIPE=Object.fromEntries(RECIPES.map(r=>[r.id,r]));
+const recipeName=r=>r.name||ITEMS[Object.keys(r.out)[0]].n;
+// fuel energy in MJ
+const FUEL={leaves:15,wood:100,biomass:180,biofuel:450,coal:300};
+// ports: [x,z,dirAngle,'in'|'out'] in local metres; dir 0 = +z (forward)
+const BUILDINGS={
+ hub:{n:'HUB',w:8,d:6,h:4,cost:{},ports:[[0,-3,Math.PI,'in']],cat:'special',desc:'Your base. Deliver parts here to complete milestones. Belts can feed it directly.'},
+ miner:{n:'Miner Mk.1',w:3,d:5,h:5,cost:{iron_plate:10,concrete:4},power:5,ports:[[0,2.5,0,'out']],cat:'production',desc:'Place on a resource node. Normal node: 60/min, impure 30, pure 120.',rate:60,tier:2},
+ miner2:{n:'Miner Mk.2',w:3,d:5,h:6,cost:{reinforced_plate:6,modular_frame:2,concrete:20},power:12,ports:[[0,2.5,0,'out']],cat:'production',desc:'Twice as fast as the Mk.1: 120/min on a normal node.',rate:120,tier:5},
+ smelter:{n:'Smelter',w:3,d:5,h:3.2,cost:{iron_rod:5,wire:8},power:4,ports:[[0,-2.5,Math.PI,'in'],[0,2.5,0,'out']],cat:'production',machine:'smelter',tier:1},
+ constructor:{n:'Constructor',w:4,d:6,h:4,cost:{reinforced_plate:2,cable:8},power:4,ports:[[0,-3,Math.PI,'in'],[0,3,0,'out']],cat:'production',machine:'constructor',tier:2},
+ assembler:{n:'Assembler',w:6,d:8,h:4.5,cost:{reinforced_plate:8,rotor:4,cable:10},power:15,ports:[[-1.2,-4,Math.PI,'in'],[1.2,-4,Math.PI,'in'],[0,4,0,'out']],cat:'production',machine:'assembler',tier:4},
+ foundry:{n:'Foundry',w:6,d:8,h:5,cost:{modular_frame:10,rotor:10,concrete:20},power:16,ports:[[-1.2,-4,Math.PI,'in'],[1.2,-4,Math.PI,'in'],[0,4,0,'out']],cat:'production',machine:'foundry',tier:5},
+ storage:{n:'Storage Container',w:3,d:4,h:3,cost:{iron_plate:10,iron_rod:10},ports:[[0,-2,Math.PI,'in'],[0,2,0,'out']],cat:'logistics',desc:'Holds 2,000 items of any kind.',cap:2000,tier:1},
+ splitter:{n:'Splitter',w:2,d:2,h:1.6,cost:{iron_plate:2,cable:2},ports:[[0,-1,Math.PI,'in'],[0,1,0,'out'],[-1,0,-Math.PI/2,'out'],[1,0,Math.PI/2,'out']],cat:'logistics',desc:'Splits one belt evenly into up to three.',tier:3},
+ merger:{n:'Merger',w:2,d:2,h:1.6,cost:{iron_plate:2,iron_rod:2},ports:[[0,-1,Math.PI,'in'],[-1,0,-Math.PI/2,'in'],[1,0,Math.PI/2,'in'],[0,1,0,'out']],cat:'logistics',desc:'Combines up to three belts into one.',tier:3},
+ cpole:{n:'Conveyor Pole',w:1,d:1,h:1.7,cost:{iron_rod:1,iron_plate:1},ports:[[0,-.5,Math.PI,'in'],[0,.5,0,'out']],cat:'logistics',desc:'Holds a belt up anywhere. Chain belts through poles to route them where you like.',tier:1,pass:1},
+ cpoleT:{n:'Tall Conveyor Pole',w:1,d:1,h:4.7,py:4,cost:{iron_rod:2,iron_plate:2},ports:[[0,-.5,Math.PI,'in'],[0,.5,0,'out']],cat:'logistics',desc:'Lifts belts 4 m up, over walkways and other belts.',tier:2,pass:1},
+ burner:{n:'Biomass Burner',w:4,d:4,h:3.5,cost:{iron_plate:15,iron_rod:15,wire:25},gen:30,fuels:['leaves','wood','biomass','biofuel'],ports:[[0,-2,Math.PI,'in']],cat:'power',desc:'30 MW. Burns leaves, wood, biomass or biofuel. Fill it by hand or by belt.',tier:1},
+ coalgen:{n:'Coal Generator',w:6,d:9,h:6,cost:{reinforced_plate:15,rotor:8,cable:30},gen:75,fuels:['coal'],ports:[[0,-4.5,Math.PI,'in']],cat:'power',desc:'75 MW from coal. Feed it with a belt.',tier:4},
+ pole:{n:'Power Pole',w:1,d:1,h:6,cost:{wire:3,iron_rod:1,concrete:1},cat:'power',desc:'Carries power up to 30 m. Machines and poles in range are wired automatically.',tier:1,range:30},
+ foundation:{n:'Foundation',w:4,d:4,h:1,cost:{concrete:5},cat:'structure',desc:'A flat 4 x 4 m platform. Stack and line them up to build level ground.',tier:3},
+ skyhook:{n:'Skyhook',w:14,d:14,h:40,cost:{concrete:200,steel_beam:100,modular_frame:30},ports:[[0,-7,Math.PI,'in']],cat:'special',desc:'The orbital lift. Feed it the final shipments to finish your mission.',tier:6},
+};
+// belts: speed in metres per second, items sit 1 m apart → 60 × speed items per minute
+// belts follow the classic progression; items sit 1 m apart so speed (m/s) = items per minute / 60
+const BELTS={
+ belt1:{n:'Conveyor Belt Mk.1',mk:1,rate:60,cost:{iron_plate:1},per:3,tier:1,col:'#d8a43a'},
+ belt2:{n:'Conveyor Belt Mk.2',mk:2,rate:120,cost:{reinforced_plate:1},per:3,tier:3,col:'#d8d8d0'},
+ belt3:{n:'Conveyor Belt Mk.3',mk:3,rate:270,cost:{modular_frame:1},per:3,tier:4,col:'#5a8ad8'},
+ belt4:{n:'Conveyor Belt Mk.4',mk:4,rate:480,cost:{steel_beam:1},per:3,tier:5,col:'#a85ad8'},
+ belt5:{n:'Conveyor Belt Mk.5',mk:5,rate:780,cost:{motor:1},per:6,tier:6,col:'#e05a4a'},
+};
+for(const b of Object.values(BELTS)){b.speed=b.rate/60;b.desc=b.rate+' items/min. '+Object.entries(b.cost).map(([k,v])=>v+' '+ITEMS[k].n.toLowerCase())+' per '+b.per+' m. Build over an older belt to upgrade it.';}
+// milestones: deliver to the HUB to unlock the next tier
+const MILESTONES=[
+ {n:'Base Camp',need:{iron_rod:10,iron_plate:10},unlock:'Smelter, Conveyor Belt Mk.1, Storage Container, Biomass Burner and Power Pole',msg:'Power a smelter with a biomass burner, then feed it ore so you can stop smelting by hand.'},
+ {n:'Field Power',need:{iron_plate:40,wire:40,iron_rod:30},unlock:'Miner Mk.1, Constructor and the Reinforced Plate recipe',msg:'Put a miner on a node, belt it into a smelter, then into a constructor. Watch it run.'},
+ {n:'Logistics',need:{reinforced_plate:20,cable:60,concrete:50},unlock:'Splitter, Merger, Foundation, Conveyor Belt Mk.2, Copper Sheet and Solid Biofuel',msg:'Split and merge belts to build bigger production lines.'},
+ {n:'Assembly',need:{reinforced_plate:60,iron_plate:200,cable:150,concrete:150},unlock:'Assembler, Coal Generator, Conveyor Belt Mk.3, Rotor and Modular Frame',msg:'Assemblers combine two parts. Coal generators give real power.'},
+ {n:'Steel Works',need:{modular_frame:25,rotor:40,cable:300,concrete:300},unlock:'Foundry, Miner Mk.2, Conveyor Belt Mk.4, Steel Ingot, Steel Beam, Steel Pipe and Encased Beam',msg:'Foundries make steel from iron ore and coal. Coal nodes are out past the ridges.'},
+ {n:'Orbit',need:{encased_beam:80,steel_pipe:200,modular_frame:60,reinforced_plate:200},unlock:'the Skyhook, Conveyor Belt Mk.5, Aurite Ingot, Quickwire, Stator, Motor and Circuit Board',msg:'Build the Skyhook and send up the final shipments. Aurite ore is far out in the badlands.'},
+];
+const SKYHOOK_PHASES=[{n:'Phase 1 · Anchor',need:{encased_beam:100,motor:30,circuit:50}},{n:'Phase 2 · Tether',need:{motor:120,circuit:200,modular_frame:150,steel_beam:400}}];
+const NODE_TYPES={iron_ore:{n:'Iron',c:'#9a5e4a'},copper_ore:{n:'Copper',c:'#d07a48'},limestone:{n:'Limestone',c:'#e4dccb'},coal:{n:'Coal',c:'#2a2a30'},aurite_ore:{n:'Aurite',c:'#f0c050'}};
+const PURITY=[{n:'Impure',k:.5},{n:'Normal',k:1},{n:'Pure',k:2}];
+const tierOf=o=>o.tier||0;
+const unlocked=o=>tierOf(o)<=S.tier;
+
+// ---- 04-world.js ----
+// ===== The planet: terrain, resource nodes, alien flora =====
+const WORLD={half:320,step:2,n:0,h:null,nodes:[],flora:[],seed:7};
+function rawHeight(x,z){
+ const d=Math.hypot(x,z);
+ let h=fbm(x*.0042,z*.0042,5)*34+ridged(x*.009+3,z*.009-7,4)*16-6;
+ h+=Math.max(0,fbm(x*.002-11,z*.002+5,3))*60;// big plateaus
+ const mesa=smooth(.18,.26,fbm(x*.006+40,z*.006-20,3));h=lerp(h,Math.max(h,22+fbm(x*.03,z*.03,2)*3),mesa*smooth(140,220,d));
+ h=lerp(10+fbm(x*.02,z*.02,2)*1.2,h,smooth(46,120,d));// a broad flat landing zone around the HUB
+ const e=Math.max(Math.abs(x),Math.abs(z));h+=smooth(WORLD.half-60,WORLD.half,e)*70;// ridges close the map
+ return h;}
+function buildHeights(){const W=WORLD,n=W.n=Math.round(W.half*2/W.step)+1;W.h=new Float32Array(n*n);
+ for(let j=0;j<n;j++)for(let i=0;i<n;i++)W.h[j*n+i]=rawHeight(-W.half+i*W.step,-W.half+j*W.step);}
+function ground(x,z){const W=WORLD,n=W.n;let fx=(x+W.half)/W.step,fz=(z+W.half)/W.step;fx=clamp(fx,0,n-1.001);fz=clamp(fz,0,n-1.001);const i=Math.floor(fx),j=Math.floor(fz),u=fx-i,v=fz-j;const H=W.h;
+ const a=H[j*n+i],b=H[j*n+i+1],c=H[(j+1)*n+i],d=H[(j+1)*n+i+1];return u+v<1?a+(b-a)*u+(c-a)*v:d+(c-d)*(1-u)+(b-d)*(1-v);}
+function groundNormal(x,z){const e=1;const hx=ground(x+e,z)-ground(x-e,z),hz=ground(x,z+e)-ground(x,z-e);return v3.norm([-hx,2*e,-hz]);}
+const TERR_COL={grass:COL('#3e9c86'),moss:COL('#6b4f93'),sand:COL('#c9a77f'),rock:COL('#6c6474'),high:COL('#9a8aa8'),dust:COL('#b07a6a')};
+function terrainColor(x,z,h,ny){const T=TERR_COL;let c=T.grass;const m=fbm(x*.012+9,z*.012,3);c=mixc(c,T.moss,smooth(.05,.25,m));
+ const ds=fbm(x*.008-30,z*.008+12,3);c=mixc(c,T.dust,smooth(.15,.4,ds)*.8);c=mixc(c,T.sand,smooth(9,6,h)*.7);
+ c=mixc(c,T.high,smooth(34,52,h));c=mixc(c,T.rock,smooth(.86,.7,ny));return c;}
+function buildTerrainMeshes(){const W=WORLD,n=W.n,CH=40;
+ for(let cj=0;cj<n-1;cj+=CH)for(let ci=0;ci<n-1;ci+=CH){const ni=Math.min(CH,n-1-ci),nj=Math.min(CH,n-1-cj);const pos=[],nrm=[],col=[],idx=[];
+  for(let j=0;j<=nj;j++)for(let i=0;i<=ni;i++){const gi=ci+i,gj=cj+j,x=-W.half+gi*W.step,z=-W.half+gj*W.step,h=W.h[gj*n+gi];pos.push(x,h,z);
+   const hl=W.h[gj*n+Math.max(0,gi-1)],hr=W.h[gj*n+Math.min(n-1,gi+1)],hd=W.h[Math.max(0,gj-1)*n+gi],hu=W.h[Math.min(n-1,gj+1)*n+gi];const N=v3.norm([hl-hr,2*W.step,hd-hu]);nrm.push(...N);
+   const c=terrainColor(x,z,h,N[1]);col.push(c[0],c[1],c[2],0);}
+  for(let j=0;j<nj;j++)for(let i=0;i<ni;i++){const a=j*(ni+1)+i,b=a+ni+1;idx.push(a,b,a+1,a+1,b,b+1);}
+  R.terrain.push(makeMesh({pos:new Float32Array(pos),nrm:new Float32Array(nrm),col:new Float32Array(col),idx}));}}
+// ---- resource nodes ----
+function placeNodes(){const rnd=mulberry(WORLD.seed*977+3),W=WORLD,out=[];
+ const ok=(x,z,minD)=>{if(Math.abs(x)>W.half-70||Math.abs(z)>W.half-70)return false;if(Math.hypot(x,z)<22)return false;for(const o of out)if(Math.hypot(o.x-x,o.z-z)<minD)return false;const n=groundNormal(x,z);return n[1]>.9;};
+ const add=(type,purity,r0,r1,tries=400)=>{for(let t=0;t<tries;t++){const a=rnd()*TAU,r=r0+rnd()*(r1-r0),x=Math.cos(a)*r,z=Math.sin(a)*r;if(ok(x,z,16)){out.push({id:out.length,type,purity,x:Math.round(x),z:Math.round(z),y:0});return;}}};
+ // starter cluster within reach of the HUB
+ add('iron_ore',1,30,55);add('iron_ore',1,35,65);add('copper_ore',1,35,65);add('limestone',1,35,70);add('iron_ore',0,40,80);add('copper_ore',0,45,85);
+ for(let k=0;k<6;k++)add('iron_ore',k<2?2:rnd()<.5?1:0,80,230);for(let k=0;k<5;k++)add('copper_ore',k<1?2:rnd()<.5?1:0,80,230);
+ for(let k=0;k<4;k++)add('limestone',rnd()<.6?1:2,70,220);for(let k=0;k<6;k++)add('coal',k<2?2:rnd()<.5?1:0,120,250);for(let k=0;k<4;k++)add('aurite_ore',k<1?2:1,190,250);
+ for(const o of out)o.y=ground(o.x,o.z);W.nodes=out;}
+function nodeMesh(type){const g=new GB(),rnd=mulberry(type.length*31+7),c=NODE_TYPES[type].c;
+ g.add(PRIM.cyl(2.4,2.9,.5,10),T(0,-.2,0),'#4a4250');
+ for(let k=0;k<9;k++){const a=k/9*TAU+rnd()*.5,r=k?.9+rnd()*1.2:0,s=k?.55+rnd()*.5:1.1;g.add(PRIM.ico(s,1,{noise:.35,seed:k+3}),T(Math.cos(a)*r,s*.45,Math.sin(a)*r,rnd()*6,rnd(),0,1,.75+rnd()*.4,1),k%3?c:'#5a5260');}
+ if(type==='aurite_ore'||type==='copper_ore')for(let k=0;k<5;k++){const a=rnd()*TAU;g.add(PRIM.cone(.18,1.2,5),T(Math.cos(a)*1.2,.2,Math.sin(a)*1.2,0,rnd()*.6-.3,rnd()*.6-.3),COL(c,.6));}
+ return g.build();}
+// ---- flora (instanced, harvestable) ----
+const FLORA={kinds:{}};
+function floraMeshes(){const K=FLORA.kinds;
+ {const g=new GB();g.add(PRIM.lathe([[.38,0],[.32,1.5],[.22,3.2],[.28,3.6]],8),null,'#8c7c8e');g.add(PRIM.sphere(1.5,10,7),T(0,4.2,0,0,0,0,1,.62,1),COL('#ffffff',.25));for(let k=0;k<6;k++){const a=k/6*TAU;g.add(PRIM.sphere(.18,6,4),T(Math.cos(a)*1.1,3.6,Math.sin(a)*1.1),COL('#fff4c0',1.2));}K.bulb=g.build();}
+ {const g=new GB();g.add(PRIM.lathe([[.3,0],[.22,2],[.12,5.5],[.02,7]],7),null,'#8a7a90');for(let k=0;k<4;k++)g.add(PRIM.cone(.9-k*.15,1.4,7),T(0,2.2+k*1.2,0),COL('#ffffff',.1));K.spire=g.build();}
+ {const g=new GB();for(let k=0;k<5;k++){const a=k/5*TAU;g.add(PRIM.sphere(.55,7,5),T(Math.cos(a)*.45,.4,Math.sin(a)*.45),'#ffffff');}g.add(PRIM.sphere(.6,7,5),T(0,.7,0),'#ffffff');K.bush=g.build();}
+ {const g=new GB();g.add(PRIM.ico(1,1,{noise:.4,seed:4}),T(0,.3,0,0,0,0,1,.6,1),'#ffffff');K.rock=g.build();}}
+const FLORA_COL={bulb:[['#8a5a8c','#4ad0b0'],['#6a4a7a','#e07ab0'],['#7a5a6a','#7ab0f0']],spire:[['#5a4a6a','#3a9a8a'],['#4a3a5a','#8a5ab0']],bush:[['#2f8a78'],['#7a4a9a'],['#3a7aa8']],rock:[['#6c6474'],['#7a6e78']]};
+function placeFlora(){const rnd=mulberry(WORLD.seed*131+11),W=WORLD,out=[];
+ const tryAdd=(kind,n,minR)=>{let made=0;for(let t=0;t<n*6&&made<n;t++){const x=(rnd()*2-1)*(W.half-30),z=(rnd()*2-1)*(W.half-30);if(Math.hypot(x,z)<minR)continue;
+  const dens=fbm(x*.01+5,z*.01-3,3);if(kind!=='rock'&&dens<-.05)continue;if(groundNormal(x,z)[1]<.8)continue;let near=false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<6){near=true;break;}if(near)continue;
+  const pal=FLORA_COL[kind][Math.floor(rnd()*FLORA_COL[kind].length)];out.push({i:out.length,kind,x,z,y:ground(x,z),s:kind==='rock'?.6+rnd()*1.6:.7+rnd()*.7,r:rnd()*TAU,pal,alive:true});made++;}};
+ tryAdd('bulb',700,30);tryAdd('spire',450,30);tryAdd('bush',700,16);tryAdd('rock',350,20);W.flora=out;}
+function floraInstancers(){FLORA.inst={};for(const k of Object.keys(FLORA.kinds)){const list=WORLD.flora.filter(f=>f.kind===k);  const I=instancer(FLORA.kinds[k],list.length+4);FLORA.inst[k]=I;R.inst.push(I);}refreshFlora();}
+function refreshFlora(){for(const k of Object.keys(FLORA.inst)){const I=FLORA.inst[k];let n=0;for(const f of WORLD.flora){if(f.kind!==k||!f.alive)continue;const c=COL(f.pal[f.pal.length-1]);const o=n*8;I.data[o]=f.x;I.data[o+1]=f.y-.1;I.data[o+2]=f.z;I.data[o+3]=f.s;I.data[o+4]=c[0];I.data[o+5]=c[1];I.data[o+6]=c[2];I.data[o+7]=f.r;n++;}I.n=n;}}
+function initWorld(){buildHeights();buildTerrainMeshes();placeNodes();WORLD.nodeMesh={};for(const t of Object.keys(NODE_TYPES))WORLD.nodeMesh[t]=nodeMesh(t);
+ for(const nd of WORLD.nodes){nd.obj={mesh:WORLD.nodeMesh[nd.type],model:T(nd.x,nd.y,nd.z,nd.id*1.7,0,0,PURITY[nd.purity].k>1?1.2:PURITY[nd.purity].k<1?.8:1)};R.objects.push(nd.obj);}
+ floraMeshes();placeFlora();floraInstancers();}
+
+// ---- 05-models.js ----
+// ===== Models: buildings, items on belts, conveyor geometry =====
+const MODELS={b:{},anim:{},items:{},itemInst:{}};
+const C_FRAME='#3d424c',C_PANEL='#f08a32',C_LIGHT='#ece6da',C_DARK='#2c3038',C_TEAL='#3fc4ae',C_GRAY='#a4acb6';
+const PORT_Y=1.0;
+const RB=(w,h,d,r=.25)=>PRIM.rbox(w,h,d,r,3);
+function portFrame(g,p,py=PORT_Y){const [x,z,a,io]=p;const m=T(x,py-PORT_Y,z,a);const col=io==='in'?'#f2b440':'#4ad0a0';
+ g.add(RB(1.5,.22,.7,.08),mm(m,T(0,PORT_Y-.32,-.05)),C_DARK);g.add(RB(.2,1.3,.7,.08),mm(m,T(-.75,PORT_Y-.32,-.05)),C_FRAME);g.add(RB(.2,1.3,.7,.08),mm(m,T(.75,PORT_Y-.32,-.05)),C_FRAME);g.add(RB(1.7,.22,.7,.08),mm(m,T(0,PORT_Y+.85,-.05)),C_FRAME);
+ g.add(RB(1.1,.06,.12,.03),mm(m,T(0,PORT_Y+1.08,.1)),COL(col,1.1));}
+const mm=(a,b)=>M4.mul(new Float32Array(16),a,b);
+function feet(g,w,d){for(const sx of [-1,1])for(const sz of [-1,1]){g.add(PRIM.cyl(.24,.32,.5,10),T(sx*(w/2-.35),-.2,sz*(d/2-.35)),C_DARK);g.add(PRIM.cyl(.36,.36,.08,10),T(sx*(w/2-.35),-.22,sz*(d/2-.35)),C_FRAME);}}
+const lamp=(g,x,y,z,c='#58e0c8')=>{g.add(PRIM.cyl(.12,.15,.1,8),T(x,y-.12,z),C_DARK);g.add(PRIM.sphere(.13,8,6),T(x,y,z),COL(c,1.6));};
+// ---- detail kit ----
+const D_={
+ // a row of bolts along x
+ bolts(g,x0,x1,y,z,n,ry=0,c='#8a929c'){for(let i=0;i<n;i++){const x=lerp(x0,x1,n>1?i/(n-1):.5);const m=T(0,0,0,ry);const P=M4.xform(m,x,y,z);g.add(PRIM.cyl(.05,.05,.06,6),T(P[0],P[1],P[2],ry,Math.PI/2),c);}},
+ // slotted vent on a face that looks along +z (rotate with ry)
+ vent(g,x,y,z,w,h,ry=0,n=5){const m=T(x,y,z,ry);g.add(RB(w+.12,h+.12,.08,.04),mm(m,T(0,-.06,-.02)),C_DARK);for(let i=0;i<n;i++)g.add(PRIM.box(w,.05,.06,{y0:true}),mm(m,T(0,(i+.5)/n*h-.03,.04,0,-.5)),C_FRAME);},
+ // vertical ladder against a wall, facing +z
+ ladder(g,x,y,z,h,ry=0){const m=T(x,y,z,ry);for(const s of [-.25,.25])g.add(PRIM.cyl(.035,.035,h,6),mm(m,T(s,0,.06)),C_DARK);for(let k=.3;k<h;k+=.35)g.add(PRIM.cyl(.025,.025,.5,5),mm(m,T(-.25,k,.06,0,0,-Math.PI/2)),C_GRAY);},
+ // railing around a rectangle on top of something
+ rail(g,x,y,z,w,d){for(const [px,pz] of [[-w/2,-d/2],[w/2,-d/2],[-w/2,d/2],[w/2,d/2],[0,-d/2],[0,d/2],[-w/2,0],[w/2,0]])g.add(PRIM.cyl(.03,.03,.7,5),T(x+px,y,z+pz),C_PANEL);
+  for(const s of [-1,1]){g.add(PRIM.box(w,.05,.05,{y0:true}),T(x,y+.68,z+s*d/2),C_PANEL);g.add(PRIM.box(.05,.05,d,{y0:true}),T(x+s*w/2,y+.68,z),C_PANEL);g.add(PRIM.box(w,.03,.03,{y0:true}),T(x,y+.35,z+s*d/2),C_PANEL);g.add(PRIM.box(.03,.03,d,{y0:true}),T(x+s*w/2,y+.35,z),C_PANEL);}},
+ // yellow and black warning stripes on a band facing +z
+ hazard(g,x,y,z,w,h,ry=0){const m=T(x,y,z,ry);const n=Math.max(3,Math.round(w/.3));for(let i=0;i<n;i++)g.add(PRIM.box(w/n,h,.03,{y0:true}),mm(m,T(-w/2+(i+.5)*w/n,0,0,0,0,0)),i%2?'#26282c':'#f2c232');},
+ // round gauge with a needle, facing +z
+ gauge(g,x,y,z,r=.18,ry=0){const m=T(x,y,z,ry);g.add(PRIM.cyl(r+.03,r+.03,.06,14),mm(m,T(0,0,0,0,Math.PI/2)),C_DARK);g.add(PRIM.cyl(r,r,.07,14),mm(m,T(0,0,0,0,Math.PI/2)),'#f4f2ea');g.add(PRIM.box(.02,r*.8,.02,{y0:true}),mm(m,T(0,0,.08,0,0,-.7)),'#e0402a');},
+ // pipe between two points
+ pipe(g,a,b,r=.12,c=C_GRAY){const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],L=Math.hypot(dx,dy,dz);g.add(PRIM.cyl(r,r,L,8),mm(T(a[0],a[1],a[2],Math.atan2(dx,dz),Math.PI/2-Math.atan2(dy,Math.hypot(dx,dz))),T()),c);
+  for(const p of [a,b])g.add(PRIM.sphere(r*1.35,8,6),T(p[0],p[1],p[2]),C_FRAME);},
+ // small control console facing +z
+ console_(g,x,y,z,ry=0){const m=T(x,y,z,ry);g.add(RB(.9,1,.4,.1),m,C_FRAME);g.add(RB(.8,.5,.06,.04),mm(m,T(0,.45,.2)),COL('#58e0c8',.9));for(let i=0;i<3;i++)g.add(PRIM.cyl(.05,.05,.05,6),mm(m,T(-.25+i*.25,.2,.21,0,Math.PI/2)),COL(['#e0402a','#f2c232','#4ad0a0'][i],.8));},
+ // fan housing facing up
+ fanbox(g,x,y,z,r=.7){g.add(PRIM.lathe([[r,0],[r+.08,.05],[r+.08,.35],[r,.4],[r*.95,.4],[r*.95,.05]],16),T(x,y,z),C_FRAME);g.add(PRIM.cyl(r*.95,r*.95,.04,16),T(x,y+.08,z),C_DARK);for(let k=0;k<6;k++)g.add(PRIM.box(.06,.04,r*1.9,{y0:true}),T(x,y+.33,z,k*Math.PI/6),C_FRAME);},
+ // stacked cable bundle running along z
+ cables(g,x,y,z0,z1,cols=['#e0402a','#3a7ad8','#f2c232']){cols.forEach((c,i)=>g.add(PRIM.cyl(.05,.05,Math.abs(z1-z0),6),T(x+i*.11,y,Math.min(z0,z1),0,Math.PI/2),c));},
+ // panel seams on a face looking +z
+ seams(g,x,y,z,w,h,ry=0,n=3){const m=T(x,y,z,ry);for(let i=1;i<n;i++)g.add(PRIM.box(.03,h,.02,{y0:true}),mm(m,T(-w/2+i*w/n,0,0)),'#c8c0b0');},
+ decal(g,x,y,z,w,h,c,ry=0){g.add(PRIM.box(w,h,.02,{y0:true}),T(x,y,z,ry),c);},
+};
+const BUILD_MODEL={
+ hub(g){g.add(RB(8,.5,6,.2),null,C_GRAY);for(let i=-3;i<=3;i+=1.5)g.add(PRIM.box(.06,.02,5.6),T(i,.5,0),'#8a929c');D_.hazard(g,0,.5,-3.01,7.6,.12,Math.PI);
+  // terminal tower with screen and antenna
+  g.add(RB(2.4,3.4,1.8,.45),T(-2.4,.5,.8),C_LIGHT);g.add(RB(2.5,.5,1.9,.2),T(-2.4,.5,.8),C_PANEL);g.add(RB(1.9,1.3,.12,.06),T(-2.4,2,1.68),COL('#58e0c8',1.1));for(let k=0;k<4;k++)g.add(PRIM.box(1.5,.04,.02,{y0:true}),T(-2.4,2.25+k*.25,1.76),COL('#bff8ee',1.4));
+  g.add(RB(2.6,.3,2,.15),T(-2.4,3.9,.8),C_PANEL);D_.vent(g,-2.4,1.05,1.71,1.4,.5,0,4);D_.vent(g,-3.61,1.4,.8,1,1,-Math.PI/2,6);D_.ladder(g,-1.2,.5,.2,3.5,Math.PI/2);
+  // crafting bench with tools
+  g.add(RB(2.8,1.1,1.3,.3),T(1.6,.5,1.8),C_LIGHT);g.add(RB(2.9,.14,1.4,.07),T(1.6,1.6,1.8),C_DARK);g.add(RB(.6,.6,.6,.2),T(.8,1.74,1.8),C_TEAL);g.add(PRIM.box(.5,.08,.25,{y0:true}),T(1.9,1.74,1.7,.4),C_PANEL);g.add(PRIM.cyl(.04,.04,.5,6),T(2.4,1.78,2,0,Math.PI/2,.6),C_GRAY);D_.vent(g,1.6,.7,2.46,2,.5,0,4);
+  // fuel/storage sphere
+  g.add(PRIM.sphere(1.1,14,10),T(2.2,1.6,-1.6,0,0,0,1,.9,1),C_LIGHT);g.add(PRIM.cyl(1.12,1.12,.25,16),T(2.2,1.3,-1.6),C_PANEL);g.add(PRIM.cyl(.7,.9,.8,14),T(2.2,.5,-1.6),C_FRAME);D_.gauge(g,2.2,1.9,-.55,.16);
+  D_.pipe(g,[2.2,1,-.6],[-1.2,1,-.6],.1);D_.pipe(g,[-1.2,1,-.6],[-1.2,1,0],.1);
+  g.add(PRIM.cyl(.08,.1,6,6),T(-3.4,.5,-2.4),C_FRAME);lamp(g,-3.4,6.55,-2.4,'#ff6a4a');g.add(PRIM.lathe([[.05,0],[1.1,.4],[1.2,.5],[.1,.52]],14),T(-3.4,5.2,-2.4,0,-.5),C_LIGHT);g.add(PRIM.cyl(.03,.03,.7,5),T(-3.4,5.3,-2.4,0,-.5),C_DARK);
+  for(const [x,z] of [[3.7,2.7],[-3.7,2.7],[3.7,-2.7]])lamp(g,x,.75,z,'#ffb84a');},
+ miner(g){feet(g,3,5);g.add(RB(3,.5,5,.2),T(0,.2,0),C_FRAME);D_.hazard(g,0,.25,2.51,2.8,.4);
+  g.add(RB(2.4,2.6,2.4,.5),T(0,.7,-.6),C_LIGHT);g.add(RB(2.5,.5,2.5,.2),T(0,1.6,-.6),C_PANEL);D_.vent(g,0,2.2,.62,1.4,.6,0,4);D_.vent(g,-1.21,1,-.6,1.2,.5,-Math.PI/2,3);D_.seams(g,0,.8,.61,2,.75,0,3);
+  g.add(RB(1.4,1.8,1.4,.4),T(0,3.2,-.6),C_LIGHT);g.add(RB(1.5,.3,1.5,.15),T(0,4.7,-.6),C_PANEL);D_.rail(g,0,3.3,-.6,2.3,2.3);
+  // drill guide rails and hydraulic pistons
+  for(const s of [-1,1]){g.add(RB(.22,2.8,.22,.08),T(s*.95,.6,1.55),C_DARK);D_.pipe(g,[s*.6,2.9,.6],[s*.75,1.8,1.3],.09,C_GRAY);}
+  g.add(RB(1.6,.7,1.8,.25),T(0,.7,1.5),C_DARK);D_.cables(g,1.25,1.3,-1.8,.6);D_.gauge(g,.7,3.5,.11,.13);D_.console_(g,-1.25,.7,-2.1,Math.PI);D_.ladder(g,1.21,.7,-.6,3.6,Math.PI/2);lamp(g,.8,4.4,-1.3);lamp(g,-.8,4.4,-1.3);lamp(g,0,5.15,-.6,'#ffb84a');},
+ smelter(g){feet(g,3,5);g.add(RB(3,2.5,4.4,.5),T(0,.3,0),C_LIGHT);g.add(RB(3.1,.6,4.5,.25),T(0,.3,0),C_PANEL);D_.hazard(g,0,.32,2.26,2.6,.12);
+  g.add(RB(1.7,1.1,.25,.12),T(0,1.1,2.1),C_DARK);g.add(RB(1.5,.9,.2,.1),T(0,1.2,2.15),COL('#ff7a2a',2.2));for(let i=0;i<4;i++)g.add(PRIM.box(.05,.9,.04,{y0:true}),T(-.55+i*.37,1.2,2.27),C_DARK);
+  D_.vent(g,1.51,1.2,-.6,2,.8,Math.PI/2,6);D_.vent(g,-1.51,1.2,-.6,2,.8,-Math.PI/2,6);D_.seams(g,0,1,-2.21,2.2,1.6,Math.PI,3);
+  g.add(PRIM.cyl(.45,.55,1.6,12),T(.7,2.7,-1.2),C_FRAME);g.add(PRIM.cyl(.5,.5,.2,12),T(.7,4.2,-1.2),C_PANEL);g.add(PRIM.cyl(.35,.35,.06,12),T(.7,4.42,-1.2),'#1a1c20');
+  D_.pipe(g,[-.8,2.8,-1.6],[-.8,2.8,.8],.1);D_.gauge(g,-.8,3.25,.95,.14);lamp(g,-1,2.9,1.6);D_.bolts(g,-1.3,1.3,2.85,2.0,5);},
+ constructor(g){feet(g,4,6);g.add(RB(4,1.2,5.8,.3),T(0,.3,0),C_FRAME);D_.hazard(g,0,.35,2.91,3.8,.15);D_.hazard(g,0,.35,-2.91,3.8,.15,Math.PI);
+  g.add(RB(3.6,2.4,3.4,.55),T(0,1.4,-.6),C_LIGHT);g.add(RB(3.7,.45,3.5,.2),T(0,1.4,-.6),C_PANEL);
+  // glass window showing the press inside
+  g.add(RB(2.7,1.3,.16,.06),T(0,2.05,1.1),C_DARK);g.add(RB(2.6,1.2,.12,.06),T(0,2.1,1.12),COL('#9ad8ff',.4));g.add(RB(1.2,.25,.8,.08),T(0,1.95,.5),'#7a828c');
+  // work bed sticking out the front
+  g.add(RB(2.4,.25,2,.1),T(0,1.5,1.9),C_GRAY);for(let i=0;i<5;i++)g.add(PRIM.cyl(.07,.07,2.2,8),T(-1.1+i*.55,1.62,1.9,0,0,Math.PI/2),C_DARK);
+  g.add(RB(4,.35,.5,.15),T(0,3.75,-.6),C_DARK);g.add(RB(.4,1,.4,.15),T(-1.8,2.9,-.6),C_DARK);g.add(RB(.4,1,.4,.15),T(1.8,2.9,-.6),C_DARK);
+  D_.vent(g,1.81,1.8,-.8,2,.8,Math.PI/2,6);D_.console_(g,-2.05,1.5,.6,-Math.PI/2);D_.fanbox(g,.9,3.8,-1.7,.45);D_.cables(g,-1.6,3.95,-2.2,1.2);D_.gauge(g,1.3,3.1,1.12,.14);lamp(g,1.5,3.95,-.6);lamp(g,-1.5,3.95,-.6,'#ffb84a');},
+ assembler(g){feet(g,6,8);g.add(RB(6,1.2,7.8,.35),T(0,.3,0),C_FRAME);D_.hazard(g,0,.35,3.91,5.8,.15);D_.hazard(g,0,.35,-3.91,5.8,.15,Math.PI);
+  g.add(RB(5.2,2.8,4.6,.7),T(0,1.4,-.4),C_LIGHT);g.add(RB(5.3,.5,4.7,.25),T(0,1.4,-.4),C_PANEL);g.add(RB(4.1,1.5,.16,.06),T(0,2.35,1.9),C_DARK);g.add(RB(4,1.4,.12,.06),T(0,2.4,1.92),COL('#9ad8ff',.4));
+  for(const x of [-1.2,1.2])g.add(RB(1,.6,1,.2),T(x,1.9,1.2),'#7a828c');
+  for(const x of [-1.6,1.6]){g.add(PRIM.cyl(.95,.95,1,16),T(x,4.1,-.6),C_LIGHT);g.add(PRIM.cyl(1,1,.2,16),T(x,4.1,-.6),C_PANEL);D_.fanbox(g,x,5.1,-.6,.7);}
+  D_.vent(g,2.61,1.9,-.4,3,1.2,Math.PI/2,8);D_.vent(g,-2.61,1.9,-.4,3,1.2,-Math.PI/2,8);D_.rail(g,0,4.2,-.4,5,4.4);D_.ladder(g,2.61,1.5,1.3,2.8,Math.PI/2);
+  D_.pipe(g,[-2.4,3.4,-2.6],[2.4,3.4,-2.6],.14);D_.pipe(g,[-2.4,3.4,-2.6],[-2.4,1.6,-3.4],.14);D_.console_(g,2.4,1.5,2.6,0);D_.gauge(g,-1.8,3.3,1.92,.15);D_.gauge(g,-1.3,3.3,1.92,.15);lamp(g,2.4,4.3,1.6);lamp(g,-2.4,4.3,1.6,'#ffb84a');},
+ foundry(g){feet(g,6,8);g.add(RB(6,3.4,7.8,.7),T(0,.3,0),C_LIGHT);g.add(RB(6.1,.7,7.9,.3),T(0,.3,0),C_PANEL);D_.hazard(g,0,1.05,3.96,5.6,.15);
+  g.add(RB(3.3,1.5,.3,.12),T(0,1.35,3.85),C_DARK);g.add(RB(3,1.2,.2,.1),T(0,1.5,3.9),COL('#ff6a1a',2.4));for(let i=0;i<6;i++)g.add(PRIM.box(.06,1.2,.04,{y0:true}),T(-1.25+i*.5,1.5,4.02),C_DARK);
+  for(const x of [-1.6,1.6]){g.add(PRIM.cyl(.6,.7,2.8,12),T(x,3.4,-2),C_FRAME);g.add(PRIM.cyl(.65,.65,.25,12),T(x,6,-2),C_PANEL);g.add(PRIM.cyl(.45,.45,.06,12),T(x,6.26,-2),'#1a1c20');}
+  // crucible on top and heavy pipework
+  g.add(PRIM.lathe([[.1,0],[1.1,.1],[1.3,.9],[1.2,1.1]],16),T(0,3.7,1),C_FRAME);g.add(PRIM.cyl(1.05,1.05,.04,16),T(0,4.65,1),COL('#ff7a2a',2));
+  D_.vent(g,3.01,1.6,0,4,1.4,Math.PI/2,8);D_.vent(g,-3.01,1.6,0,4,1.4,-Math.PI/2,8);D_.pipe(g,[2.6,3.9,-3],[2.6,3.9,2.6],.16);D_.pipe(g,[2.6,3.9,2.6],[2.6,1.2,3.6],.16);
+  D_.rail(g,0,3.75,0,5.8,7.6);D_.ladder(g,3.01,.3,-3,3.5,Math.PI/2);D_.console_(g,-2.4,.3,4.3,0);D_.gauge(g,1.9,2.6,3.92,.18);D_.gauge(g,2.4,2.6,3.92,.18);lamp(g,2.6,3.95,3.6,'#ff6a4a');lamp(g,-2.6,3.95,3.6,'#ffb84a');},
+ storage(g){g.add(RB(3,2.7,4,.4),T(0,.15,0),'#5a8ab8');for(let z=-1.3;z<=1.31;z+=.65)g.add(RB(3.1,2.2,.14,.06),T(0,.4,z),'#4a74a0');g.add(RB(3.1,.3,4.1,.15),T(0,2.7,0),C_LIGHT);g.add(RB(3.1,.3,4.1,.15),T(0,0,0),C_DARK);
+  for(const s of [-1,1])for(const t of [-1,1])g.add(RB(.4,3,.4,.12),T(s*1.4,0,t*1.9),C_LIGHT);D_.hazard(g,0,2.75,2.06,2.4,.18);g.add(RB(1.2,.5,.08,.04),T(0,1.6,2.03),'#f4f2ea');g.add(PRIM.box(.9,.08,.02,{y0:true}),T(0,1.8,2.08),'#3a3f48');
+  lamp(g,1.2,3.05,1.6,'#ffd23a');g.add(PRIM.cyl(.04,.04,.6,6),T(-1.2,3,-1.6),C_DARK);},
+ splitter(g){g.add(RB(1.9,1.5,1.9,.35),null,C_LIGHT);g.add(RB(2,.3,2,.15),T(0,1.4,0),C_PANEL);g.add(RB(.24,.06,1.1,.05),T(0,1.72,0),COL('#4ad0a0',1));g.add(RB(1.1,.06,.24,.05),T(0,1.72,0),COL('#4ad0a0',1));D_.vent(g,0,.4,.96,1.1,.4,0,3);D_.vent(g,0,.4,-.96,1.1,.4,Math.PI,3);D_.hazard(g,0,.05,.97,1.6,.1);},
+ merger(g){g.add(RB(1.9,1.5,1.9,.35),null,C_LIGHT);g.add(RB(2,.3,2,.15),T(0,1.4,0),C_TEAL);g.add(RB(.24,.06,1.1,.05),T(0,1.72,0),COL('#f2b440',1));g.add(RB(1.1,.06,.24,.05),T(0,1.72,0),COL('#f2b440',1));D_.vent(g,0,.4,.96,1.1,.4,0,3);D_.vent(g,0,.4,-.96,1.1,.4,Math.PI,3);D_.hazard(g,0,.05,.97,1.6,.1);},
+ burner(g){g.add(RB(4,.5,4,.25),null,C_FRAME);D_.hazard(g,0,.1,2.01,3.6,.25);g.add(PRIM.lathe([[1.5,0],[1.65,.4],[1.65,2],[1.3,2.6],[.4,2.8]],18),T(0,.5,.2),C_LIGHT);g.add(PRIM.cyl(1.68,1.68,.4,18),T(0,1.1,.2),C_PANEL);
+  for(let k=0;k<8;k++){const a=k/8*TAU;g.add(PRIM.box(.08,1.6,.08,{y0:true}),T(Math.sin(a)*1.66,.5,.2+Math.cos(a)*1.66),C_GRAY);}
+  g.add(RB(1.2,.8,.3,.12),T(0,1.55,1.62),C_DARK);g.add(RB(1.1,.7,.25,.12),T(0,1.6,1.65),COL('#ff8a2a',2.4));for(let i=0;i<3;i++)g.add(PRIM.box(.05,.7,.04,{y0:true}),T(-.3+i*.3,1.6,1.8),C_DARK);
+  g.add(PRIM.cyl(.3,.35,2.2,10),T(1.1,2.4,-.7),C_FRAME);g.add(PRIM.cyl(.38,.38,.18,10),T(1.1,4.6,-.7),C_PANEL);D_.gauge(g,-1,2.4,1.25,.15,-.6);g.add(RB(1,.7,1,.2),T(-1.3,.5,-1.2),C_PANEL);D_.vent(g,-1.3,.6,-.69,.7,.4,0,3);lamp(g,1.6,.95,1.6,'#ff6a4a');},
+ coalgen(g){g.add(RB(6,.6,9,.3),null,C_FRAME);D_.hazard(g,0,.15,4.51,5.6,.3);g.add(PRIM.lathe([[2.4,0],[2.5,.5],[2.5,3.6],[2.1,4.2]],22),T(0,.6,.6),C_LIGHT);g.add(PRIM.cyl(2.55,2.55,.5,22),T(0,2.2,.6),C_PANEL);
+  for(let k=0;k<12;k++){const a=k/12*TAU;g.add(PRIM.box(.1,3.4,.1,{y0:true}),T(Math.sin(a)*2.52,.7,.6+Math.cos(a)*2.52),C_GRAY);}
+  g.add(RB(4,2.6,2.2,.5),T(0,.6,-3),C_LIGHT);g.add(RB(4.1,.5,2.3,.2),T(0,.6,-3),C_PANEL);D_.vent(g,2.01,1.3,-3,1.6,1,Math.PI/2,5);
+  g.add(PRIM.cyl(.9,1.1,6.4,14),T(-1.8,.6,-3.2),C_FRAME);g.add(PRIM.cyl(.95,.95,.3,14),T(-1.8,6.8,-3.2),C_PANEL);g.add(PRIM.cyl(.7,.7,.06,14),T(-1.8,7.11,-3.2),'#1a1c20');for(let y=2;y<6;y+=1.2)g.add(PRIM.cyl(1.0,1.0,.12,14),T(-1.8,y,-3.2),C_GRAY);
+  g.add(RB(1.4,.6,.2,.1),T(0,1.5,-1.9),COL('#ff8a2a',2));D_.pipe(g,[2.4,2,-2.2],[2.4,2,2.6],.18);D_.pipe(g,[2.4,2,2.6],[1.6,2,3.2],.18);D_.ladder(g,2.21,.6,1.4,4,Math.PI/2);D_.rail(g,0,4.8,.6,3,3);D_.console_(g,2.4,.6,-1.2,Math.PI/2);D_.gauge(g,1,2.3,-1.88,.2);D_.gauge(g,1.5,2.3,-1.88,.2);lamp(g,-2.6,1,4.2,'#ff6a4a');lamp(g,2.6,1,4.2,'#ffb84a');},
+ cpole(g){g.add(RB(.7,.25,.7,.1),null,C_GRAY);g.add(PRIM.cyl(.1,.12,.75,8),T(0,.2,0),C_LIGHT);g.add(RB(1.3,.12,1.1,.05),T(0,.62,0),C_DARK);for(const s of [-1,1])g.add(RB(.12,.3,1.1,.05),T(s*.62,.62,0),C_PANEL);},
+ cpoleT(g){g.add(RB(.8,.3,.8,.1),null,C_GRAY);g.add(PRIM.cyl(.13,.16,3.75,8),T(0,.25,0),C_LIGHT);for(let y=1;y<3.6;y+=1.1)g.add(PRIM.cyl(.18,.18,.08,8),T(0,y,0),C_PANEL);g.add(RB(1.3,.12,1.1,.05),T(0,3.62,0),C_DARK);for(const s of [-1,1])g.add(RB(.12,.3,1.1,.05),T(s*.62,3.62,0),C_PANEL);},
+ pole(g){g.add(RB(.8,.4,.8,.15),null,C_GRAY);D_.bolts(g,-.25,.25,.42,.3,2);g.add(PRIM.cyl(.11,.15,5.4,8),T(0,.4,0),C_LIGHT);for(let y=1;y<5;y+=1.2)g.add(PRIM.cyl(.17,.17,.08,8),T(0,y,0),C_PANEL);g.add(RB(1.6,.18,.25,.08),T(0,5.2,0),C_FRAME);for(const x of [-.65,.65]){g.add(PRIM.cyl(.07,.1,.3,8),T(x,5.38,0),COL('#e0e8ff',.3));g.add(PRIM.cyl(.11,.11,.04,8),T(x,5.5,0),COL('#e0e8ff',.3));}lamp(g,0,5.95);},
+ foundation(g){g.add(RB(4,1,4,.12),null,'#cfcac0');g.add(PRIM.box(3.7,.02,.06,{y0:true}),T(0,1,0),'#b8b2a6');g.add(PRIM.box(.06,.02,3.7,{y0:true}),T(0,1,0),'#b8b2a6');
+  for(const s of [-1,1]){g.add(PRIM.box(3.6,.02,.12,{y0:true}),T(0,1.0,s*1.86),COL('#f0a040',.3));g.add(PRIM.box(.12,.02,3.6,{y0:true}),T(s*1.86,1.0,0),COL('#f0a040',.3));}
+  for(const s of [-1,1])for(const t of [-1,1])g.add(PRIM.cyl(.08,.08,.02,8),T(s*1.5,1.0,t*1.5),'#8a8680');D_.hazard(g,0,.3,2.01,3.8,.12);D_.hazard(g,0,.3,-2.01,3.8,.12,Math.PI);},
+ skyhook(g){g.add(RB(14,1,14,.4),null,C_GRAY);D_.hazard(g,0,.3,7.01,13,.3);for(let k=0;k<4;k++){const a=k/4*TAU+Math.PI/4;g.add(RB(1.4,38,1.4,.5),T(Math.cos(a)*5,1,Math.sin(a)*5),C_LIGHT);for(let y=3;y<38;y+=4)lamp(g,Math.cos(a)*5.75,y,Math.sin(a)*5.75,'#ff6a4a');}
+  for(let y=4;y<38;y+=6)g.add(PRIM.cyl(5.6,5.6,.6,4,{phase:Math.PI/4}),T(0,y,0),C_PANEL);g.add(PRIM.cyl(.25,.25,80,6),T(0,1,0),COL('#9ad8ff',1.2));g.add(PRIM.cyl(3,3.5,4,16),T(0,1,0),C_LIGHT);g.add(PRIM.sphere(1.4,12,10),T(0,40,0),COL('#58e0c8',1.6));
+  for(const s of [-1,1])D_.console_(g,s*3,1,6.2,0);D_.ladder(g,0,1,3.5,4);},
+};
+// moving parts, drawn spinning while the machine runs
+const ANIM_MODEL={
+ miner(){const g=new GB();g.add(PRIM.cone(.7,1.6,8),T(0,0,0,0,Math.PI),'#9aa0a8');for(let k=0;k<3;k++)g.add(PRIM.box(.15,1.3,.6),T(Math.cos(k*2.1)*.4,-.6,Math.sin(k*2.1)*.4,k*2.1),C_DARK);return {mesh:g.build(),at:[0,1.4,1.6],axis:'y',speed:6,needs:'run'};},
+ coalgen(){const g=new GB();for(let k=0;k<4;k++)g.add(PRIM.box(.3,.05,1.8),T(0,0,0,k*Math.PI/4),C_DARK);g.add(PRIM.cyl(.2,.2,.2,8),T(0,-.1,0),C_PANEL);return {mesh:g.build(),at:[0,4.6,.6],axis:'y',speed:5,needs:'run'};},
+ assembler(){const g=new GB();g.add(PRIM.box(.2,.2,2.4),null,C_DARK);g.add(PRIM.box(2.4,.2,.2),null,C_DARK);return {mesh:g.build(),at:[0,4.4,-.6],axis:'y',speed:2.5,needs:'run'};},
+ constructor(){const g=new GB();g.add(PRIM.box(.5,.5,.5),null,C_TEAL);g.add(PRIM.box(.15,.6,.15),T(0,-.5,0),C_DARK);return {mesh:g.build(),at:[0,3.5,-.6],axis:'slide',speed:1.6,amp:1.4,needs:'run'};},
+};
+function initModels(){for(const [k,f] of Object.entries(BUILD_MODEL)){const g=new GB();f(g);if(!BUILDINGS[k].pass)for(const p of BUILDINGS[k].ports||[])portFrame(g,p,BUILDINGS[k].py||PORT_Y);MODELS.b[k]=g.build();}
+ MODELS.b.miner2=(()=>{const g=new GB();BUILD_MODEL.miner(g);g.add(PRIM.box(2.3,.5,2.3,{y0:true}),T(0,2.9,-.6),'#c84a3a');for(const p of BUILDINGS.miner2.ports)portFrame(g,p);return g.build();})();
+ for(const [k,f] of Object.entries(ANIM_MODEL))MODELS.anim[k]=f();MODELS.anim.miner2=MODELS.anim.miner;
+ initItemModels();}
+// ---- items riding belts ----
+const ITEM_SHAPES={
+ ore:()=>PRIM.ico(.22,0,{noise:.4,seed:3}),
+ ingot:()=>PRIM.lathe([[.2,0],[.15,.14]],4,{phase:Math.PI/4,flat:true}),
+ plate:()=>PRIM.box(.5,.06,.5,{y0:true}),
+ plate2:()=>{const g=new GB();g.add(PRIM.box(.5,.1,.5,{y0:true}),null,'#ffffff');for(const s of [[-1,-1],[1,-1],[-1,1],[1,1]])g.add(PRIM.cyl(.03,.03,.03,5),T(s[0]*.19,.1,s[1]*.19),'#606060');return g;},
+ rod:()=>PRIM.cyl(.05,.05,.7,6),
+ small:()=>{const g=new GB();for(let k=0;k<5;k++)g.add(PRIM.cyl(.035,.035,.14,5),T((k%3-1)*.09,0,(k>2?.08:-.04),0,1.2,k),'#ffffff');return g;},
+ coil:()=>PRIM.lathe([[.08,0],[.2,.02],[.22,.12],[.2,.22],[.08,.24],[.08,0]],10),
+ block:()=>PRIM.box(.36,.3,.36,{y0:true}),
+ bag:()=>PRIM.sphere(.22,7,5),
+ log:()=>PRIM.cyl(.13,.13,.7,7),
+ rotor:()=>{const g=new GB();g.add(PRIM.cyl(.07,.07,.6,6),T(0,.1,-.3,0,Math.PI/2),'#a0a0a0');for(let k=0;k<4;k++)g.add(PRIM.box(.05,.3,.18),T(0,.12,0,0,k*Math.PI/4+Math.PI/2),'#ffffff');return g;},
+ frame:()=>{const g=new GB();for(const [x,z,w,d] of [[0,-.22,.5,.06],[0,.22,.5,.06],[-.22,0,.06,.5],[.22,0,.06,.5]])g.add(PRIM.box(w,.24,d,{y0:true}),T(x,0,z),'#ffffff');g.add(PRIM.box(.06,.24,.5,{y0:true}),T(0,0,0,Math.PI/4),'#a0a0a0');return g;},
+ beam:()=>{const g=new GB();g.add(PRIM.box(.16,.04,.75,{y0:true}),null,'#ffffff');g.add(PRIM.box(.04,.16,.75,{y0:true}),T(0,.04,0),'#ffffff');g.add(PRIM.box(.16,.04,.75,{y0:true}),T(0,.2,0),'#ffffff');return g;},
+ pipe:()=>PRIM.lathe([[.1,0],[.1,.7],[.07,.7],[.07,0]],8),
+ motor:()=>{const g=new GB();g.add(PRIM.cyl(.18,.18,.36,10),T(0,.18,-.18,0,Math.PI/2),'#ffffff');g.add(PRIM.box(.3,.06,.3,{y0:true}),null,'#505050');g.add(PRIM.cyl(.04,.04,.12,6),T(0,.18,.18,0,Math.PI/2),'#c0c0c0');return g;},
+};
+function initItemModels(){for(const [k,f] of Object.entries(ITEM_SHAPES)){let g=f();if(!(g instanceof GB)){const b=new GB();
+   // rods, logs and pipes lie down along the belt
+   const lie=k==='rod'||k==='log'||k==='pipe';b.add(g,lie?T(0,.06,-.35,0,Math.PI/2):k==='ore'?T(0,.16,0,0,0,0,1,.75,1):k==='bag'?T(0,.14,0,0,0,0,1,.65,1):null,'#ffffff');g=b;}
+  const mesh=g.build();MODELS.items[k]=mesh;const I=instancer(mesh,4096);MODELS.itemInst[k]=I;R.inst.push(I);}}
+// ---- conveyor geometry ----
+// a belt runs from an output port to an input port along a smooth curve
+function beltCurve(p0,d0,p1,d1){const L=Math.hypot(p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]);const k=Math.max(1,L*.55);
+ const pts=[],N=Math.max(4,Math.ceil(L*3));for(let i=0;i<=N;i++){const t=i/N,t2=t*t,t3=t2*t,h00=2*t3-3*t2+1,h10=t3-2*t2+t,h01=-2*t3+3*t2,h11=t3-t2;
+  pts.push([h00*p0[0]+h10*k*d0[0]+h01*p1[0]+h11*k*d1[0],h00*p0[1]+h10*k*d0[1]+h01*p1[1]+h11*k*d1[1],h00*p0[2]+h10*k*d0[2]+h01*p1[2]+h11*k*d1[2]]);}
+ const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1],pts[i][2]-pts[i-1][2]));
+ return {pts,cum,len:cum[cum.length-1]};}
+// position and heading at distance s along the curve
+function curveAt(c,s){const cum=c.cum;s=clamp(s,0,c.len);let lo=0,hi=cum.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(cum[m]<s)lo=m;else hi=m;}const seg=cum[hi]-cum[lo]||1,t=(s-cum[lo])/seg,a=c.pts[lo],b=c.pts[hi];
+ return {p:[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t],yaw:Math.atan2(b[0]-a[0],b[2]-a[2]),pitch:Math.atan2(b[1]-a[1],Math.hypot(b[0]-a[0],b[2]-a[2]))};}
+// sweep a 2D cross-section (x across, y up) along the curve; segs = list of [x0,y0,x1,y1,color]
+function sweep(g,c,segs,s0=0,s1=null){s1=s1??c.len;const P=c.pts,n=P.length;const fr=[];
+ for(let i=0;i<n;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(n-1,i+1)];let t=v3.norm([b[0]-a[0],b[1]-a[1],b[2]-a[2]]);let r=v3.norm([t[2],0,-t[0]]);const u=v3.cross(r,t);fr.push({p:P[i],r,u:[-u[0],-u[1],-u[2]]});}
+ for(const [x0,y0,x1,y1,col] of segs){const cc=Array.isArray(col)?col:COL(col);const nx=y1-y0,ny=-(x1-x0),nl=Math.hypot(nx,ny)||1;const base=g.p.length/3;
+  for(let i=0;i<n;i++){const F=fr[i];for(const [x,y] of [[x0,y0],[x1,y1]]){g.p.push(F.p[0]+F.r[0]*x+F.u[0]*y,F.p[1]+F.r[1]*x+F.u[1]*y,F.p[2]+F.r[2]*x+F.u[2]*y);
+    const N=[F.r[0]*nx/nl+F.u[0]*ny/nl,F.r[1]*nx/nl+F.u[1]*ny/nl,F.r[2]*nx/nl+F.u[2]*ny/nl];g.n.push(...N);g.c.push(cc[0],cc[1],cc[2],cc[3]||0);}}
+  for(let i=0;i<n-1;i++){const k=base+i*2;g.i.push(k,k+2,k+1,k+1,k+2,k+3,k,k+1,k+2,k+1,k+3,k+2);}}}
+// place a part every `step` metres along the curve, oriented with the belt
+function along(g,c,step,fn,off=0){for(let s=off||step/2;s<c.len-.2;s+=step){const q=curveAt(c,s);fn(T(q.p[0],q.p[1],q.p[2],q.yaw,-q.pitch),q,s);}}
+const box=(w,h,d)=>PRIM.box(w,h,d);
+function supports(g,c,step,style){const n=Math.max(1,Math.round(c.len/step));for(let k=0;k<=n;k++){const s=k===0?.7:k===n?c.len-.7:c.len*k/n;const q=curveAt(c,s);const gy=ground(q.p[0],q.p[2]);const h=q.p[1]-.3-gy;if(h<.12)continue;const x=q.p[0],z=q.p[2];
+  if(style===1)g.add(PRIM.cyl(.07,.09,h+.3,6),T(x,gy-.3,z),'#4a4e56');
+  else if(style===2){g.add(PRIM.box(.16,h+.3,.16,{y0:true}),T(x,gy-.3,z,q.yaw),'#6a707a');g.add(PRIM.box(.5,.1,.5,{y0:true}),T(x,gy-.05,z,q.yaw),'#4a4e56');}
+  else if(style===3){for(const sd of [-.42,.42])g.add(PRIM.box(.12,h+.3,.12,{y0:true}),T(x+Math.cos(q.yaw)*sd,gy-.3,z-Math.sin(q.yaw)*sd,q.yaw),'#3a4a6a');g.add(PRIM.box(.95,.12,.2,{y0:true}),T(x,gy+h*.5,z,q.yaw),'#5a8ad8');}
+  else if(style===4){g.add(PRIM.cyl(.12,.2,h+.3,8),T(x,gy-.3,z),'#2e2a3a');g.add(PRIM.cyl(.24,.24,.08,10),T(x,gy+h*.6,z),COL('#c88aff',1.2));g.add(PRIM.cyl(.3,.38,.12,10),T(x,gy-.05,z),'#2e2a3a');}
+  else{g.add(PRIM.lathe([[.32,0],[.18,.4],[.12,h*.6],[.2,h+.25]],6),T(x,gy-.3,z),'#22222a');for(const yy of [.3,.6])g.add(PRIM.cyl(.21,.21,.05,6),T(x,gy+h*yy,z),COL('#ff5a3a',1.6));}}}
+function beltMesh(c,tier){const g=new GB(),mk=BELTS[tier].mk,acc=BELTS[tier].col;
+ if(mk===1){// open steel trough, painted rails, plain rubber
+  sweep(g,c,[[-.48,0,.48,0,'#2c3036'],[-.5,-.18,.5,-.18,'#202328'],[.5,-.18,.5,.1,acc],[-.5,.1,-.5,-.18,acc],[.5,.1,.42,.1,acc],[-.42,.1,-.5,.1,acc]]);supports(g,c,4,1);}
+ else if(mk===2){// deeper side plates, visible rollers underneath, bolted rails
+  sweep(g,c,[[-.48,0,.48,0,'#30343a'],[-.54,-.3,.54,-.3,'#25282d'],[.54,-.3,.54,.16,'#cfd2d4'],[-.54,.16,-.54,-.3,'#cfd2d4'],[.54,.16,.44,.16,'#a8acb0'],[-.44,.16,-.54,.16,'#a8acb0'],[.44,.16,.44,.02,'#a8acb0'],[-.44,.02,-.44,.16,'#a8acb0']]);
+  along(g,c,.7,m=>{g.add(PRIM.cyl(.06,.06,1.02,8),mm(m,T(-.51,-.12,0,0,0,-Math.PI/2)),'#7a8088');});along(g,c,1.4,m=>{for(const sd of [-.55,.55])g.add(PRIM.cyl(.04,.04,.03,6),mm(m,T(sd,0,0,0,0,Math.PI/2)),'#5a5e66');});supports(g,c,4,2);}
+ else if(mk===3){// enclosed side walls with a running light strip
+  sweep(g,c,[[-.48,0,.48,0,'#2a3040'],[-.58,-.34,.58,-.34,'#1e2430'],[.58,-.34,.58,.26,'#e4e8ee'],[-.58,.26,-.58,-.34,'#e4e8ee'],[.58,.26,.46,.26,'#3a4a6a'],[-.46,.26,-.58,.26,'#3a4a6a'],[.46,.26,.46,.02,'#3a4a6a'],[-.46,.02,-.46,.26,'#3a4a6a'],
+   [.59,.16,.59,0,COL(acc,2.2)],[-.59,0,-.59,.16,COL(acc,2.2)]]);
+  along(g,c,.55,m=>g.add(PRIM.box(.9,.02,.08),mm(m,T(0,.012,0)),'#3a4458'));along(g,c,2,m=>{for(const sd of [-.6,.6])g.add(RB(.08,.5,.3,.03),mm(m,T(sd,-.32,0)),'#5a6a8a');});supports(g,c,5,3);}
+ else if(mk===4){// sleek dark chassis, glowing chevrons on the deck, light pylons
+  sweep(g,c,[[-.48,0,.48,0,'#221e2c'],[-.6,-.28,.6,-.28,'#1a1722'],[.6,-.28,.62,.08,'#3a3448'],[-.62,.08,-.6,-.28,'#3a3448'],[.62,.08,.46,.2,'#4a4060'],[-.46,.2,-.62,.08,'#4a4060'],[.46,.2,.46,.02,'#2a2638'],[-.46,.02,-.46,.2,'#2a2638'],
+   [.47,.16,.47,.12,COL('#c88aff',2)],[-.47,.12,-.47,.16,COL('#c88aff',2)],[.61,-.1,.61,-.16,COL(acc,1.6)],[-.61,-.16,-.61,-.1,COL(acc,1.6)]]);
+  along(g,c,1.2,m=>{for(const sd of [-1,1])g.add(PRIM.box(.32,.012,.07),mm(m,T(sd*.12,.008,0,sd*.75)),COL('#d8a8ff',1.5));});along(g,c,3,m=>{for(const sd of [-.64,.64])g.add(RB(.1,.42,.1,.04),mm(m,T(sd,-.05,0)),COL('#c88aff',1.4));});supports(g,c,5,4);}
+ else{// maglev: no rubber deck, items ride a glowing energy rail between two charged guides
+  sweep(g,c,[[-.18,-.08,.18,-.08,'#141418'],[.18,-.08,.18,-.32,'#141418'],[-.18,-.32,-.18,-.08,'#141418'],[-.18,-.32,.18,-.32,'#0e0e12'],[-.08,-.07,.08,-.07,COL('#ff6a3a',2.6)],
+   [.5,-.06,.62,-.06,'#2a2a32'],[.62,-.06,.62,.24,'#2a2a32'],[.5,.24,.5,-.06,'#2a2a32'],[.62,.24,.5,.24,COL(acc,2)],[-.62,-.06,-.5,-.06,'#2a2a32'],[-.5,-.06,-.5,.24,'#2a2a32'],[-.62,.24,-.62,-.06,'#2a2a32'],[-.5,.24,-.62,.24,COL(acc,2)]]);
+  along(g,c,1.6,m=>{g.add(PRIM.box(1.2,.06,.14),mm(m,T(0,-.3,0)),'#22222a');g.add(PRIM.lathe([[.66,-.05],[.74,0],[.66,.05],[.6,0],[.66,-.05]],16,{cap:false}),mm(m,T(0,.05,0,0,Math.PI/2)),COL('#ff8a5a',1.5));});supports(g,c,6,5);}
+ return g.build();}
+// ---- build menu pictures: render each model once into a small image ----
+function makeThumbs(){const gl=GL.gl,W=220,H=150;const fb=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fb);const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,W,H,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+ const rb=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,rb);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT24,W,H);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,rb);
+ const px=new Uint8Array(W*H*4),cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d');const img=cx.createImageData(W,H);
+ const save={cam:R.cam,vp:R.vp.slice(),shadows:R.shadows,fog:R.fog.slice()};R.shadows=false;R.fog[3]=0;const p=GL.progs.lit;
+ const shoot=(meshes)=>{let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(const m of meshes)for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],m.min[k]);mx[k]=Math.max(mx[k],m.max[k]);}
+  const c=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2],r=Math.hypot(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])/2;const dist=r/Math.tan(.35)*.82;
+  const eye=[c[0]+dist*.62,c[1]+dist*.48,c[2]+dist*.62];R.cam=eye;const view=M4.lookAt(M4.create(),eye,c,[0,1,0]),proj=M4.perspective(M4.create(),.7,W/H,.1,dist*4);M4.mul(R.vp,proj,view);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fb);gl.viewport(0,0,W,H);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);
+  frameUniforms(p);gl.uniformMatrix4fv(p.u.uModel,false,M4.create());for(const m of meshes)drawMesh(m);gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,px);
+  for(let y=0;y<H;y++)img.data.set(px.subarray((H-1-y)*W*4,(H-y)*W*4),y*W*4);cx.putImageData(img,0,0);return cv.toDataURL('image/png');};
+ try{for(const k of Object.keys(BUILDINGS))if(MODELS.b[k])UI.icons[k]=shoot([MODELS.b[k]]);
+  for(const k of Object.keys(BELTS)){const c=beltCurve([-3,1,0],[1,0,0],[3,1,0],[1,0,0]);const m=beltMesh(c,k);UI.icons[k]=shoot([m]);freeMesh(m);}}catch(e){console.warn('thumbs',e);}
+ R.cam=save.cam;R.vp=save.vp;R.shadows=save.shadows;R.fog=save.fog;gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.deleteFramebuffer(fb);gl.deleteTexture(tex);gl.deleteRenderbuffer(rb);}
+
+// ---- 06-sim.js ----
+// ===== Factory simulation: buildings, belts, power =====
+const FAC={b:new Map(),belts:new Map(),grids:[],powerDirty:true,stats:{prod:{},cons:{}},statT:0,rate:{},rateIn:{}};
+const portWorld=(b,i)=>{const p=BUILDINGS[b.k].ports[i];const c=Math.cos(b.rot),s=Math.sin(b.rot);return {p:[b.x+c*p[0]+s*p[1],b.y+(BUILDINGS[b.k].py||PORT_Y),b.z-s*p[0]+c*p[1]],d:[Math.sin(b.rot+p[2]),0,Math.cos(b.rot+p[2])],io:p[3]};};
+const inCap=n=>Math.max(6,n*3),outCap=n=>Math.max(10,n*4);
+function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot:o.rot||0,recipe:o.recipe||null,inb:o.inb||{},out:o.out||{},prog:o.prog||0,store:o.store||{},fuel:o.fuel||{},energy:o.energy||0,node:o.node??null,conn:[],wires:[],buf:o.buf||[],rr:0,run:0,anim:0};
+ const D=BUILDINGS[b.k];b.conn=(D.ports||[]).map(()=>null);
+ const mesh=MODELS.b[b.k];b.obj={mesh,model:T(b.x,b.y,b.z,b.rot),bid:b.id};R.objects.push(b.obj);
+ const A=MODELS.anim[b.k];if(A)b.animDef=A;
+ FAC.b.set(b.id,b);return b;}
+function removeBuilding(b){for(const bid of b.conn)if(bid!=null){const bl=FAC.belts.get(bid);if(bl)removeBelt(bl);}
+ S.wires=S.wires.filter(w=>w[0]!==b.id&&w[1]!==b.id);FAC.powerDirty=true;const i=R.objects.indexOf(b.obj);if(i>=0)R.objects.splice(i,1);FAC.b.delete(b.id);}
+function newBelt(o){const A=FAC.b.get(o.from[0]),B=FAC.b.get(o.to[0]);if(!A||!B)return null;const pa=portWorld(A,o.from[1]),pb=portWorld(B,o.to[1]);
+ const c=beltCurve(pa.p,pa.d,pb.p,[-pb.d[0],0,-pb.d[2]]);const bl={id:o.id??S.nextId++,tier:o.tier||'belt1',from:o.from,to:o.to,items:(o.items||[]).map(([t,d])=>({t,d})),c};
+ bl.obj={mesh:beltMesh(c,bl.tier),model:M4.create(),belt:bl.id};R.objects.push(bl.obj);A.conn[o.from[1]]=bl.id;B.conn[o.to[1]]=bl.id;FAC.belts.set(bl.id,bl);return bl;}
+function removeBelt(bl){const A=FAC.b.get(bl.from[0]),B=FAC.b.get(bl.to[0]);if(A)A.conn[bl.from[1]]=null;if(B)B.conn[bl.to[1]]=null;const i=R.objects.indexOf(bl.obj);if(i>=0)R.objects.splice(i,1);freeMesh(bl.obj.mesh);FAC.belts.delete(bl.id);return bl;}
+// ---- what a building will take in ----
+function accepts(b,pi,item){const D=BUILDINGS[b.k];
+ if(D.machine){const r=RECIPE[b.recipe];if(!r||!r.in[item])return false;return (b.inb[item]||0)<inCap(r.in[item]);}
+ if(b.k==='storage'){let t=0;for(const v of Object.values(b.store))t+=v;return t<D.cap;}
+ if(b.k==='splitter'||b.k==='merger'||D.pass)return b.buf.length<2;
+ if(D.fuels){if(!D.fuels.includes(item))return false;let t=0;for(const v of Object.values(b.fuel))t+=v;return t<100;}
+ if(b.k==='hub')return hubWants(item)>0;
+ if(b.k==='skyhook')return skyWants(item)>0;
+ return false;}
+function give(b,pi,item){const D=BUILDINGS[b.k];if(D.machine)b.inb[item]=(b.inb[item]||0)+1;else if(b.k==='storage')b.store[item]=(b.store[item]||0)+1;else if(b.k==='splitter'||b.k==='merger'||D.pass)b.buf.push(item);else if(D.fuels)b.fuel[item]=(b.fuel[item]||0)+1;else if(b.k==='hub')hubDeliver(item,1);else if(b.k==='skyhook')skyDeliver(item,1);
+ FAC.rateIn[item]=(FAC.rateIn[item]||0)+0;}
+// ---- belts ----
+const beltCanTake=bl=>!bl.items.length||bl.items[bl.items.length-1].d>=1;
+function beltPush(bl,item){bl.items.push({t:item,d:0});}
+function updateBelt(bl,dt){const v=BELTS[bl.tier].speed,L=bl.c.len,its=bl.items;if(!its.length)return;
+ // deliver whatever has reached the end
+ const dest=FAC.b.get(bl.to[0]);while(its.length&&its[0].d>=L-.001&&dest&&accepts(dest,bl.to[1],its[0].t)){give(dest,bl.to[1],its[0].t);its.shift();}
+ let lim=L;for(const it of its){it.d=Math.min(it.d+v*dt,lim);lim=it.d-1;}}
+// ---- one machine step ----
+function machineReady(b){const r=RECIPE[b.recipe];if(!r)return false;for(const [k,n] of Object.entries(r.in))if((b.inb[k]||0)<n)return false;for(const [k,n] of Object.entries(r.out))if((b.out[k]||0)+n>outCap(n))return false;return true;}
+function wantsPower(b){const D=BUILDINGS[b.k];if(!D.power)return false;if(D.machine)return machineReady(b);if(b.k==='miner'||b.k==='miner2'){const tot=Object.values(b.out).reduce((a,c)=>a+c,0);return b.node!=null&&tot<50;}return false;}
+function pushOut(b,pi,item){const bid=b.conn[pi];if(bid==null)return false;const bl=FAC.belts.get(bid);if(!bl||!beltCanTake(bl))return false;beltPush(bl,item);return true;}
+function outPorts(b){const P=BUILDINGS[b.k].ports||[];const o=[];P.forEach((p,i)=>{if(p[3]==='out')o.push(i);});return o;}
+function updateBuilding(b,dt){const D=BUILDINGS[b.k];b.run=0;
+ if(D.machine){if(b.pf>0&&machineReady(b)){const r=RECIPE[b.recipe];b.prog+=dt*b.pf;b.run=1;if(b.prog>=r.t){b.prog-=r.t;for(const [k,n] of Object.entries(r.in)){b.inb[k]-=n;stat('cons',k,n);}for(const [k,n] of Object.entries(r.out)){b.out[k]=(b.out[k]||0)+n;stat('prod',k,n);}}}
+  for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>0&&pushOut(b,pi,k)){b.out[k]--;break;}}
+ else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd&&b.pf>0){const rate=D.rate*PURITY[nd.purity].k;const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot<50){b.prog+=dt*b.pf;b.run=1;const iv=60/rate;while(b.prog>=iv){b.prog-=iv;b.out[nd.type]=(b.out[nd.type]||0)+1;stat('prod',nd.type,1);}}}
+  for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>0&&pushOut(b,pi,k)){b.out[k]--;break;}}
+ else if(b.k==='storage'){const keys=Object.keys(b.store).filter(k=>b.store[k]>0);if(keys.length){const k=keys[b.rr++%keys.length];if(pushOut(b,1,k)){b.store[k]--;if(!b.store[k])delete b.store[k];}}}
+ else if(b.k==='splitter'){if(b.buf.length){const outs=outPorts(b).filter(i=>b.conn[i]!=null);for(let n=0;n<outs.length&&b.buf.length;n++){const pi=outs[b.rr++%outs.length];if(pushOut(b,pi,b.buf[0])){b.buf.shift();break;}}}}
+ else if(b.k==='merger'){if(b.buf.length&&pushOut(b,3,b.buf[0]))b.buf.shift();}
+ else if(D.pass){if(b.buf.length&&pushOut(b,1,b.buf[0]))b.buf.shift();}}
+function stat(kind,k,n){const m=FAC.stats[kind];m[k]=(m[k]||0)+n;}
+// ---- power ----
+function rebuildGrids(){const ids=[...FAC.b.keys()],par=new Map(ids.map(i=>[i,i]));const f=x=>{while(par.get(x)!==x){par.set(x,par.get(par.get(x)));x=par.get(x);}return x;};
+ for(const [a,c] of S.wires)if(par.has(a)&&par.has(c))par.set(f(a),f(c));const g=new Map();for(const id of ids){const r=f(id);if(!g.has(r))g.set(r,[]);g.get(r).push(FAC.b.get(id));}
+ FAC.grids=[...g.values()].filter(l=>l.some(b=>BUILDINGS[b.k].gen||BUILDINGS[b.k].power));for(const b of FAC.b.values())b.grid=null;FAC.grids.forEach((l,i)=>{for(const b of l)b.grid=i;});FAC.powerDirty=false;}
+function genReady(b){if(b.energy>0)return true;return Object.values(b.fuel).some(v=>v>0);}
+function updatePower(dt){if(FAC.powerDirty)rebuildGrids();FAC.power={use:0,cap:0,want:0};
+ for(const b of FAC.b.values())b.pf=0;
+ for(const list of FAC.grids){let want=0,cap=0;for(const b of list){const D=BUILDINGS[b.k];if(D.power&&wantsPower(b))want+=D.power;if(D.gen&&genReady(b))cap+=D.gen;}
+  const pf=want>0?Math.min(1,cap/want):1,load=cap>0?Math.min(1,want/cap):0;
+  for(const b of list){const D=BUILDINGS[b.k];if(D.power)b.pf=cap>0?pf:0;if(D.gen){b.run=0;if(load>0&&genReady(b)){let need=D.gen*load*dt;b.run=load;while(need>0){if(b.energy<=0){const k=D.fuels.find(f=>(b.fuel[f]||0)>0);if(!k)break;b.fuel[k]--;stat('cons',k,1);b.energy+=FUEL[k];}const u=Math.min(need,b.energy);b.energy-=u;need-=u;}}}}
+  FAC.power.use+=Math.min(want,cap);FAC.power.cap+=cap;FAC.power.want+=want;}}
+// ---- one simulation step ----
+function simStep(dt){updatePower(dt);for(const bl of FAC.belts.values())updateBelt(bl,dt);for(const b of FAC.b.values())updateBuilding(b,dt);
+ FAC.statT+=dt;if(FAC.statT>=10){// items per minute, smoothed
+  for(const kind of ['prod','cons']){const m=FAC.stats[kind],r=kind==='prod'?FAC.rate:FAC.rateIn;for(const k of new Set([...Object.keys(m),...Object.keys(r)]))r[k]=lerp(r[k]||0,(m[k]||0)*60/FAC.statT,.5);FAC.stats[kind]={};}FAC.statT=0;}}
+// ---- drawing the moving parts ----
+function fillItemInstances(){for(const I of Object.values(MODELS.itemInst))I.n=0;
+ for(const bl of FAC.belts.values()){if(!bl.items.length)continue;if(!inFrustum(bl.obj.mesh.center,bl.obj.mesh.radius+1))continue;const far=Math.hypot(bl.obj.mesh.center[0]-R.cam[0],bl.obj.mesh.center[2]-R.cam[2])>180;if(far)continue;
+  const lev=BELTS[bl.tier].mk===5;for(const it of bl.items){const D=ITEMS[it.t],I=MODELS.itemInst[D.s];if(!I||I.n>=I.max)continue;const q=curveAt(bl.c,it.d);const c=D.col||(D.col=COL(D.c));const o=I.n*8,a=I.data;a[o]=q.p[0];a[o+1]=q.p[1]+(lev?.14+Math.sin(R.time*3+it.d*2)*.03:0);a[o+2]=q.p[2];a[o+3]=1;a[o+4]=c[0];a[o+5]=c[1];a[o+6]=c[2];a[o+7]=q.yaw;I.n++;}}}
+const _animM=new Float32Array(16),_wireMesh={};
+function animObjects(){const out=[];const t=R.time;
+ for(const b of FAC.b.values()){const A=b.animDef;if(!A)continue;b.anim+=(b.run?1:0)*0.016*A.speed;const c=Math.cos(b.rot),s=Math.sin(b.rot);const ax=b.x+c*A.at[0]+s*A.at[2],az=b.z-s*A.at[0]+c*A.at[2];
+  let m;if(A.axis==='slide')m=T(ax+Math.cos(b.rot)*Math.sin(b.anim)*A.amp,b.y+A.at[1],az-Math.sin(b.rot)*Math.sin(b.anim)*A.amp,b.rot);else m=T(ax,b.y+A.at[1],az,b.rot+b.anim);out.push({mesh:A.mesh.mesh||A.mesh,model:m});}
+ // power lines
+ if(!_wireMesh.m){const g=new GB();g.add(PRIM.box(.06,.06,1,{}),T(0,0,.5),COL('#1a1c20'));_wireMesh.m=g.build();}
+ for(const [a,c] of S.wires){const A=FAC.b.get(a),B=FAC.b.get(c);if(!A||!B)continue;const p=wirePoint(A),q=wirePoint(B);const dx=q[0]-p[0],dy=q[1]-p[1],dz=q[2]-p[2],L=Math.hypot(dx,dy,dz);
+  out.push({mesh:_wireMesh.m,model:T(p[0],p[1],p[2],Math.atan2(dx,dz),-Math.atan2(dy,Math.hypot(dx,dz)),0,1,1,L)});}
+ for(const o of FX.list)out.push(o);
+ return out;}
+function wirePoint(b){const D=BUILDINGS[b.k];if(b.k==='pole')return [b.x,b.y+5.45,b.z];return [b.x,b.y+(D.h||3)+.1,b.z];}
+const FX={list:[]};
+
+// ---- 07-player.js ----
+// ===== Player: first-person movement, look, input =====
+const PL={x:0,y:12,z:-12,vy:0,ground:false,yaw:0,pitch:-.1,eye:1.65,speed:0};
+const INPUT={keys:{},jx:0,jy:0,joyId:null,lookId:null,last:null,locked:false,act:false,actT:0};
+const touchMode=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
+function solidAt(x,z,y){// highest walkable surface under (x,z) at or below y+0.6
+ let top=ground(x,z);for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(b.k==='pole')continue;const hw=(b.rot%Math.PI?D.d:D.w)/2,hd=(b.rot%Math.PI?D.w:D.d)/2;
+  if(Math.abs(x-b.x)<hw&&Math.abs(z-b.z)<hd){const h=b.y+(b.k==='foundation'?1:b.k==='hub'?.5:D.h);if(h<=y+.6&&h>top)top=h;}}return top;}
+function blockedAt(x,z,y){for(const b of FAC.b.values()){const D=BUILDINGS[b.k];const r=.3;let hw=(Math.abs(Math.sin(b.rot))>.5?D.d:D.w)/2+r,hd=(Math.abs(Math.sin(b.rot))>.5?D.w:D.d)/2+r;
+  if(b.k==='pole'){hw=hd=.5;}const top=b.y+(b.k==='foundation'?1:b.k==='hub'?.5:D.h);if(Math.abs(x-b.x)<hw&&Math.abs(z-b.z)<hd&&y<top-.5&&y+1.8>b.y)return true;}
+ for(const f of WORLD.flora)if(f.alive&&f.kind!=='bush'&&Math.abs(f.x-x)<2&&Math.abs(f.z-z)<2&&Math.hypot(f.x-x,f.z-z)<(f.kind==='rock'?1.1:.5)*f.s)return true;
+ return false;}
+function updatePlayer(dt){let mx=INPUT.jx,my=INPUT.jy;const k=INPUT.keys;if(k.KeyW||k.ArrowUp)my=1;if(k.KeyS||k.ArrowDown)my=-1;if(k.KeyA||k.ArrowLeft)mx=-1;if(k.KeyD||k.ArrowRight)mx=1;
+ if(UI.panel){mx=my=0;}const run=k.ShiftLeft||Math.hypot(INPUT.jx,INPUT.jy)>.98;const sp=(run?9:5.2)*Math.min(1,Math.hypot(mx,my));
+ const ang=Math.atan2(mx,my)+PL.yaw;let nx=PL.x,nz=PL.z;if(Math.hypot(mx,my)>.05){nx+=Math.sin(PL.yaw)*my*sp*dt/Math.max(1,Math.hypot(mx,my))+Math.cos(PL.yaw)*-mx*sp*dt/Math.max(1,Math.hypot(mx,my));nz+=Math.cos(PL.yaw)*my*sp*dt/Math.max(1,Math.hypot(mx,my))-Math.sin(PL.yaw)*-mx*sp*dt/Math.max(1,Math.hypot(mx,my));}
+ const lim=WORLD.half-8;nx=clamp(nx,-lim,lim);nz=clamp(nz,-lim,lim);
+ if(!blockedAt(nx,PL.z,PL.y))PL.x=nx;if(!blockedAt(PL.x,nz,PL.y))PL.z=nz;
+ PL.vy-=24*dt;PL.y+=PL.vy*dt;const top=solidAt(PL.x,PL.z,PL.y);if(PL.y<=top){if(top-PL.y<1.2||PL.vy<0){PL.y=top;PL.vy=0;PL.ground=true;}}else PL.ground=PL.y-top<.05;
+ if((k.Space||INPUT.jump)&&PL.ground){PL.vy=8.2;PL.ground=false;}INPUT.jump=false;
+ PL.speed=sp;R.yaw=PL.yaw;R.pitch=PL.pitch;const bob=PL.ground&&sp>0?Math.sin(R.time*sp*1.6)*.04:0;R.cam=[PL.x,PL.y+PL.eye+bob,PL.z];}
+function initInput(){const cv=GL.canvas;
+ addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;INPUT.keys[e.code]=true;onKey(e.code,e);});addEventListener('keyup',e=>{INPUT.keys[e.code]=false;if(e.code==='KeyE'||e.code==='Mouse0')INPUT.act=false;});
+ addEventListener('blur',()=>{INPUT.keys={};INPUT.jx=INPUT.jy=0;INPUT.joyId=null;INPUT.act=false;UI.joy(false);});
+ document.addEventListener('pointerlockchange',()=>{INPUT.locked=document.pointerLockElement===cv;});
+ document.addEventListener('mousemove',e=>{if(!INPUT.locked)return;const s=.0024*(S.settings.sens||1);PL.yaw-=e.movementX*s;PL.pitch=clamp(PL.pitch-e.movementY*s,-1.45,1.45);});
+ cv.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){if(!INPUT.locked&&!UI.panel){cv.requestPointerLock&&cv.requestPointerLock();return;}if(e.button===0){INPUT.act=true;INPUT.actT=0;GAME.primary(true);}if(e.button===2)GAME.secondary();return;}
+  try{cv.setPointerCapture(e.pointerId);}catch(_){}const w=innerWidth;
+  if(e.clientX<w*.42&&INPUT.joyId===null){INPUT.joyId=e.pointerId;INPUT.joyO=[e.clientX,e.clientY];UI.joy(true,e.clientX,e.clientY,0,0);}
+  else if(INPUT.lookId===null){INPUT.lookId=e.pointerId;INPUT.last=[e.clientX,e.clientY];INPUT.tap={x:e.clientX,y:e.clientY,t:performance.now(),m:0};}});
+ cv.addEventListener('pointermove',e=>{if(e.pointerId===INPUT.joyId){let dx=e.clientX-INPUT.joyO[0],dy=e.clientY-INPUT.joyO[1];const L=Math.hypot(dx,dy),M=58;if(L>M){dx*=M/L;dy*=M/L;}INPUT.jx=dx/M;INPUT.jy=-dy/M;UI.joy(true,INPUT.joyO[0],INPUT.joyO[1],dx,dy);}
+  else if(e.pointerId===INPUT.lookId){const dx=e.clientX-INPUT.last[0],dy=e.clientY-INPUT.last[1];INPUT.last=[e.clientX,e.clientY];const s=.0055*(S.settings.sens||1);PL.yaw-=dx*s;PL.pitch=clamp(PL.pitch-dy*s,-1.45,1.45);if(INPUT.tap)INPUT.tap.m+=Math.hypot(dx,dy);}});
+ const up=e=>{if(e.pointerType==='mouse'){if(e.button===0){INPUT.act=false;GAME.primary(false);}return;}
+  if(e.pointerId===INPUT.joyId){INPUT.joyId=null;INPUT.jx=INPUT.jy=0;UI.joy(false);}if(e.pointerId===INPUT.lookId){const t=INPUT.tap;if(t&&t.m<10&&performance.now()-t.t<300)GAME.tapAt(e.clientX,e.clientY);INPUT.lookId=null;INPUT.tap=null;}};
+ cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);cv.addEventListener('lostpointercapture',e=>{if(e.pointerId===INPUT.joyId||e.pointerId===INPUT.lookId)up(e);});
+ document.addEventListener('touchend',e=>{if(INPUT.joyId===null)return;let on=false;for(const t of e.touches)if(t.clientX<innerWidth*.5)on=true;if(!on){INPUT.joyId=null;INPUT.jx=INPUT.jy=0;UI.joy(false);}},true);
+ cv.addEventListener('contextmenu',e=>e.preventDefault());cv.addEventListener('wheel',e=>{if(BUILD.mode==='place')BUILD.rotate(Math.sign(e.deltaY));},{passive:true});}
+// ---- what the crosshair is looking at ----
+function aimRay(){const d=camDir();return {o:R.cam.slice(),d};}
+function rayGround(o,d,maxT=60){let t=0,prev=o[1]-ground(o[0],o[2]);for(let i=0;i<240&&t<maxT;i++){t+=.25+t*.02;const x=o[0]+d[0]*t,y=o[1]+d[1]*t,z=o[2]+d[2]*t,h=y-ground(x,z);if(h<0){// refine
+    let a=t-(.25+t*.02),b=t;for(let k=0;k<8;k++){const m=(a+b)/2;if(o[1]+d[1]*m-ground(o[0]+d[0]*m,o[2]+d[2]*m)<0)b=m;else a=m;}return {t:b,p:[o[0]+d[0]*b,o[1]+d[1]*b,o[2]+d[2]*b]};}prev=h;}return null;}
+// ray vs building boxes (rotations are multiples of 90°)
+function rayBuildings(o,d,maxT=40){let best=null;for(const b of FAC.b.values()){const D=BUILDINGS[b.k];const sw=Math.abs(Math.sin(b.rot))>.5;const hx=(sw?D.d:D.w)/2,hz=(sw?D.w:D.d)/2,h=b.k==='foundation'?1:b.k==='hub'?3.4:D.h;
+  const mn=[b.x-hx,b.y,b.z-hz],mx=[b.x+hx,b.y+h,b.z+hz];let t0=0,t1=maxT;for(let a=0;a<3;a++){if(Math.abs(d[a])<1e-6){if(o[a]<mn[a]||o[a]>mx[a]){t0=1e9;break;}continue;}let u=(mn[a]-o[a])/d[a],v=(mx[a]-o[a])/d[a];if(u>v)[u,v]=[v,u];t0=Math.max(t0,u);t1=Math.min(t1,v);if(t0>t1)break;}
+  if(t0<=t1&&t0<maxT&&(!best||t0<best.t)){const p=[o[0]+d[0]*t0,o[1]+d[1]*t0,o[2]+d[2]*t0];let face='side';if(Math.abs(p[1]-mx[1])<.02)face='top';best={t:t0,b,p,face};}}return best;}
+function rayBelts(o,d,maxT=30){let best=null;for(const bl of FAC.belts.values()){const m=bl.obj.mesh;const dc=v3.sub(m.center,o);const tc=v3.dot(dc,d);if(tc<0||tc>maxT+m.radius)continue;const pc=[o[0]+d[0]*tc-m.center[0],o[1]+d[1]*tc-m.center[1],o[2]+d[2]*tc-m.center[2]];if(Math.hypot(...pc)>m.radius)continue;
+  for(let i=0;i<bl.c.pts.length;i+=2){const p=bl.c.pts[i];const w=v3.sub(p,o);const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-p[0],o[1]+d[1]*t-p[1],o[2]+d[2]*t-p[2]];if(Math.hypot(...q)<.7&&(!best||t<best.t))best={t,bl,i};}}return best;}
+function rayNodes(o,d,maxT=8){let best=null;for(const nd of WORLD.nodes){const w=[nd.x-o[0],nd.y+.8-o[1],nd.z-o[2]];const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-nd.x,o[1]+d[1]*t-nd.y-.8,o[2]+d[2]*t-nd.z];if(Math.hypot(...q)<2.2&&(!best||t<best.t))best={t,nd};}return best;}
+function rayFlora(o,d,maxT=6){let best=null;for(const f of WORLD.flora){if(!f.alive||f.kind==='rock')continue;if(Math.abs(f.x-o[0])>maxT+3||Math.abs(f.z-o[2])>maxT+3)continue;const cy=f.kind==='bush'?.5:2;const w=[f.x-o[0],f.y+cy*f.s-o[1],f.z-o[2]];const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-f.x,o[1]+d[1]*t-f.y-cy*f.s,o[2]+d[2]*t-f.z];const r=(f.kind==='bush'?1:1.4)*f.s;
+  if(Math.hypot(q[0],q[2])<(f.kind==='bush'?1:.7)*f.s&&Math.abs(q[1])<(f.kind==='bush'?1:2.6)*f.s&&(!best||t<best.t))best={t,f};}return best;}
+
+// ---- 08-build.js ----
+// ===== Building, belts, dismantling, hand work =====
+const BUILD={mode:null,k:null,rot:0,ghost:null,ok:false,why:'',beltTier:'belt1',beltA:null,beltB:null,ghostBelt:null,target:null};
+const isPower=k=>!!(BUILDINGS[k].power||BUILDINGS[k].gen);
+const rotN=r=>((Math.round(r/(Math.PI/2))%4)+4)%4;
+function fp(k,rot){const D=BUILDINGS[k];return rotN(rot)%2?[D.d,D.w]:[D.w,D.d];}
+function canAfford(cost,n=1){for(const [k,v] of Object.entries(cost))if((S.inv[k]||0)<v*n)return false;return true;}
+function pay(cost,n=1){for(const [k,v] of Object.entries(cost))S.inv[k]=(S.inv[k]||0)-v*n;}
+function refund(cost,n=1){for(const [k,v] of Object.entries(cost))addInv(k,v*n);}
+function addInv(k,n){S.inv[k]=(S.inv[k]||0)+n;if(S.inv[k]<=0)delete S.inv[k];}
+function mergeCost(a,n,b){const o={};for(const [k,v] of Object.entries(a))o[k]=(o[k]||0)+v*n;for(const [k,v] of Object.entries(b))o[k]=(o[k]||0)+v;return o;}
+function costText(cost,n=1){return Object.entries(cost).map(([k,v])=>v*n+' '+ITEMS[k].n).join(' · ');}
+BUILD.start=function(k){BUILD.cancel();if(BELTS[k]){BUILD.mode='belt';BUILD.beltTier=k;}else{BUILD.mode='place';BUILD.k=k;}UI.closePanel();UI.hint(BUILD.mode==='belt'?(touchMode?'Aim at a port and tap Connect, then aim at a second port':'Aim at a port and click, then click a second port. Right-click cancels.'):(touchMode?'Aim where it goes · Rotate · Place':'Click to place · R or wheel rotates · Right-click cancels'));};
+BUILD.dismantle=function(){BUILD.cancel();BUILD.mode='dismantle';UI.hint('Aim at a building or belt to remove it. Everything is refunded.');};
+BUILD.cancel=function(){BUILD.mode=null;BUILD.k=null;BUILD.beltA=null;BUILD.ghost=null;R.ghosts.length=0;if(BUILD.ghostBelt){freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt=null;}UI.hint('');};
+BUILD.rotate=function(s=1){const st=BUILD.k&&BUILDINGS[BUILD.k].pass?Math.PI/4:Math.PI/2;BUILD.rot=(BUILD.rot+s*st+TAU)%TAU;};
+// ---- placement ghost ----
+function placeTarget(){const k=BUILD.k,D=BUILDINGS[k],{o,d}=aimRay();const hb=rayBuildings(o,d,30),hg=rayGround(o,d,30);let p,base=null;
+ if(hb&&(!hg||hb.t<hg.t)&&hb.face==='top'&&hb.b.k==='foundation'){base=hb.b;p=hb.p;}else if(hg)p=hg.p;else{const t=12;p=[o[0]+d[0]*t,o[1]+d[1]*t,o[2]+d[2]*t];}
+ const [w,dd]=fp(k,BUILD.rot);let x,z,y,node=null;
+ if(k==='miner'||k==='miner2'){let best=null;for(const nd of WORLD.nodes){const dist=Math.hypot(nd.x-p[0],nd.z-p[2]);if(dist<5&&(!best||dist<best.d))best={nd,d:dist};}
+  if(best){node=best.nd;x=node.x;z=node.z;y=node.y+.2;}else{x=p[0];z=p[2];y=ground(x,z);}}
+ else if(base){const s=k==='foundation'?4:.5;x=base.x+Math.round((p[0]-base.x)/s)*s;z=base.z+Math.round((p[2]-base.z)/s)*s;y=base.y+1;}
+ else{const s=k==='foundation'?4:.5;const ox=k==='foundation'?0:(w%2?.5:0),oz=k==='foundation'?0:(dd%2?.5:0);x=Math.round((p[0]-ox)/s)*s+ox;z=Math.round((p[2]-oz)/s)*s+oz;
+  // sit on the highest ground under the footprint; foundations may stand on other foundations' sides by snapping to their level
+  let hi=-1e9,lo=1e9;for(const [sx,sz] of [[0,0],[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]]){const g=ground(x+sx*w/2*.95,z+sz*dd/2*.95);hi=Math.max(hi,g);lo=Math.min(lo,g);}y=k==='foundation'?lo-.3:hi;
+  if(k==='foundation'){// line up with a neighbouring foundation's height and grid
+   for(const b of FAC.b.values())if(b.k==='foundation'&&Math.hypot(b.x-p[0],b.z-p[2])<7){x=b.x+Math.round((p[0]-b.x)/4)*4;z=b.z+Math.round((p[2]-b.z)/4)*4;y=b.y;break;}}
+  BUILD.slope=hi-lo;}
+ return {x,y,z,node,base};}
+function placeValid(t){const k=BUILD.k,D=BUILDINGS[k];if(!canAfford(D.cost))return 'Not enough parts: needs '+costText(D.cost);
+ if((k==='miner'||k==='miner2')){if(!t.node)return 'Miners go on a resource node';for(const b of FAC.b.values())if(b.node===t.node.id)return 'That node already has a miner';}
+ if(Math.hypot(t.x-PL.x,t.z-PL.z)>40)return 'Too far away';
+ if(k==='skyhook'&&[...FAC.b.values()].some(b=>b.k==='skyhook'))return 'You already have a Skyhook';
+ if(!t.base&&k!=='foundation'&&k!=='pole'&&BUILD.slope>3.2&&!t.node)return 'Too steep here: build a foundation first';
+ const [w,d]=fp(k,BUILD.rot);for(const b of FAC.b.values()){if(t.base&&b===t.base)continue;const [bw,bd]=fp(b.k,b.rot);const top=b.y+(b.k==='foundation'?1:BUILDINGS[b.k].h);if(t.y>=top-.01||t.y+D.h<=b.y+.01)continue;
+  if(Math.abs(t.x-b.x)<(w+bw)/2-.05&&Math.abs(t.z-b.z)<(d+bd)/2-.05)return 'Something is in the way';}
+ const pr=Math.hypot(t.x-PL.x,t.z-PL.z);const [hw,hd]=[w/2,d/2];if(k!=='foundation'&&Math.abs(PL.x-t.x)<hw+.3&&Math.abs(PL.z-t.z)<hd+.3&&PL.y<t.y+D.h&&PL.y+1.8>t.y)return 'You are standing in the way';
+ return '';}
+function placeBuilding(){const t=BUILD.target;if(!t)return;const why=placeValid(t);if(why){UI.toast(why,'warn');AUDIO.bad();return;}const D=BUILDINGS[BUILD.k];pay(D.cost);
+ const b=newBuilding({k:BUILD.k,x:t.x,y:t.y,z:t.z,rot:BUILD.rot,node:t.node?t.node.id:null});if(D.machine){const rs=RECIPES.filter(r=>r.m===D.machine&&unlocked(r));if(rs.length===1)b.recipe=rs[0].id;}
+ autoWire(b);clearFloraAround(b);AUDIO.place();FX.puff(t.x,t.y,t.z);saveSoon();
+ if(D.machine&&!b.recipe)setTimeout(()=>UI.toast('Tap the '+D.n.toLowerCase()+' to pick a recipe','info'),400);}
+function clearFloraAround(b){const [w,d]=fp(b.k,b.rot);let ch=false;for(const f of WORLD.flora)if(f.alive&&Math.abs(f.x-b.x)<w/2+1&&Math.abs(f.z-b.z)<d/2+1){f.alive=false;S.chopped.push(f.i);ch=true;}if(ch)refreshFlora();}
+// ---- power wiring: done for you ----
+function autoWire(b){const D=BUILDINGS[b.k];if(!isPower(b.k)&&b.k!=='pole')return;const range=30,cands=[];
+ for(const o of FAC.b.values()){if(o===b)continue;const dd=Math.hypot(o.x-b.x,o.z-b.z);if(dd>range)continue;if(b.k==='pole'){if(o.k==='pole'||(isPower(o.k)&&!S.wires.some(w=>w[0]===o.id||w[1]===o.id)))cands.push([dd,o]);}else if(o.k==='pole')cands.push([dd,o]);}
+ cands.sort((a,c)=>a[0]-c[0]);let n=0;const max=b.k==='pole'?6:1;for(const [,o] of cands){if(n>=max)break;if(o.k==='pole'&&S.wires.filter(w=>w[0]===o.id||w[1]===o.id).length>=6)continue;S.wires.push([b.id,o.id]);n++;}
+ // a generator or machine with no pole nearby links straight to the closest powered building
+ if(!n&&b.k!=='pole'){let best=null;for(const o of FAC.b.values()){if(o===b||!isPower(o.k))continue;const dd=Math.hypot(o.x-b.x,o.z-b.z);if(dd<20&&(!best||dd<best[0]))best=[dd,o];}if(best)S.wires.push([b.id,best[1].id]);}
+ FAC.powerDirty=true;}
+// ---- belts ----
+function portUnderAim(){const {o,d}=aimRay();let best=null;for(const b of FAC.b.values()){const P=BUILDINGS[b.k].ports||[];if(Math.hypot(b.x-o[0],b.z-o[2])>40)continue;for(let i=0;i<P.length;i++){const w=portWorld(b,i);const c=[w.p[0],w.p[1]+.3,w.p[2]];const v=v3.sub(c,o),t=v3.dot(v,d);if(t<0||t>28)continue;const q=[o[0]+d[0]*t-c[0],o[1]+d[1]*t-c[1],o[2]+d[2]*t-c[2]];const e=Math.hypot(...q);if(e<1.1+t*.03&&(!best||e/(1+t*.05)<best.e))best={b,i,e:e/(1+t*.05),w,t};}}return best;}
+function beltCheck(A,B){if(!A||!B)return 'Pick two ports';if(A.b===B.b)return 'Pick a port on another building';const a=A.w.io,b=B.w.io;if(a===b)return a==='in'?'Both are inputs: connect an output to an input':'Both are outputs: connect an output to an input';
+ if(A.b.conn[A.i]!=null||B.b.conn[B.i]!=null)return 'That port is already connected';const o=a==='out'?A:B,i=a==='out'?B:A;const c=beltCurve(o.w.p,o.w.d,i.w.p,[-i.w.d[0],0,-i.w.d[2]]);
+ if(c.len>60)return 'Too long: belts reach up to 60 m';const dy=Math.abs(i.w.p[1]-o.w.p[1]),dh=Math.hypot(i.w.p[0]-o.w.p[0],i.w.p[2]-o.w.p[2]);if(dy>dh*.7+1)return 'Too steep for a belt';
+ const B_=BELTS[BUILD.beltTier],n=Math.max(1,Math.ceil(c.len/B_.per));if(!canAfford(B_.cost,n))return 'Needs '+costText(B_.cost,n);return {o,i,c,n};}
+// aiming at open ground while dragging a belt drops a conveyor pole there and carries on from it
+function freePole(){const A=BUILD.beltA;if(!A)return null;const {o,d}=aimRay();const hg=rayGround(o,d,30);if(!hg)return null;const x=Math.round(hg.p[0]*2)/2,z=Math.round(hg.p[2]*2)/2;
+ const fromOut=A.w.io==='out';const dx=x-A.w.p[0],dz=z-A.w.p[2];if(Math.hypot(dx,dz)<2)return null;const rot=Math.atan2(dx,dz)+(fromOut?0:Math.PI);
+ const tall=BUILD.tallPole&&unlocked(BUILDINGS.cpoleT);const k=tall?'cpoleT':'cpole';const fake={k,x,y:ground(x,z),z,rot,conn:[null,null],id:-1};const P={b:fake,i:fromOut?0:1,w:portWorld(fake,fromOut?0:1)};return {fake,P,k};}
+function beltAction(){const P=portUnderAim();if(!BUILD.beltA){// upgrading an existing belt by building over it
+  if(!P){const hb=rayBelts(aimRay().o,aimRay().d);if(hb)return upgradeBelt(hb.bl);UI.toast('Aim at a port (the framed openings on buildings)','info');return;}
+  if(P.b.conn[P.i]!=null){const bl=FAC.belts.get(P.b.conn[P.i]);if(bl)return upgradeBelt(bl);}BUILD.beltA=P;AUDIO.click();UI.hint(touchMode?'Now aim at the other port and tap Connect':'Now click the other port');return;}
+ if(!P){const fp_=freePole();if(!fp_){UI.toast('Aim at a port, or at open ground nearby to drop a conveyor pole','info');return;}const D=BUILDINGS[fp_.k];if(!unlocked(D)){UI.toast('Conveyor poles are not unlocked yet','warn');return;}
+  const r=beltCheck(BUILD.beltA,fp_.P);if(typeof r==='string'){UI.toast(r,'warn');AUDIO.bad();return;}if(!canAfford(D.cost)||!canAfford(mergeCost(BELTS[BUILD.beltTier].cost,r.n,D.cost))){UI.toast('Needs '+costText(BELTS[BUILD.beltTier].cost,r.n)+' + '+costText(D.cost),'warn');AUDIO.bad();return;}
+  pay(D.cost);const pb=newBuilding({k:fp_.k,x:fp_.fake.x,y:fp_.fake.y,z:fp_.fake.z,rot:fp_.fake.rot});clearFloraAround(pb);const fromOut=BUILD.beltA.w.io==='out';
+  pay(BELTS[BUILD.beltTier].cost,r.n);if(fromOut)newBelt({tier:BUILD.beltTier,from:[BUILD.beltA.b.id,BUILD.beltA.i],to:[pb.id,0]});else newBelt({tier:BUILD.beltTier,from:[pb.id,1],to:[BUILD.beltA.b.id,BUILD.beltA.i]});
+  BUILD.beltA={b:pb,i:fromOut?1:0,w:portWorld(pb,fromOut?1:0)};if(BUILD.ghostBelt){freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt=null;}AUDIO.place();saveSoon();return;}
+ const r=beltCheck(BUILD.beltA,P);if(typeof r==='string'){UI.toast(r,'warn');AUDIO.bad();return;}const B_=BELTS[BUILD.beltTier];pay(B_.cost,r.n);
+ newBelt({tier:BUILD.beltTier,from:[r.o.b.id,r.o.i],to:[r.i.b.id,r.i.i]});BUILD.beltA=null;if(BUILD.ghostBelt){freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt=null;}AUDIO.place();saveSoon();UI.hint(touchMode?'Belt built. Aim at another port to keep going':'Belt built. Click another port to keep going');}
+function upgradeBelt(bl){const cur=BELTS[bl.tier].mk,nw=BELTS[BUILD.beltTier];if(nw.mk<=cur){UI.toast('Select a higher belt tier to upgrade this one','info');return;}const n=Math.max(1,Math.ceil(bl.c.len/nw.per));if(!canAfford(nw.cost,n)){UI.toast('Upgrade needs '+costText(nw.cost,n),'warn');return;}
+ pay(nw.cost,n);refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));const items=bl.items.map(it=>[it.t,it.d]);removeBelt(bl);newBelt({id:bl.id,tier:BUILD.beltTier,from:bl.from,to:bl.to,items});AUDIO.place();UI.toast('Upgraded to '+nw.n,'good');saveSoon();}
+// ---- dismantle ----
+function dismantleTarget(){const {o,d}=aimRay();const hb=rayBuildings(o,d,30),hl=rayBelts(o,d,30);if(hl&&(!hb||hl.t<hb.t))return {belt:hl.bl};if(hb&&hb.b.k!=='hub')return {b:hb.b};return null;}
+function dismantle(){const t=BUILD.target;if(!t){UI.toast('Aim at something to remove','info');return;}
+ if(t.belt){const bl=t.belt;refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));for(const it of bl.items)addInv(it.t,1);removeBelt(bl);}
+ else{const b=t.b,D=BUILDINGS[b.k];for(const bid of b.conn)if(bid!=null){const bl=FAC.belts.get(bid);if(bl){refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));for(const it of bl.items)addInv(it.t,1);}}
+  refund(D.cost);for(const m of [b.inb,b.out,b.store,b.fuel])for(const [k,v] of Object.entries(m))if(v>0)addInv(k,v);for(const it of b.buf)addInv(it,1);
+  // things standing on a foundation come down with it would be confusing: block instead
+  if(b.k==='foundation'){for(const o of FAC.b.values())if(o!==b&&Math.abs(o.x-b.x)<2&&Math.abs(o.z-b.z)<2&&Math.abs(o.y-(b.y+1))<.05){refund(D.cost,-1);UI.toast('Remove what is standing on it first','warn');return;}}
+  removeBuilding(b);}
+ AUDIO.remove();saveSoon();}
+// ---- per-frame: ghosts and highlights ----
+function updateBuildMode(){R.ghosts.length=0;BUILD.target=null;if(!BUILD.mode)return;
+ if(BUILD.mode==='place'){const t=placeTarget();BUILD.target=t;const why=placeValid(t);BUILD.why=why;R.ghosts.push({mesh:MODELS.b[BUILD.k],model:T(t.x,t.y,t.z,BUILD.rot),tint:why?[1,.3,.25,.45]:[.3,1,.7,.45]});}
+ else if(BUILD.mode==='belt'){const P=portUnderAim();BUILD.target=P;if(P){const w=P.w;R.ghosts.push({mesh:FX.portMark(),model:T(w.p[0],w.p[1]-.2,w.p[2],Math.atan2(w.d[0],w.d[2])),tint:P.b.conn[P.i]!=null?[1,.8,.2,.6]:w.io==='out'?[.3,1,.6,.6]:[1,.8,.2,.6]});}
+  if(BUILD.beltA){const A=BUILD.beltA;R.ghosts.push({mesh:FX.portMark(),model:T(A.w.p[0],A.w.p[1]-.2,A.w.p[2],Math.atan2(A.w.d[0],A.w.d[2])),tint:[.3,.8,1,.7]});
+   const r=P?beltCheck(A,P):'Aim at a second port';const key=P?P.b.id+':'+P.i:'';if(typeof r!=='string'){if(!BUILD.ghostBelt||BUILD.ghostBelt.key!==key){if(BUILD.ghostBelt)freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt={key,mesh:beltMesh(r.c,BUILD.beltTier),n:r.n};}R.ghosts.push({mesh:BUILD.ghostBelt.mesh,model:M4.create(),tint:[.3,1,.7,.45]});BUILD.why='';UI.hint(Math.round(r.c.len)+' m · '+costText(BELTS[BUILD.beltTier].cost,r.n));}
+   else{BUILD.why=r;if(P)UI.hint(r);}
+   if(!P){const fp_=freePole();if(fp_){const r2=beltCheck(A,fp_.P);R.ghosts.push({mesh:MODELS.b[fp_.k],model:T(fp_.fake.x,fp_.fake.y,fp_.fake.z,fp_.fake.rot),tint:typeof r2==='string'?[1,.3,.25,.45]:[.3,1,.7,.45]});
+    if(typeof r2!=='string'){const key='free:'+fp_.fake.x+','+fp_.fake.z;if(!BUILD.ghostBelt||BUILD.ghostBelt.key!==key){if(BUILD.ghostBelt)freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt={key,mesh:beltMesh(r2.c,BUILD.beltTier),n:r2.n};}R.ghosts.push({mesh:BUILD.ghostBelt.mesh,model:M4.create(),tint:[.3,1,.7,.45]});BUILD.why='';UI.hint(Math.round(r2.c.len)+' m + conveyor pole');}else{BUILD.why=r2;UI.hint(r2);}}}}}
+ else if(BUILD.mode==='dismantle'){const t=dismantleTarget();BUILD.target=t;if(t){if(t.belt)R.ghosts.push({mesh:t.belt.obj.mesh,model:M4.create(),tint:[1,.25,.2,.5]});else R.ghosts.push({mesh:t.b.obj.mesh,model:t.b.obj.model,tint:[1,.25,.2,.5]});}}}
+// ---- hand work: mining ore and harvesting plants ----
+const HAND={t:0,what:null};
+function handTarget(){const {o,d}=aimRay();const n=rayNodes(o,d,7),f=rayFlora(o,d,6),b=rayBuildings(o,d,9);let best=null;
+ if(n)best={kind:'node',t:n.t,nd:n.nd};if(f&&(!best||f.t<best.t))best={kind:'flora',t:f.t,f:f.f};if(b&&(!best||b.t<best.t))best={kind:'building',t:b.t,b:b.b};return best;}
+function updateHand(dt,holding){const t=handTarget();HAND.what=t;if(!holding||!t||t.kind==='building'){HAND.t=0;return;}
+ HAND.t+=dt;const need=t.kind==='node'?.55/(t.nd.purity===2?1.4:1):.9;if(HAND.t>=need){HAND.t=0;
+  if(t.kind==='node'){addInv(t.nd.type,1);AUDIO.mine();FX.chips(t.nd,ITEMS[t.nd.type].c);UI.pop('+1 '+ITEMS[t.nd.type].n);}
+  else{const f=t.f;f.alive=false;S.chopped.push(f.i);refreshFlora();if(f.kind==='bush'){addInv('leaves',6);UI.pop('+6 Leaves');}else{addInv('wood',4);addInv('leaves',10);UI.pop('+4 Wood · +10 Leaves');}AUDIO.chop();FX.puff(f.x,f.y+1,f.z,COL(f.pal[f.pal.length-1]));}}}
+
+// ---- 09-game.js ----
+// ===== Game state, progression, crafting, saving, sound, effects =====
+const SAVE_KEY='ff_save_v1';
+let S=null;
+function newState(){return {v:1,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
+// ---- milestones ----
+const curMilestone=()=>MILESTONES[S.tier]||null;
+function hubWants(item){const M=curMilestone();if(!M||!M.need[item])return 0;return M.need[item]-(S.hub[item]||0);}
+function hubDeliver(item,n){const M=curMilestone();if(!M)return 0;const k=Math.min(n,hubWants(item));if(k<=0)return 0;S.hub[item]=(S.hub[item]||0)+k;if(Object.entries(M.need).every(([i,v])=>(S.hub[i]||0)>=v))completeMilestone();return k;}
+function completeMilestone(){const M=curMilestone();S.tier++;S.hub={};AUDIO.fanfare();UI.banner('Milestone complete: '+M.n,'Unlocked: '+M.unlock+'. '+M.msg);saveSoon();UI.refresh();}
+const curPhase=()=>SKYHOOK_PHASES[S.sky.phase]||null;
+function skyWants(item){const P=curPhase();if(!P||!P.need[item])return 0;return P.need[item]-(S.sky.got[item]||0);}
+function skyDeliver(item,n){const P=curPhase();if(!P)return 0;const k=Math.min(n,skyWants(item));if(k<=0)return 0;S.sky.got[item]=(S.sky.got[item]||0)+k;
+ if(Object.entries(P.need).every(([i,v])=>(S.sky.got[i]||0)>=v)){S.sky.phase++;S.sky.got={};AUDIO.fanfare();if(!curPhase()){S.won=true;UI.banner('Mission complete!','The Skyhook is up and the final shipment is in orbit. Your factory is yours to keep growing.');}else UI.banner(P.n+' complete','Next: '+curPhase().n);saveSoon();}return k;}
+function deliverFromInv(to){let n=0;const want=to==='sky'?skyWants:hubWants,dl=to==='sky'?skyDeliver:hubDeliver;for(const k of Object.keys(S.inv)){const w=Math.min(want(k),S.inv[k]||0);if(w>0){dl(k,w);addInv(k,-w);n+=w;}}return n;}
+// ---- hand crafting ----
+function benchRecipes(){return RECIPES.filter(r=>r.bench&&unlocked(r));}
+function craft(r,times=1){let made=0;for(let t=0;t<times;t++){if(!Object.entries(r.in).every(([k,v])=>(S.inv[k]||0)>=v))break;for(const [k,v] of Object.entries(r.in))addInv(k,-v);for(const [k,v] of Object.entries(r.out))addInv(k,v);made++;}if(made){AUDIO.craft();}return made;}
+// ---- save / load ----
+function serialize(){S.player={x:PL.x,y:PL.y,z:PL.z,yaw:PL.yaw,pitch:PL.pitch};S.time=Date.now();
+ S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog}));
+ S.belts=[...FAC.belts.values()].map(bl=>({id:bl.id,tier:bl.tier,from:bl.from,to:bl.to,items:bl.items.map(i=>[i.t,Math.round(i.d*100)/100])}));return JSON.stringify(S);}
+function saveGame(){try{localStorage.setItem(SAVE_KEY,serialize());}catch(e){}}
+let _saveT=null;function saveSoon(){clearTimeout(_saveT);_saveT=setTimeout(saveGame,1500);}
+function loadGame(){let d=null;try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');}catch(e){}S=Object.assign(newState(),d||{});S.settings=Object.assign(newState().settings,S.settings||{});return !!d;}
+function restoreWorld(){for(const i of S.chopped){const f=WORLD.flora[i];if(f)f.alive=false;}refreshFlora();
+ if(!S.b.some(b=>b.k==='hub')){const y=ground(0,0);S.b.unshift({id:S.nextId++,k:'hub',x:0,y,z:0,rot:0});}
+ for(const o of S.b)newBuilding(o);for(const o of S.belts)newBelt(o);FAC.powerDirty=true;
+ const p=S.player;PL.x=p.x??0;PL.z=p.z??-11;PL.y=p.y??solidAt(PL.x,PL.z,99);PL.yaw=p.yaw??0;PL.pitch=p.pitch??-.08;}
+// production that happened while the game was closed (up to an hour)
+function catchUp(){const away=Math.min(3600,(Date.now()-(S.time||Date.now()))/1000);if(away<30||!FAC.b.size)return;const before={...FAC.stats.prod};FAC.stats.prod={};
+ for(let t=0;t<away;t+=1)simStep(1);const made=Object.entries(FAC.stats.prod).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);FAC.stats.prod={};
+ if(made.length)setTimeout(()=>UI.banner('While you were away ('+Math.round(away/60)+' min)',made.slice(0,4).map(([k,v])=>v+' '+ITEMS[k].n).join(' · ')),900);}
+// ---- sound: tiny synth, no files ----
+const AUDIO={ctx:null,init(){if(this.ctx||!S.settings.sound)return;try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}},
+ tone(f,d,o={}){const c=this.ctx;if(!c||!S.settings.sound)return;const t=c.currentTime+(o.when||0),g=c.createGain(),os=c.createOscillator();os.type=o.type||'sine';os.frequency.setValueAtTime(f,t);if(o.slide)os.frequency.exponentialRampToValueAtTime(f*o.slide,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(o.vol||.12,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g).connect(c.destination);os.start(t);os.stop(t+d+.02);},
+ noise(d,o={}){const c=this.ctx;if(!c||!S.settings.sound)return;const n=c.sampleRate*d,b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);const s=c.createBufferSource();s.buffer=b;const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=o.freq||1200;const g=c.createGain();g.gain.value=o.vol||.15;s.connect(f).connect(g).connect(c.destination);s.start(c.currentTime+(o.when||0));},
+ click(){this.tone(880,.06,{type:'triangle',vol:.06});},place(){this.tone(220,.12,{type:'square',vol:.07,slide:.6});this.noise(.12,{freq:700,vol:.12});this.tone(660,.1,{type:'triangle',vol:.06,when:.06});},
+ remove(){this.tone(440,.18,{type:'sawtooth',vol:.05,slide:.4});this.noise(.15,{freq:900,vol:.1});},bad(){this.tone(160,.18,{type:'square',vol:.06});},
+ mine(){this.noise(.08,{freq:2200,vol:.16});this.tone(140+Math.random()*60,.08,{type:'triangle',vol:.08});},chop(){this.noise(.25,{freq:500,vol:.2});},craft(){this.tone(520,.08,{type:'triangle',vol:.07});this.tone(780,.1,{type:'triangle',vol:.07,when:.07});},
+ fanfare(){[523,659,784,1047].forEach((f,i)=>this.tone(f,.32,{type:'triangle',vol:.1,when:i*.12}));}};
+// ---- particles ----
+FX.parts=[];
+FX.init=function(){const g=new GB();g.add(PRIM.box(.14,.14,.14),null,'#ffffff');FX.cube=g.build();FX.inst=instancer(FX.cube,600);R.inst.push(FX.inst);};
+FX.burst=function(x,y,z,col,n=10,sp=3){const c=Array.isArray(col)?col:COL(col);for(let i=0;i<n;i++)FX.parts.push({x,y,z,vx:(Math.random()-.5)*sp,vy:Math.random()*sp+1,vz:(Math.random()-.5)*sp,life:.7+Math.random()*.5,c,s:.6+Math.random()*.8,r:Math.random()*6});};
+FX.chips=(nd,col)=>{const d=camDir();FX.burst(PL.x+d[0]*2.2,PL.y+1.2+d[1]*2.2,PL.z+d[2]*2.2,col,6,2.4);};
+FX.puff=(x,y,z,col)=>FX.burst(x,y+.5,z,col||COL('#e8e4dc'),18,4);
+FX.update=function(dt){const I=FX.inst;let n=0;FX.parts=FX.parts.filter(p=>(p.life-=dt)>0);for(const p of FX.parts){p.vy-=12*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;const g=ground(p.x,p.z);if(p.y<g){p.y=g;p.vy*=-.3;p.vx*=.6;p.vz*=.6;}if(n>=I.max)break;const o=n*8;I.data.set([p.x,p.y,p.z,p.s*Math.min(1,p.life*2),p.c[0],p.c[1],p.c[2],p.r+=dt*4],o);n++;}I.n=n;};
+FX.portMark=()=>{if(!FX._pm){const g=new GB();g.add(PRIM.box(1.4,.1,.6),null,'#ffffff');g.add(PRIM.box(.3,.1,.8),T(0,0,.5,Math.PI/4),'#ffffff');g.add(PRIM.box(.3,.1,.8),T(0,0,.5,-Math.PI/4),'#ffffff');FX._pm=g.build();}return FX._pm;};
+
+// ---- 10-ui.js ----
+// ===== Interface: HUD, touch controls, panels =====
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const UI={panel:null,tab:null,bld:null,icons:{}};
+const swatch=k=>`<i class="sw" style="background:${ITEMS[k].c}"></i>`;
+const itemTag=(k,n)=>`<span class="it">${swatch(k)}${n!=null?'<b>'+n+'</b> ':''}${esc(ITEMS[k].n)}</span>`;
+const fmt=n=>n>=1000?(n/1000).toFixed(n>=1e4?0:1)+'k':String(Math.round(n));
+UI.init=function(){const u=$('#ui');u.innerHTML=`
+ <div id="cross"><i></i></div><div id="look"></div><div id="hint"></div><div id="toasts"></div><div id="pops"></div><div id="banner" class="hide"></div>
+ <button id="ms" class="card"></button>
+ <div id="tr"><div id="pow" class="pill"></div><button class="rb" data-a="tab" data-v="build" title="Build (B)">${ICO.hammer}</button><button class="rb" data-a="tab" data-v="inv" title="Inventory (Tab)">${ICO.bag}</button><button class="rb" data-a="tab" data-v="map" title="Map (M)">${ICO.map}</button><button class="rb" data-a="tab" data-v="menu" title="Menu">${ICO.menu}</button></div>
+ <div id="joy" class="hide"><i></i></div><div id="joyHint">MOVE</div>
+ <div id="pad"><div id="modeBtns"></div><button id="act" class="big"><span></span><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></button><button id="jump" class="small">${ICO.up}</button></div>
+ <div id="sheet" class="hide"><div class="sh"><div class="tabs"></div><button class="x" data-a="close">✕</button></div><div class="body"></div></div>`;
+ if(!touchMode){document.body.classList.add('pc');}
+ u.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.stopPropagation();AUDIO.init();const a=UI.A[t.dataset.a];if(a){a(t.dataset.v,t);}});
+ const act=$('#act');act.addEventListener('pointerdown',e=>{e.preventDefault();AUDIO.init();act.setPointerCapture(e.pointerId);act.classList.add('on');GAME.primary(true);});
+ const aup=()=>{act.classList.remove('on');GAME.primary(false);};act.addEventListener('pointerup',aup);act.addEventListener('pointercancel',aup);act.addEventListener('lostpointercapture',aup);
+ $('#jump').addEventListener('pointerdown',e=>{e.preventDefault();INPUT.jump=true;});
+ for(const id of ['#ms','#tr','#pad','#sheet'])$(id).addEventListener('pointerdown',e=>e.stopPropagation());};
+const ICO={hammer:'<svg viewBox="0 0 24 24"><path d="M3 21l9-9M12 12l2-2M14 6l4-4 4 4-4 4-4-4zM10 8l6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+ bag:'<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6L5 8zM9 8V6a3 3 0 016 0v2" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linejoin="round"/></svg>',
+ map:'<svg viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/></svg>',
+ menu:'<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+ up:'<svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ rot:'<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 11-2-5M19 4v4h-4" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+ bin:'<svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linejoin="round"/></svg>'};
+UI.joy=function(on,x,y,dx,dy){const j=$('#joy');if(!j)return;j.classList.toggle('hide',!on);if(on){j.style.left=x+'px';j.style.top=y+'px';j.firstElementChild.style.transform=`translate(${dx}px,${dy}px)`;}$('#joyHint').style.opacity=on?0:'';};
+UI.toast=function(msg,kind='info'){const b=$('#toasts');const t=document.createElement('div');t.className='toast '+kind;t.textContent=msg;b.appendChild(t);while(b.children.length>3)b.firstChild.remove();setTimeout(()=>{t.style.opacity=0;setTimeout(()=>t.remove(),400);},2800);};
+UI.pop=function(msg){const p=document.createElement('div');p.className='pop';p.textContent=msg;$('#pops').appendChild(p);setTimeout(()=>p.remove(),900);};
+UI.hint=function(m){const h=$('#hint');if(!h)return;h.textContent=m||'';h.style.display=m?'':'none';};
+UI.banner=function(t,s){const b=$('#banner');b.innerHTML=`<b>${esc(t)}</b><span>${esc(s||'')}</span>`;b.classList.remove('hide');clearTimeout(UI._bt);UI._bt=setTimeout(()=>b.classList.add('hide'),6500);};
+// ---- per-frame HUD ----
+UI.frame=function(dt){UI._t=(UI._t||0)+dt;
+ // action button + what you're looking at
+ let label='',look='',holdK=0;const H=HAND.what;
+ if(BUILD.mode==='place'){label='Place';look=BUILD.why||BUILDINGS[BUILD.k].n+' · '+costText(BUILDINGS[BUILD.k].cost);}
+ else if(BUILD.mode==='belt'){label=BUILD.beltA?'Connect':'Start';const P=BUILD.target;look=P?(P.b.conn[P.i]!=null?'Connected port: build over to upgrade':(P.w.io==='out'?'Output':'Input')+' · '+BUILDINGS[P.b.k].n):BELTS[BUILD.beltTier].n;}
+ else if(BUILD.mode==='dismantle'){label='Remove';const t=BUILD.target;look=t?(t.belt?BELTS[t.belt.tier].n:BUILDINGS[t.b.k].n):'Aim at something';}
+ else if(H){if(H.kind==='node'){label='Mine';look=PURITY[H.nd.purity].n+' '+NODE_TYPES[H.nd.type].n+' node · hold to mine';holdK=HAND.t/.55;}else if(H.kind==='flora'){label='Harvest';look=(H.f.kind==='bush'?'Bush · leaves':'Tree · wood and leaves');holdK=HAND.t/.9;}else{label='Open';look=BUILDINGS[H.b.k].n+bStatusShort(H.b);}}
+ const act=$('#act');act.classList.toggle('hide',!label);act.firstElementChild.textContent=label;act.classList.toggle('red',BUILD.mode==='dismantle');act.querySelector('circle').style.strokeDashoffset=String(289*(1-clamp(holdK,0,1)));
+ const lk=$('#look');if(lk._v!==look){lk._v=look;lk.textContent=look;lk.style.display=look?'':'none';}
+ const mk=BUILD.mode||'';if(UI._mk!==mk){UI._mk=mk;$('#modeBtns').innerHTML=mk?`${mk==='place'?`<button class="rb" data-a="rot" title="Rotate (R)">${ICO.rot}</button>`:''}${mk==='belt'?`<button class="rb tier" data-a="tab" data-v="build">${BELTS[BUILD.beltTier].n.replace('Conveyor Belt ','')}</button><button class="rb tier" data-a="tallPole">${BUILD.tallPole?'Tall pole':'Low pole'}</button>`:''}<button class="rb" data-a="cancel" title="Cancel">${ICO.x}</button>`:`<button class="rb" data-a="dismantle" title="Dismantle (X)">${ICO.bin}</button>`;}
+ if(UI._t<.25)return;UI._t=0;
+ const P=FAC.power||{use:0,cap:0,want:0};const pw=$('#pow');pw.innerHTML=`⚡ ${Math.round(P.use)}/${Math.round(P.cap)} MW`;pw.classList.toggle('bad',P.want>P.cap+.01);
+ UI.msCard();if(UI.panel)UI.liveRefresh();};
+UI.msCard=function(){const el=$('#ms');const M=curMilestone();let h='';if(M){h=`<small>MILESTONE ${S.tier+1} OF ${MILESTONES.length}</small><b>${esc(M.n)}</b>`+Object.entries(M.need).map(([k,v])=>{const g=S.hub[k]||0,have=S.inv[k]||0;return `<div class="mr">${swatch(k)}<span>${esc(ITEMS[k].n)}</span><em>${fmt(g)}/${fmt(v)}</em><i style="width:${Math.min(100,g/v*100)}%"></i>${have&&g<v?`<u>+${fmt(Math.min(have,v-g))}</u>`:''}</div>`;}).join('');}
+ else{const Ph=curPhase();h=Ph?`<small>SKYHOOK</small><b>${esc(Ph.n)}</b>`+Object.entries(Ph.need).map(([k,v])=>{const g=S.sky.got[k]||0;return `<div class="mr">${swatch(k)}<span>${esc(ITEMS[k].n)}</span><em>${fmt(g)}/${fmt(v)}</em><i style="width:${Math.min(100,g/v*100)}%"></i></div>`;}).join(''):`<small>MISSION</small><b>Complete!</b>`;}
+ if(el._h!==h){el._h=h;el.innerHTML=h;}el.dataset.a='tab';el.dataset.v='hub';};
+function bStatus(b){const D=BUILDINGS[b.k];if(D.machine){if(!b.recipe)return ['Pick a recipe','warn'];if(b.grid==null)return ['Not connected to power','bad'];if(b.run)return [b.pf<1?'Running slowly: not enough power':'Running','good'];const r=RECIPE[b.recipe];for(const [k,n] of Object.entries(r.out))if((b.out[k]||0)+n>outCap(n))return ['Output full: connect a belt or take items','warn'];if(b.pf===0&&machineReady(b))return ['No power: add fuel to a generator','bad'];return ['Waiting for '+Object.keys(r.in).filter(k=>(b.inb[k]||0)<r.in[k]).map(k=>ITEMS[k].n.toLowerCase()).join(' and '),'warn'];}
+ if(b.k==='miner'||b.k==='miner2'){if(b.grid==null)return ['Not connected to power','bad'];if(b.run)return [b.pf<1?'Mining slowly: not enough power':'Mining','good'];const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot>=50)return ['Output full: connect a belt','warn'];return ['No power: add fuel to a generator','bad'];}
+ if(D.gen){if(b.run)return ['Generating '+Math.round(D.gen*b.run)+' MW','good'];return genReady(b)?['Ready · nothing to power yet','info']:['Out of fuel','bad'];}
+ return ['',''];}
+const bStatusShort=b=>{const [s]=bStatus(b);return s?' · '+s:'';};
+// ---- panels ----
+UI.open=function(tab,b){UI.panel=true;UI.tab=tab;UI.bld=b||null;$('#sheet').classList.remove('hide');if(document.pointerLockElement)document.exitPointerLock();INPUT.jx=INPUT.jy=0;UI.refresh();};
+UI.closePanel=function(){UI.panel=false;UI.tab=null;UI.bld=null;$('#sheet').classList.add('hide');};
+UI.refresh=function(){if(!UI.panel)return;const tabs=[['build','Build'],['inv','Inventory'],['hub','HUB'],['map','Map'],['stats','Production'],['menu','Settings']];
+ $('#sheet .tabs').innerHTML=UI.bld?`<b class="ttl">${esc(BUILDINGS[UI.bld.k].n)}</b>`:tabs.map(([k,n])=>`<button class="${UI.tab===k?'on':''}" data-a="tab" data-v="${k}">${n}</button>`).join('');
+ const body=$('#sheet .body');body.innerHTML=UI.bld?UI.bldView(UI.bld):(UI.views[UI.tab]||(()=>''))();if(UI.tab==='map'&&!UI.bld)UI.drawMap();};
+UI.liveRefresh=function(){if(UI.bld||UI.tab==='hub'||UI.tab==='stats'){const body=$('#sheet .body');const st=body.scrollTop;const h=UI.bld?UI.bldView(UI.bld):UI.views[UI.tab]();if(body._h!==h){body._h=h;body.innerHTML=h;body.scrollTop=st;}}};
+UI.views={
+ build(){const cats=[['production','Production'],['logistics','Logistics'],['power','Power'],['structure','Structures'],['special','Special']];let h='<div class="cats">';
+  h+=`<div class="cat"><h4>Conveyor belts</h4><div class="grid">`+Object.entries(BELTS).map(([k,B])=>card(k,B.n,B.desc,B.cost,unlocked(B),B.tier,BUILD.mode==='belt'&&BUILD.beltTier===k,B.col)).join('')+`</div></div>`;
+  for(const [c,n] of cats){const list=Object.entries(BUILDINGS).filter(([k,D])=>D.cat===c&&k!=='hub');if(!list.length)continue;h+=`<div class="cat"><h4>${n}</h4><div class="grid">`+list.map(([k,D])=>card(k,D.n,D.desc||(D.machine?'Power '+D.power+' MW':''),D.cost,unlocked(D),D.tier,false)).join('')+`</div></div>`;}
+  return h+'</div>';
+  function card(k,n,desc,cost,ok,tier,sel,col){const aff=canAfford(cost);return `<button class="bcard ${ok?'':'lock'} ${sel?'sel':''}" ${ok?`data-a="pick" data-v="${k}"`:''}><div class="bi">${UI.icons[k]?`<img src="${UI.icons[k]}">`:''}</div><b>${esc(n)}</b>${ok?`<small>${Object.entries(cost).map(([i,v])=>`<span class="${(S.inv[i]||0)>=v?'':'no'}">${v} ${esc(ITEMS[i].n)}</span>`).join('')}</small>`:`<small class="lk">Unlocks at milestone ${tier}</small>`}${ok&&desc?`<p>${esc(desc)}</p>`:''}</button>`;}},
+ inv(){const items=Object.entries(S.inv).filter(([,v])=>v>0).sort((a,b)=>Object.keys(ITEMS).indexOf(a[0])-Object.keys(ITEMS).indexOf(b[0]));
+  let h=`<h4>Carrying</h4>`+(items.length?`<div class="inv">${items.map(([k,v])=>`<div class="slot">${swatch(k)}<b>${fmt(v)}</b><span>${esc(ITEMS[k].n)}</span></div>`).join('')}</div>`:'<p class="mut">Empty. Mine ore nodes and harvest plants to get started.</p>');
+  h+=`<h4>Hand crafting</h4><p class="mut">Craft parts on the go. Machines do this automatically once you build them.</p><div class="crafts">`+benchRecipes().map(r=>{const can=Object.entries(r.in).every(([k,v])=>(S.inv[k]||0)>=v);const maxN=Math.min(...Object.entries(r.in).map(([k,v])=>Math.floor((S.inv[k]||0)/v)));
+   return `<div class="craft ${can?'':'off'}"><div class="cr">${Object.entries(r.in).map(([k,v])=>itemTag(k,v)).join('<i>+</i>')}<i>→</i>${Object.entries(r.out).map(([k,v])=>itemTag(k,v)).join('')}</div><div class="cb"><button class="btn" data-a="craft" data-v="${r.id}:1" ${can?'':'disabled'}>Craft</button><button class="btn" data-a="craft" data-v="${r.id}:10" ${maxN>=2?'':'disabled'}>×${Math.max(2,Math.min(10,maxN))}</button></div></div>`;}).join('')+'</div>';return h;},
+ hub(){const M=curMilestone();let h='';if(M){const can=Object.keys(M.need).some(k=>hubWants(k)>0&&(S.inv[k]||0)>0);h+=`<div class="msh"><small>Milestone ${S.tier+1} of ${MILESTONES.length}</small><h3>${esc(M.n)}</h3><p>Unlocks: ${esc(M.unlock)}</p></div>`+Object.entries(M.need).map(([k,v])=>{const g=S.hub[k]||0;return `<div class="need">${itemTag(k)}<div class="bar"><i style="width:${Math.min(100,g/v*100)}%"></i></div><em>${fmt(g)} / ${fmt(v)}</em><small>you have ${fmt(S.inv[k]||0)}</small></div>`;}).join('')+`<div class="btns"><button class="btn big ${can?'gold':''}" data-a="deliver" data-v="hub" ${can?'':'disabled'}>Deliver from inventory</button></div><p class="mut">Tip: belt parts straight into the HUB's input to deliver them automatically.</p>`;}
+  else h+=`<div class="msh"><h3>All milestones complete</h3><p>Build the Skyhook (Build → Special) and feed it the final shipments.</p></div>`;
+  h+=`<h4>Milestones</h4>`+MILESTONES.map((m,i)=>`<div class="mrow ${i<S.tier?'done':i===S.tier?'cur':''}"><b>${i<S.tier?'✓':i+1}</b><span>${esc(m.n)}<small>${esc(m.unlock)}</small></span></div>`).join('');return h;},
+ map(){return `<canvas id="mapc" width="640" height="640"></canvas><p class="mut">Ore nodes: <span class="it">${Object.entries(NODE_TYPES).map(([k,n])=>`<i class="sw" style="background:${n.c}"></i>${n.n}`).join(' ')}</span></p>`;},
+ stats(){const ks=[...new Set([...Object.keys(FAC.rate),...Object.keys(FAC.rateIn)])].filter(k=>(FAC.rate[k]||0)>.05||(FAC.rateIn[k]||0)>.05);
+  return `<p class="mut">Average items per minute across your whole factory (updates every 10 s).</p>`+(ks.length?`<table class="st"><tr><th>Item</th><th>Made</th><th>Used</th><th>Net</th></tr>`+ks.map(k=>{const p=FAC.rate[k]||0,c=FAC.rateIn[k]||0,n=p-c;return `<tr><td>${itemTag(k)}</td><td>${p.toFixed(1)}</td><td>${c.toFixed(1)}</td><td class="${n<-.05?'neg':n>.05?'pos':''}">${n>0?'+':''}${n.toFixed(1)}</td></tr>`;}).join('')+'</table>':'<p>Nothing is being made yet.</p>')+`<h4>Power</h4><p>${Math.round(FAC.power?FAC.power.use:0)} MW used of ${Math.round(FAC.power?FAC.power.cap:0)} MW available${FAC.power&&FAC.power.want>FAC.power.cap?' · <b class="neg">machines are slowed: build more generators</b>':''}</p>`;},
+ menu(){return `<h4>Settings</h4><div class="set"><span>Look sensitivity</span><input type="range" min="0.3" max="2.5" step="0.1" value="${S.settings.sens}" oninput="this.dispatchEvent(new CustomEvent('ff',{bubbles:true}))" data-s="sens"></div>
+  <div class="set"><span>Sound</span><button class="btn" data-a="sound">${S.settings.sound?'On':'Off'}</button></div>
+  <div class="set"><span>Graphics</span><button class="btn" data-a="qual">${{auto:'Auto',low:'Low (faster)',high:'High (sharper)'}[S.settings.quality]}</button></div>
+  <h4>Game</h4><div class="btns"><button class="btn" data-a="save">Save now</button><button class="btn red" data-a="reset">Start a new game</button></div>
+  <p class="mut">${GAME_NAME} · version ${VERSION}. Saves automatically on this device.</p>
+  <h4>Controls</h4><p class="mut">${touchMode?'Left thumb: move. Right thumb: look. Big button: mine, harvest, open, place. Tap a building to open it.':'WASD move · Mouse look · Space jump · Shift run · Click: mine, harvest, place · E open · B build · R rotate · X dismantle · Tab inventory · M map · Right-click or Esc cancels'}</p>`;},
+};
+// ---- building panel ----
+UI.bldView=function(b){const D=BUILDINGS[b.k];const [st,cls]=bStatus(b);let h=st?`<div class="status ${cls}">${esc(st)}</div>`:'';
+ if(D.machine){const r=RECIPE[b.recipe];if(r)h+=`<div class="prog"><i style="width:${(b.prog/r.t*100).toFixed(0)}%"></i></div>`;
+  h+=`<h4>Recipe</h4><div class="recs">`+RECIPES.filter(x=>x.m===D.machine).map(x=>{const ok=unlocked(x);return `<button class="rec ${b.recipe===x.id?'on':''} ${ok?'':'lock'}" ${ok?`data-a="recipe" data-v="${x.id}"`:''}><b>${esc(recipeName(x))}</b><span>${Object.entries(x.in).map(([k,v])=>`${swatch(k)}${(v*60/x.t).toFixed(v*60/x.t%1?1:0)}`).join(' + ')} → ${Object.entries(x.out).map(([k,v])=>`${swatch(k)}${(v*60/x.t).toFixed(v*60/x.t%1?1:0)}/min`).join('')}</span>${ok?'':'<small>Locked</small>'}</button>`;}).join('')+'</div>';
+  if(r){h+=`<h4>Input</h4><div class="bufs">`+Object.keys(r.in).map(k=>`<div class="buf">${itemTag(k,b.inb[k]||0)}${(S.inv[k]||0)>0?`<button class="btn sm" data-a="put" data-v="${k}">Add ${fmt(Math.min(S.inv[k],inCap(r.in[k])-(b.inb[k]||0)))}</button>`:''}</div>`).join('')+`</div><h4>Output</h4><div class="bufs">`+Object.keys(r.out).map(k=>`<div class="buf">${itemTag(k,b.out[k]||0)}${(b.out[k]||0)>0?`<button class="btn sm gold" data-a="take" data-v="${k}">Take</button>`:''}</div>`).join('')+'</div>';}
+  h+=`<p class="mut">Uses ${D.power} MW when running.</p>`;}
+ else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd)h+=`<p>${PURITY[nd.purity].n} ${NODE_TYPES[nd.type].n} node · <b>${D.rate*PURITY[nd.purity].k}/min</b></p>`;h+=`<div class="bufs">`+Object.keys(b.out).map(k=>`<div class="buf">${itemTag(k,b.out[k])}${b.out[k]>0?`<button class="btn sm gold" data-a="take" data-v="${k}">Take</button>`:''}</div>`).join('')+`</div><p class="mut">Uses ${D.power} MW. Belt its output into a smelter.</p>`;}
+ else if(b.k==='storage'){const it=Object.entries(b.store).filter(([,v])=>v>0);const tot=it.reduce((a,[,v])=>a+v,0);h+=`<p>${fmt(tot)} / ${fmt(D.cap)} items</p><div class="inv">${it.map(([k,v])=>`<button class="slot" data-a="takeS" data-v="${k}">${swatch(k)}<b>${fmt(v)}</b><span>${esc(ITEMS[k].n)}</span></button>`).join('')||'<p class="mut">Empty</p>'}</div><div class="btns"><button class="btn gold" data-a="takeAll">Take all</button><button class="btn" data-a="putAll">Store everything</button></div>`;}
+ else if(D.gen){h+=`<p>Up to ${D.gen} MW · burns ${D.fuels.map(f=>ITEMS[f].n.toLowerCase()).join(', ')}</p><div class="bufs">`+D.fuels.map(k=>`<div class="buf">${itemTag(k,b.fuel[k]||0)}<small class="mut">${Math.round(FUEL[k]/D.gen)} s each</small>${(S.inv[k]||0)>0?`<button class="btn sm gold" data-a="fuel" data-v="${k}">Add all</button>`:''}</div>`).join('')+`</div><p class="mut">A generator only burns what your machines need.</p>`;}
+ else if(b.k==='hub'){h+=`<p>Your base camp.</p><div class="btns"><button class="btn gold big" data-a="tab" data-v="hub">Milestones</button><button class="btn big" data-a="tab" data-v="inv">Hand crafting</button></div>`;}
+ else if(b.k==='skyhook'){const P=curPhase();h+=P?`<h3>${esc(P.n)}</h3>`+Object.entries(P.need).map(([k,v])=>{const g=S.sky.got[k]||0;return `<div class="need">${itemTag(k)}<div class="bar"><i style="width:${Math.min(100,g/v*100)}%"></i></div><em>${fmt(g)} / ${fmt(v)}</em></div>`;}).join('')+`<div class="btns"><button class="btn gold big" data-a="deliver" data-v="sky">Deliver from inventory</button></div>`:'<h3>Mission complete</h3>';}
+ else if(b.k==='splitter'||b.k==='merger'||b.k==='pole'||b.k==='foundation'||D.pass)h+=`<p>${esc(D.desc||'')}</p>`;
+ return h;};
+UI.A={tab:v=>{if(UI.panel&&UI.tab===v&&!UI.bld){UI.closePanel();return;}UI.open(v);},close:()=>UI.closePanel(),
+ pick:v=>{BUILD.start(v);},tallPole:()=>{if(!unlocked(BUILDINGS.cpoleT)){UI.toast('Tall conveyor poles unlock at milestone 2','info');return;}BUILD.tallPole=!BUILD.tallPole;UI._mk='';},rot:()=>BUILD.rotate(1),cancel:()=>BUILD.cancel(),dismantle:()=>BUILD.mode==='dismantle'?BUILD.cancel():BUILD.dismantle(),
+ craft:v=>{const [id,n]=v.split(':');const r=RECIPE[id];const max=Math.min(...Object.entries(r.in).map(([k,c])=>Math.floor((S.inv[k]||0)/c)));const m=craft(r,n==='10'?Math.max(1,Math.min(10,max)):1);if(m)UI.pop('+'+Object.entries(r.out).map(([k,c])=>c*m+' '+ITEMS[k].n).join(' '));UI.refresh();saveSoon();},
+ deliver:v=>{const n=deliverFromInv(v);if(n){UI.toast('Delivered '+n+' parts','good');AUDIO.craft();}UI.refresh();saveSoon();},
+ recipe:v=>{const b=UI.bld;if(!b)return;if(b.recipe!==v){for(const [k,c] of Object.entries(b.inb))if(c>0)addInv(k,c);for(const [k,c] of Object.entries(b.out))if(c>0)addInv(k,c);b.inb={};b.out={};b.prog=0;b.recipe=v;}AUDIO.click();UI.refresh();saveSoon();},
+ take:v=>{const b=UI.bld;const n=b.out[v]||0;if(n){addInv(v,n);b.out[v]=0;UI.pop('+'+n+' '+ITEMS[v].n);}UI.refresh();},
+ put:v=>{const b=UI.bld,r=RECIPE[b.recipe];const n=Math.min(S.inv[v]||0,inCap(r.in[v])-(b.inb[v]||0));if(n>0){addInv(v,-n);b.inb[v]=(b.inb[v]||0)+n;}UI.refresh();},
+ fuel:v=>{const b=UI.bld;const t=Object.values(b.fuel).reduce((a,c)=>a+c,0);const n=Math.min(S.inv[v]||0,Math.max(0,200-t));if(n>0){addInv(v,-n);b.fuel[v]=(b.fuel[v]||0)+n;AUDIO.craft();}UI.refresh();},
+ takeS:v=>{const b=UI.bld;const n=b.store[v]||0;addInv(v,n);delete b.store[v];UI.refresh();},takeAll:()=>{const b=UI.bld;for(const [k,v] of Object.entries(b.store))addInv(k,v);b.store={};UI.refresh();},
+ putAll:()=>{const b=UI.bld,D=BUILDINGS[b.k];let tot=Object.values(b.store).reduce((a,c)=>a+c,0);for(const [k,v] of Object.entries(S.inv)){const n=Math.min(v,D.cap-tot);if(n<=0)break;b.store[k]=(b.store[k]||0)+n;addInv(k,-n);tot+=n;}UI.refresh();},
+ sound:()=>{S.settings.sound=!S.settings.sound;AUDIO.init();UI.refresh();saveSoon();},qual:()=>{const o=['auto','low','high'];S.settings.quality=o[(o.indexOf(S.settings.quality)+1)%3];applyQuality();UI.refresh();saveSoon();},
+ save:()=>{saveGame();UI.toast('Saved','good');},reset:()=>{if(confirm('Start over? Your factory and inventory will be wiped.')){localStorage.removeItem(SAVE_KEY);location.reload();}}};
+addEventListener('ff',e=>{const t=e.target;if(t.dataset.s==='sens'){S.settings.sens=+t.value;saveSoon();}},true);
+// ---- map ----
+UI.drawMap=function(){const c=$('#mapc');if(!c)return;const x=c.getContext('2d'),W=WORLD,N=c.width,sc=N/(W.half*2);
+ if(!UI._mapImg){const im=x.createImageData(N,N);for(let j=0;j<N;j++)for(let i=0;i<N;i++){const wx=-W.half+i/sc,wz=-W.half+j/sc,h=ground(wx,wz),n=groundNormal(wx,wz);const col=terrainColor(wx,wz,h,n[1]);const sh=.75+n[0]*.5+(h-10)*.004;const o=(j*N+i)*4;
+   im.data[o]=Math.pow(col[0],1/2.2)*255*sh;im.data[o+1]=Math.pow(col[1],1/2.2)*255*sh;im.data[o+2]=Math.pow(col[2],1/2.2)*255*sh;im.data[o+3]=255;}UI._mapImg=im;}
+ x.putImageData(UI._mapImg,0,0);const P=(wx,wz)=>[(wx+W.half)*sc,(wz+W.half)*sc];
+ x.lineWidth=2.5;for(const bl of FAC.belts.values()){x.strokeStyle=BELTS[bl.tier].col;x.beginPath();bl.c.pts.forEach((p,i)=>{const q=P(p[0],p[2]);i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]);});x.stroke();}
+ for(const b of FAC.b.values()){const [w,d]=fp(b.k,b.rot);const q=P(b.x,b.z);x.fillStyle=b.k==='hub'?'#f08a32':b.k==='foundation'?'#bbb':'#f4f4f4';x.fillRect(q[0]-w*sc/2,q[1]-d*sc/2,Math.max(2,w*sc),Math.max(2,d*sc));}
+ for(const nd of W.nodes){const q=P(nd.x,nd.z);x.fillStyle=NODE_TYPES[nd.type].c;x.strokeStyle='#111';x.lineWidth=1.5;x.beginPath();x.arc(q[0],q[1],3+nd.purity*1.5,0,TAU);x.fill();x.stroke();}
+ const q=P(PL.x,PL.z);x.save();x.translate(q[0],q[1]);x.rotate(-PL.yaw+Math.PI);x.fillStyle='#ffd23a';x.strokeStyle='#000';x.beginPath();x.moveTo(0,-9);x.lineTo(6,7);x.lineTo(0,3);x.lineTo(-6,7);x.closePath();x.fill();x.stroke();x.restore();};
+
+// ---- 99-main.js ----
+// ===== Boot and main loop =====
+const VERSION='0.1.0',VERSION_MARK='FFVER@0.1.0@';
+// ---- update check: a small pill appears when a newer version is online ----
+const UPD={start(){setTimeout(()=>this.check(),20000);setInterval(()=>this.check(),7*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION)UI.toast('Update '+m[1]+' ready: reopen the game to get it','good');}catch(e){}}};
+const GAME={started:false};
+const setLoad=(f,m)=>{const b=document.getElementById('lbar');if(b)b.style.width=(f*100)+'%';const l=document.getElementById('lmsg');if(l&&m)l.textContent=m;};
+GAME.primary=function(down){AUDIO.init();if(!down){INPUT.act=false;return;}if(UI.panel)return;
+ if(BUILD.mode==='place')return placeBuilding();if(BUILD.mode==='belt')return beltAction();if(BUILD.mode==='dismantle')return dismantle();
+ const H=handTarget();if(H&&H.kind==='building'){UI.open('bld',H.b);return;}INPUT.act=true;};
+GAME.secondary=()=>{if(BUILD.mode)BUILD.cancel();};
+GAME.tapAt=function(sx,sy){if(UI.panel||BUILD.mode)return;const r=screenRay(sx/innerWidth,sy/innerHeight);const h=rayBuildings(r.o,r.d,30);if(h)UI.open('bld',h.b);};
+function onKey(c,e){AUDIO.init();if(c==='Tab'){e.preventDefault();UI.A.tab('inv');return;}
+ if(c==='Escape'){if(UI.panel)UI.closePanel();else if(BUILD.mode)BUILD.cancel();return;}
+ if(UI.panel&&c!=='KeyB'&&c!=='KeyM')return;
+ if(c==='KeyB'||c==='KeyQ')UI.A.tab('build');else if(c==='KeyM')UI.A.tab('map');else if(c==='KeyR'){if(BUILD.mode==='place')BUILD.rotate(1);}else if(c==='KeyX')UI.A.dismantle();
+ else if(c==='KeyE'){const H=handTarget();if(H&&H.kind==='building')UI.open('bld',H.b);}else if(c==='KeyH')UI.A.tab('hub');
+ else if(/^Digit[1-5]$/.test(c)&&BUILD.mode==='belt'){const k='belt'+c.slice(5);if(unlocked(BELTS[k])){BUILD.beltTier=k;UI._mk='';}}}
+function applyQuality(){const q=S.settings.quality;R.maxDPR=q==='low'?1:q==='high'?2:1.5;R.scale=q==='low'?.8:1;R.far=q==='low'?520:800;R.shadows=q!=='low';resize();}
+let lastT=performance.now(),perf={t:0,n:0};
+function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
+ try{updatePlayer(dt);if(GAME.freeCam){const f=GAME.freeCam;R.cam=f.cam;R.yaw=f.yaw;R.pitch=f.pitch;}updateBuildMode();updateHand(dt,INPUT.act&&!BUILD.mode&&!UI.panel);
+  let left=dt;while(left>0){const s=Math.min(.05,left);simStep(s);left-=s;}
+  fillItemInstances();FX.update(dt);UI.frame(dt);renderFrame();}catch(e){console.error(e);GAME.err=(GAME.err||0)+1;if(GAME.err<3)UI.toast('Error: '+e.message,'bad');}
+ // automatic quality: drop resolution on slow devices
+ if(S.settings.quality==='auto'){perf.t+=dt;perf.n++;if(perf.t>4){const fps=perf.n/perf.t;perf.t=perf.n=0;if(fps<28&&R.scale>.6){R.scale=Math.max(.6,R.scale-.12);resize();}else if(fps>55&&R.scale<1){R.scale=Math.min(1,R.scale+.08);resize();}}}
+ requestAnimationFrame(frame);}
+(async function boot(){try{
+ const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
+ initWorld();setLoad(.6,'Unpacking the HUB…');await sleep(20);initModels();FX.init();R.extra=animObjects;
+ UI.init();makeThumbs();initInput();restoreWorld();if(!fresh)catchUp();
+ document.getElementById('loading').remove();UI.hint('');GAME.started=true;
+ if(fresh)setTimeout(()=>UI.banner('Welcome, pioneer','Mine the iron node near the HUB, craft iron plates and rods (Inventory), then deliver them to the HUB to unlock your first machines.'),600);
+ addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
+ window.FW={S:()=>S,UI,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
+ if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});UPD.start();
+}catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
+
+})();</script></body></html>
