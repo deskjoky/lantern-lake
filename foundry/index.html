@@ -98,6 +98,9 @@ h4{margin:14px 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercas
 @media (max-height:500px){.tbtn{padding:10px 14px;font-size:14px}.tlogo{margin-bottom:6px}.pcard{padding:14px;gap:6px}#title{padding-left:calc(4vw + var(--safe-l))}}
 body.intitle #ui>*:not(#sheet):not(#toasts){display:none!important}
 .help{padding-left:20px;margin:0}.help li{margin:0 0 8px;font-size:13.5px;line-height:1.45}
+.clock{display:flex;align-items:center;gap:6px}.clock b{min-width:64px;text-align:center;font-size:18px;color:#ffd27a}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:6px 0}.pgrid div{background:rgba(255,255,255,.06);border-radius:12px;padding:8px 10px}.pgrid b{font-size:18px;display:block}.pgrid small{color:var(--muted);font-size:11px}
+.pgraph{width:100%;height:120px;border-radius:12px;margin-top:6px}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -355,6 +358,7 @@ const ITEMS={
  iron_plate:{n:'Iron plate',c:'#b8c0c8',s:'plate'},iron_rod:{n:'Iron rod',c:'#a8b0b8',s:'rod'},screw:{n:'Screws',c:'#c8ccd0',s:'small'},wire:{n:'Wire',c:'#e09050',s:'coil'},cable:{n:'Cable',c:'#30343a',s:'coil'},
  concrete:{n:'Concrete',c:'#b4b0a8',s:'block'},copper_sheet:{n:'Copper sheet',c:'#e0904e',s:'plate'},reinforced_plate:{n:'Reinforced plate',c:'#8a929c',s:'plate2'},rotor:{n:'Rotor',c:'#9c8a5a',s:'rotor'},
  modular_frame:{n:'Modular frame',c:'#7c8694',s:'frame'},steel_beam:{n:'Steel beam',c:'#58606a',s:'beam'},steel_pipe:{n:'Steel pipe',c:'#6c747e',s:'pipe'},encased_beam:{n:'Encased beam',c:'#a8a49c',s:'beam'},
+ slug:{n:'Power slug',c:'#f0d040',s:'bag'},power_shard:{n:'Power shard',c:'#ffd04a',s:'small'},
  stator:{n:'Stator',c:'#6a7a5a',s:'rotor'},motor:{n:'Motor',c:'#c86a3a',s:'motor'},quickwire:{n:'Quickwire',c:'#f2cc66',s:'coil'},circuit:{n:'Circuit board',c:'#3a8a5a',s:'plate2'},
 };
 // machine: smelter | foundry | constructor | assembler | bench (hand crafting). time in seconds per cycle.
@@ -376,6 +380,7 @@ const RECIPES=[
  {id:'steel_beam',m:'constructor',in:{steel_ingot:4},out:{steel_beam:1},t:4,tier:5},
  {id:'steel_pipe',m:'constructor',in:{steel_ingot:3},out:{steel_pipe:2},t:6,tier:5},
  {id:'quickwire',m:'constructor',in:{aurite_ingot:1},out:{quickwire:5},t:5,tier:6},
+ {id:'power_shard',m:'constructor',in:{slug:1},out:{power_shard:1},t:8,bench:1,name:'Power shard'},
  {id:'reinforced_plate',m:'assembler',in:{iron_plate:6,screw:12},out:{reinforced_plate:1},t:12,bench:1,tier:2},
  {id:'rotor',m:'assembler',in:{iron_rod:5,screw:25},out:{rotor:1},t:15,bench:1,tier:4},
  {id:'modular_frame',m:'assembler',in:{reinforced_plate:3,iron_rod:12},out:{modular_frame:2},t:60,bench:1,tier:4},
@@ -404,8 +409,15 @@ const BUILDINGS={
  cpoleT:{n:'Tall Conveyor Pole',w:1,d:1,h:4.7,py:4,cost:{iron_rod:2,iron_plate:2},ports:[[0,-.5,Math.PI,'in'],[0,.5,0,'out']],cat:'logistics',desc:'Lifts belts 4 m up, over walkways and other belts.',tier:2,pass:1},
  burner:{n:'Biomass Burner',w:4,d:4,h:3.5,cost:{iron_plate:15,iron_rod:15,wire:25},gen:30,fuels:['leaves','wood','biomass','biofuel'],ports:[[0,-2,Math.PI,'in']],cat:'power',desc:'30 MW. Burns leaves, wood, biomass or biofuel. Fill it by hand or by belt.',tier:1},
  coalgen:{n:'Coal Generator',w:6,d:9,h:6,cost:{reinforced_plate:15,rotor:8,cable:30},gen:75,fuels:['coal'],ports:[[0,-4.5,Math.PI,'in']],cat:'power',desc:'75 MW from coal. Feed it with a belt.',tier:4},
- pole:{n:'Power Pole',w:1,d:1,h:6,cost:{wire:3,iron_rod:1,concrete:1},cat:'power',desc:'Carries power up to 30 m. Machines and poles in range are wired automatically.',tier:1,range:30},
- foundation:{n:'Foundation',w:4,d:4,h:1,cost:{concrete:5},cat:'structure',desc:'A flat 4 x 4 m platform. Stack and line them up to build level ground.',tier:3},
+ pole:{n:'Power Pole',w:1,d:1,h:6,cost:{wire:3,iron_rod:1,concrete:1},cat:'power',desc:'Holds up to 4 power lines reaching 30 m. Use the wire tool, or let auto-wire connect things in range.',tier:1,range:30,conns:4},
+ pole2:{n:'Power Pole Mk.2',w:1,d:1,h:7,cost:{cable:6,iron_rod:2,concrete:2},cat:'power',desc:'Holds up to 7 power lines.',tier:3,range:30,conns:7},
+ pswitch:{n:'Power Switch',w:1.2,d:1,h:2,cost:{cable:8,iron_plate:6},cat:'power',desc:'Wire it between two parts of your grid. Flip it to cut power to everything on the far side.',tier:2,conns:6},
+ battery:{n:'Power Storage',w:4,d:4,h:4,cost:{reinforced_plate:20,cable:40,wire:60},cat:'power',desc:'Stores 100 MW·min. Charges from spare power and covers short shortfalls so your fuse does not blow.',tier:4,store:6000,rate:100,conns:2},
+ wall:{n:'Wall',w:4,d:.4,h:4,cost:{concrete:4,iron_plate:2},cat:'structure',desc:'Snaps to the edge of a foundation. Line your factory floors.',tier:3,surf:'block'},
+ ramp:{n:'Ramp',w:4,d:4,h:1,rise:1,cost:{concrete:6},cat:'structure',desc:'Walk up one foundation level.',tier:3,surf:'ramp'},
+ stairs:{n:'Stairs',w:2,d:4,h:4,rise:4,cost:{concrete:6,iron_rod:6},cat:'structure',desc:'Climb 4 m to an upper floor.',tier:3,surf:'ramp'},
+ catwalk:{n:'Catwalk',w:2,d:4,h:4.1,top:4,cost:{iron_plate:4,iron_rod:6},cat:'structure',desc:'A raised 4 m walkway on legs. Belts and you can pass underneath.',tier:2,surf:'deck'},
+ foundation:{n:'Foundation',w:4,d:4,h:1,cost:{concrete:5},cat:'structure',desc:'A flat 4 x 4 m platform. Raise or lower it, stack them and line them up to build level ground and upper floors.',tier:3,surf:'deck',top:1},
  skyhook:{n:'Skyhook',w:14,d:14,h:40,cost:{concrete:200,steel_beam:100,modular_frame:30},ports:[[0,-7,Math.PI,'in']],cat:'special',desc:'The orbital lift. Feed it the final shipments to finish your mission.',tier:6},
 };
 // belts: speed in metres per second, items sit 1 m apart → 60 × speed items per minute
@@ -480,13 +492,14 @@ function floraMeshes(){const K=FLORA.kinds;
  {const g=new GB();g.add(PRIM.lathe([[.38,0],[.32,1.5],[.22,3.2],[.28,3.6]],8),null,'#8c7c8e');g.add(PRIM.sphere(1.5,10,7),T(0,4.2,0,0,0,0,1,.62,1),COL('#ffffff',.25));for(let k=0;k<6;k++){const a=k/6*TAU;g.add(PRIM.sphere(.18,6,4),T(Math.cos(a)*1.1,3.6,Math.sin(a)*1.1),COL('#fff4c0',1.2));}K.bulb=g.build();}
  {const g=new GB();g.add(PRIM.lathe([[.3,0],[.22,2],[.12,5.5],[.02,7]],7),null,'#8a7a90');for(let k=0;k<4;k++)g.add(PRIM.cone(.9-k*.15,1.4,7),T(0,2.2+k*1.2,0),COL('#ffffff',.1));K.spire=g.build();}
  {const g=new GB();for(let k=0;k<5;k++){const a=k/5*TAU;g.add(PRIM.sphere(.55,7,5),T(Math.cos(a)*.45,.4,Math.sin(a)*.45),'#ffffff');}g.add(PRIM.sphere(.6,7,5),T(0,.7,0),'#ffffff');K.bush=g.build();}
- {const g=new GB();g.add(PRIM.ico(1,1,{noise:.4,seed:4}),T(0,.3,0,0,0,0,1,.6,1),'#ffffff');K.rock=g.build();}}
-const FLORA_COL={bulb:[['#8a5a8c','#4ad0b0'],['#6a4a7a','#e07ab0'],['#7a5a6a','#7ab0f0']],spire:[['#5a4a6a','#3a9a8a'],['#4a3a5a','#8a5ab0']],bush:[['#2f8a78'],['#7a4a9a'],['#3a7aa8']],rock:[['#6c6474'],['#7a6e78']]};
+ {const g=new GB();g.add(PRIM.ico(1,1,{noise:.4,seed:4}),T(0,.3,0,0,0,0,1,.6,1),'#ffffff');K.rock=g.build();}
+ {const g=new GB();g.add(PRIM.sphere(.45,10,8),T(0,.3,0,0,0,0,1,.65,1.3),COL('#ffffff',1.3));g.add(PRIM.sphere(.16,8,6),T(0,.48,.45),COL('#ffffff',1.8));for(let k=0;k<3;k++)g.add(PRIM.cone(.09,.5,5),T((k-1)*.25,.4,-.3,0,-.6),COL('#ffffff',1));g.add(PRIM.cyl(.9,.9,.03,16),T(0,.02,0),COL('#ffffff',.6));K.slug=g.build();}}
+const FLORA_COL={bulb:[['#8a5a8c','#4ad0b0'],['#6a4a7a','#e07ab0'],['#7a5a6a','#7ab0f0']],spire:[['#5a4a6a','#3a9a8a'],['#4a3a5a','#8a5ab0']],bush:[['#2f8a78'],['#7a4a9a'],['#3a7aa8']],rock:[['#6c6474'],['#7a6e78']],slug:[['#f0d040'],['#c070ff'],['#40e0ff']]};
 function placeFlora(){const rnd=mulberry(WORLD.seed*131+11),W=WORLD,out=[];
  const tryAdd=(kind,n,minR)=>{let made=0;for(let t=0;t<n*6&&made<n;t++){const x=(rnd()*2-1)*(W.half-30),z=(rnd()*2-1)*(W.half-30);if(Math.hypot(x,z)<minR)continue;
-  const dens=fbm(x*.01+5,z*.01-3,3);if(kind!=='rock'&&dens<-.05)continue;if(groundNormal(x,z)[1]<.8)continue;let near=false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<6){near=true;break;}if(near)continue;
-  const pal=FLORA_COL[kind][Math.floor(rnd()*FLORA_COL[kind].length)];out.push({i:out.length,kind,x,z,y:ground(x,z),s:kind==='rock'?.6+rnd()*1.6:.7+rnd()*.7,r:rnd()*TAU,pal,alive:true});made++;}};
- tryAdd('bulb',700,30);tryAdd('spire',450,30);tryAdd('bush',700,16);tryAdd('rock',350,20);W.flora=out;}
+  const dens=fbm(x*.01+5,z*.01-3,3);if(kind!=='rock'&&kind!=='slug'&&dens<-.05)continue;if(groundNormal(x,z)[1]<.8)continue;let near=false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<6){near=true;break;}if(near)continue;
+  const pal=FLORA_COL[kind][Math.floor(rnd()*FLORA_COL[kind].length)];out.push({i:out.length,kind,x,z,y:ground(x,z),s:kind==='rock'?.6+rnd()*1.6:kind==='slug'?1:.7+rnd()*.7,r:rnd()*TAU,pal,alive:true});made++;}};
+ tryAdd('slug',26,90);tryAdd('bulb',700,30);tryAdd('spire',450,30);tryAdd('bush',700,16);tryAdd('rock',350,20);W.flora=out;}
 function floraInstancers(){FLORA.inst={};for(const k of Object.keys(FLORA.kinds)){const list=WORLD.flora.filter(f=>f.kind===k);  const I=instancer(FLORA.kinds[k],list.length+4);FLORA.inst[k]=I;R.inst.push(I);}refreshFlora();}
 function refreshFlora(){for(const k of Object.keys(FLORA.inst)){const I=FLORA.inst[k];let n=0;for(const f of WORLD.flora){if(f.kind!==k||!f.alive)continue;const c=COL(f.pal[f.pal.length-1]);const o=n*8;I.data[o]=f.x;I.data[o+1]=f.y-.1;I.data[o+2]=f.z;I.data[o+3]=f.s;I.data[o+4]=c[0];I.data[o+5]=c[1];I.data[o+6]=c[2];I.data[o+7]=f.r;n++;}I.n=n;}}
 function initWorld(){buildHeights();buildTerrainMeshes();placeNodes();WORLD.nodeMesh={};for(const t of Object.keys(NODE_TYPES))WORLD.nodeMesh[t]=nodeMesh(t);
@@ -601,10 +614,23 @@ const BUILD_MODEL={
   g.add(RB(1.4,.6,.2,.1),T(0,1.5,-1.9),COL('#ff8a2a',2));D_.pipe(g,[2.4,2,-2.2],[2.4,2,2.6],.18);D_.pipe(g,[2.4,2,2.6],[1.6,2,3.2],.18);D_.ladder(g,2.21,.6,1.4,4,Math.PI/2);D_.rail(g,0,4.8,.6,3,3);D_.console_(g,2.4,.6,-1.2,Math.PI/2);D_.gauge(g,1,2.3,-1.88,.2);D_.gauge(g,1.5,2.3,-1.88,.2);lamp(g,-2.6,1,4.2,'#ff6a4a');lamp(g,2.6,1,4.2,'#ffb84a');},
  cpole(g){g.add(RB(.7,.25,.7,.1),null,C_GRAY);g.add(PRIM.cyl(.1,.12,.75,8),T(0,.2,0),C_LIGHT);g.add(RB(1.3,.12,1.1,.05),T(0,.62,0),C_DARK);for(const s of [-1,1])g.add(RB(.12,.3,1.1,.05),T(s*.62,.62,0),C_PANEL);},
  cpoleT(g){g.add(RB(.8,.3,.8,.1),null,C_GRAY);g.add(PRIM.cyl(.13,.16,3.75,8),T(0,.25,0),C_LIGHT);for(let y=1;y<3.6;y+=1.1)g.add(PRIM.cyl(.18,.18,.08,8),T(0,y,0),C_PANEL);g.add(RB(1.3,.12,1.1,.05),T(0,3.62,0),C_DARK);for(const s of [-1,1])g.add(RB(.12,.3,1.1,.05),T(s*.62,3.62,0),C_PANEL);},
+ pole2(g){g.add(RB(.9,.45,.9,.15),null,C_GRAY);g.add(PRIM.cyl(.13,.17,6.4,8),T(0,.45,0),C_LIGHT);for(let y=1;y<6;y+=1.2)g.add(PRIM.cyl(.2,.2,.08,8),T(0,y,0),C_TEAL);g.add(RB(2.2,.2,.3,.08),T(0,6.2,0),C_FRAME);g.add(RB(1.4,.16,.26,.08),T(0,5.7,0),C_FRAME);for(const x of [-.95,-.4,.4,.95])g.add(PRIM.cyl(.07,.1,.3,8),T(x,6.4,0),COL('#e0e8ff',.3));lamp(g,0,6.95,0,'#58e0c8');},
+ pswitch(g){g.add(RB(1.2,.3,1,.1),null,C_GRAY);g.add(RB(.9,1.5,.6,.15),T(0,.3,0),C_LIGHT);g.add(RB(.95,.25,.65,.08),T(0,.3,0),C_PANEL);g.add(RB(.5,.6,.08,.04),T(0,.9,.31),C_DARK);D_.hazard(g,0,.32,.33,.8,.12);for(const x of [-.3,.3])g.add(PRIM.cyl(.07,.1,.3,8),T(x,1.8,0),COL('#e0e8ff',.3));},
+ battery(g){g.add(RB(4,.4,4,.15),null,C_FRAME);for(const [x,z] of [[-.95,-.95],[.95,-.95],[-.95,.95],[.95,.95]]){g.add(RB(1.6,3.2,1.6,.4),T(x,.4,z),C_LIGHT);g.add(RB(1.65,.3,1.65,.12),T(x,3.3,z),C_TEAL);for(let y=0;y<4;y++)g.add(RB(1.62,.08,1.62,.03),T(x,.9+y*.6,z),'#c8c2b6');}D_.hazard(g,0,.1,2.01,3.6,.25);D_.cables(g,-.15,3.75,-1.6,1.6);lamp(g,1.7,3.9,1.7);},
  pole(g){g.add(RB(.8,.4,.8,.15),null,C_GRAY);D_.bolts(g,-.25,.25,.42,.3,2);g.add(PRIM.cyl(.11,.15,5.4,8),T(0,.4,0),C_LIGHT);for(let y=1;y<5;y+=1.2)g.add(PRIM.cyl(.17,.17,.08,8),T(0,y,0),C_PANEL);g.add(RB(1.6,.18,.25,.08),T(0,5.2,0),C_FRAME);for(const x of [-.65,.65]){g.add(PRIM.cyl(.07,.1,.3,8),T(x,5.38,0),COL('#e0e8ff',.3));g.add(PRIM.cyl(.11,.11,.04,8),T(x,5.5,0),COL('#e0e8ff',.3));}lamp(g,0,5.95);},
  foundation(g){g.add(RB(4,1,4,.12),null,'#cfcac0');g.add(PRIM.box(3.7,.02,.06,{y0:true}),T(0,1,0),'#b8b2a6');g.add(PRIM.box(.06,.02,3.7,{y0:true}),T(0,1,0),'#b8b2a6');
   for(const s of [-1,1]){g.add(PRIM.box(3.6,.02,.12,{y0:true}),T(0,1.0,s*1.86),COL('#f0a040',.3));g.add(PRIM.box(.12,.02,3.6,{y0:true}),T(s*1.86,1.0,0),COL('#f0a040',.3));}
   for(const s of [-1,1])for(const t of [-1,1])g.add(PRIM.cyl(.08,.08,.02,8),T(s*1.5,1.0,t*1.5),'#8a8680');D_.hazard(g,0,.3,2.01,3.8,.12);D_.hazard(g,0,.3,-2.01,3.8,.12,Math.PI);},
+ wall(g){g.add(RB(4,4,.4,.06),null,'#d8d2c6');for(const y of [1,2,3])g.add(PRIM.box(3.96,.04,.42,{y0:true}),T(0,y,0),'#bcb6aa');g.add(PRIM.box(.04,3.96,.42,{y0:true}),T(0,0,0),'#bcb6aa');
+  g.add(RB(4.04,.3,.46,.06),T(0,0,0),C_PANEL);g.add(RB(4.04,.14,.46,.05),T(0,3.86,0),C_FRAME);for(const s of [-1,1]){g.add(RB(.2,4,.48,.06),T(s*1.9,0,0),C_FRAME);D_.vent(g,s*1.1,2.2,.21,.9,.5,0,3);}lamp(g,0,3.5,.25,'#ffb84a');},
+ ramp(g){const N=8;for(let i=0;i<N;i++){const t0=i/N,h=(i+1)/N;g.add(PRIM.box(4,h,4/N,{y0:true}),T(0,0,-2+(i+.5)*4/N),'#cfcac0');}
+  const s=new GB();g.add({p:[-2,0,-2,2,0,-2,2,1.01,2,-2,1.01,2],n:[0,.97,-.24,0,.97,-.24,0,.97,-.24,0,.97,-.24],i:[0,2,1,0,3,2]},null,'#bfb9ae');
+  for(let i=1;i<8;i++)g.add(PRIM.box(3.6,.03,.06),T(0,i/8+.012,-2+i/2,0,-.245),'#a8a296');for(const x of [-1.95,1.95])g.add(PRIM.box(.1,.06,4.1),T(x,.53,0,0,-.245),COL('#f0a040',.3));},
+ stairs(g){const N=12;for(let i=0;i<N;i++){g.add(RB(2,(i+1)/N*4,4/N,.03),T(0,0,-2+(i+.5)*4/N),i%2?'#cfcac0':'#c6c0b4');g.add(PRIM.box(1.9,.03,.06,{y0:true}),T(0,(i+1)/N*4,-2+(i+1)*4/N-.05),COL('#f0a040',.25));}
+  for(const x of [-1.02,1.02]){for(let i=0;i<=4;i++)g.add(PRIM.cyl(.03,.03,1,5),T(x,i,-2+i+.1),C_PANEL);g.add(PRIM.cyl(.035,.035,5.66,6),T(x,1,-2,0,Math.PI/4),C_PANEL);}},
+ catwalk(g){g.add(RB(2,.15,4,.05),T(0,3.85,0),C_FRAME);for(let i=0;i<10;i++)g.add(PRIM.box(1.9,.02,.06,{y0:true}),T(0,4.0,-1.8+i*.4),'#6a707a');
+  for(const s of [-1,1])for(const t of [-1,1]){g.add(PRIM.box(.14,3.85,.14,{y0:true}),T(s*.8,0,t*1.6),'#5a606a');g.add(PRIM.box(.3,.06,.3,{y0:true}),T(s*.8,0,t*1.6),C_DARK);}
+  for(const t of [-1,1])g.add(PRIM.box(1.7,.1,.1,{y0:true}),T(0,2,t*1.6),'#5a606a');D_.rail(g,0,4,0,2,4);g.add(PRIM.box(.06,.06,4,{y0:true}),T(-.95,3.9,0),COL('#f2c232',.3));g.add(PRIM.box(.06,.06,4,{y0:true}),T(.95,3.9,0),COL('#f2c232',.3));},
  skyhook(g){g.add(RB(14,1,14,.4),null,C_GRAY);D_.hazard(g,0,.3,7.01,13,.3);for(let k=0;k<4;k++){const a=k/4*TAU+Math.PI/4;g.add(RB(1.4,38,1.4,.5),T(Math.cos(a)*5,1,Math.sin(a)*5),C_LIGHT);for(let y=3;y<38;y+=4)lamp(g,Math.cos(a)*5.75,y,Math.sin(a)*5.75,'#ff6a4a');}
   for(let y=4;y<38;y+=6)g.add(PRIM.cyl(5.6,5.6,.6,4,{phase:Math.PI/4}),T(0,y,0),C_PANEL);g.add(PRIM.cyl(.25,.25,80,6),T(0,1,0),COL('#9ad8ff',1.2));g.add(PRIM.cyl(3,3.5,4,16),T(0,1,0),C_LIGHT);g.add(PRIM.sphere(1.4,12,10),T(0,40,0),COL('#58e0c8',1.6));
   for(const s of [-1,1])D_.console_(g,s*3,1,6.2,0);D_.ladder(g,0,1,3.5,4);},
@@ -649,6 +675,8 @@ const ITEM_MODEL={
  encased_beam(g){g.add(RB(.32,.3,.6,.04),null,'#c4c0b6');for(const z of [-.31,.31]){g.add(PRIM.box(.2,.03,.02,{y0:true}),T(0,.06,z),'#4e5662');g.add(PRIM.box(.04,.16,.02,{y0:true}),T(0,.08,z),'#4e5662');g.add(PRIM.box(.2,.03,.02,{y0:true}),T(0,.22,z),'#4e5662');}},
  stator(g){g.add(PRIM.cyl(.16,.16,.36,12),T(0,.16,-.18,0,Math.PI/2),'#6a7684');for(let i=0;i<5;i++)g.add(PRIM.cyl(.17,.17,.04,12),T(0,.16,-.14+i*.07,0,Math.PI/2),'#e08a4a');g.add(PRIM.cyl(.04,.04,.48,8),T(0,.16,-.24,0,Math.PI/2),'#c0c4ca');},
  motor(g){g.add(PRIM.cyl(.17,.17,.4,14),T(0,.2,-.2,0,Math.PI/2),'#e06a2a');for(let i=0;i<6;i++)g.add(PRIM.box(.02,.38,.36,{y0:false}),T(0,.2,0,0,0,i*Math.PI/6),'#c05a24');g.add(PRIM.cyl(.18,.18,.04,14),T(0,.2,.2,0,Math.PI/2),'#3a3f48');g.add(PRIM.cyl(.04,.04,.14,8),T(0,.2,.22,0,Math.PI/2),'#c0c4ca');g.add(RB(.3,.05,.34,.02),null,'#3a3f48');},
+ slug(g){g.add(PRIM.sphere(.2,10,8),T(0,.16,0,0,0,0,1,.7,1.2),COL('#f0d040',1.2));g.add(PRIM.sphere(.08,6,4),T(0,.26,.18),COL('#fff4a0',1.6));},
+ power_shard(g){g.add(PRIM.lathe([[.001,0],[.12,.12],[.06,.42],[.001,.46]],6,{flat:true}),T(0,0,0,0,0,.3),COL('#ffd04a',1.4));g.add(PRIM.lathe([[.001,0],[.08,.08],[.04,.28],[.001,.3]],6,{flat:true}),T(.12,0,.05,0,0,-.4),COL('#ffe88a',1.3));},
  circuit(g){g.add(RB(.48,.03,.36,.01),null,'#2a8a52');for(const [x,z,w] of [[-.12,-.06,.12],[.1,.04,.14],[-.04,.1,.08]])g.add(PRIM.box(w,.03,w*.8,{y0:true}),T(x,.03,z),'#1a1c20');for(let i=0;i<5;i++)g.add(PRIM.box(.4,.004,.012,{y0:true}),T(0,.031,-.15+i*.07),COL('#f2c84a',.3));g.add(PRIM.cyl(.03,.03,.04,8),T(.18,.03,-.12),'#c0c4ca');},
 };
 function initItemModels(){for(const [k,f] of Object.entries(ITEM_MODEL)){const g=new GB();f(g);const mesh=g.build();MODELS.items[k]=mesh;const I=instancer(mesh,2048);MODELS.itemInst[k]=I;R.inst.push(I);}}
@@ -659,6 +687,20 @@ function beltCurve(p0,d0,p1,d1){const L=Math.hypot(p1[0]-p0[0],p1[1]-p0[1],p1[2]
   pts.push([h00*p0[0]+h10*k*d0[0]+h01*p1[0]+h11*k*d1[0],h00*p0[1]+h10*k*d0[1]+h01*p1[1]+h11*k*d1[1],h00*p0[2]+h10*k*d0[2]+h01*p1[2]+h11*k*d1[2]]);}
  const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1],pts[i][2]-pts[i-1][2]));
  return {pts,cum,len:cum[cum.length-1]};}
+// conveyor lift: short level stubs out of each port joined by a straight vertical run
+function isLift(p0,p1){const dy=Math.abs(p1[1]-p0[1]),dh=Math.hypot(p1[0]-p0[0],p1[2]-p0[2]);return dy>dh*.7+1&&dh<=3.2;}
+function liftCurve(p0,d0,p1,d1){const B=[p0[0]+d0[0]*.9,p0[1],p0[2]+d0[2]*.9],C=[p1[0]-d1[0]*.9,p1[1],p1[2]-d1[2]*.9];const pts=[];
+ const seg=(a,b,first)=>{const L=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]),n=Math.max(1,Math.ceil(L*3));for(let i=first?0:1;i<=n;i++){const t=i/n;pts.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]);}};
+ seg(p0,B,true);seg(B,C,false);seg(C,p1,false);const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1],pts[i][2]-pts[i-1][2]));
+ return {pts,cum,len:cum[cum.length-1],lift:{B,C,yaw:Math.atan2(d0[0],d0[2])}};}
+function liftMesh(c,tier){const g=new GB(),L=c.lift,mk=BELTS[tier].mk,acc=COL(BELTS[tier].col,mk>=3?1.4:0);const lo=Math.min(L.B[1],L.C[1])-.3,hi=Math.max(L.B[1],L.C[1])+1.2,cx=(L.B[0]+L.C[0])/2,cz=(L.B[2]+L.C[2])/2,y=L.yaw;
+ const m=T(cx,0,cz,y);const P=(x,yy,z)=>mm(m,T(x,yy,z));
+ for(const sx of [-1,1])for(const sz of [-1,1])g.add(RB(.16,hi-lo,.16,.05),P(sx*.62,lo,sz*.62),mk>=4?'#2a2638':'#5a606a');
+ g.add(RB(1.3,hi-lo,.08,.03),P(0,lo,-.66),mk>=4?'#221e2c':'#3a3f48');for(let yy=lo+.6;yy<hi-.2;yy+=.9){g.add(PRIM.box(1.3,.06,.06,{y0:true}),P(0,yy,.64),mk>=3?acc:'#7a808a');g.add(PRIM.box(.06,.06,1.3,{y0:true}),P(-.64,yy,0),'#7a808a');g.add(PRIM.box(.06,.06,1.3,{y0:true}),P(.64,yy,0),'#7a808a');}
+ g.add(RB(1.5,.25,1.5,.08),P(0,hi-.2,0),C_FRAME);g.add(RB(1.5,.25,1.5,.08),P(0,lo,0),C_FRAME);g.add(PRIM.box(1.52,.06,.1,{y0:true}),P(0,hi-.08,.72),acc);
+ // little level stubs where items enter and leave the lift
+ for(const [a,b] of [[c.pts[0],L.B],[L.C,c.pts[c.pts.length-1]]]){const dx=b[0]-a[0],dz=b[2]-a[2],l=Math.hypot(dx,dz);if(l<.05)continue;g.add(RB(1.1,.2,l+.4,.05),T((a[0]+b[0])/2,a[1]-.22,(a[2]+b[2])/2,Math.atan2(dx,dz)),'#2c3036');}
+ return g.build();}
 // position and heading at distance s along the curve
 function curveAt(c,s){const cum=c.cum;s=clamp(s,0,c.len);let lo=0,hi=cum.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(cum[m]<s)lo=m;else hi=m;}const seg=cum[hi]-cum[lo]||1,t=(s-cum[lo])/seg,a=c.pts[lo],b=c.pts[hi];
  return {p:[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t],yaw:Math.atan2(b[0]-a[0],b[2]-a[2]),pitch:Math.atan2(b[1]-a[1],Math.hypot(b[0]-a[0],b[2]-a[2]))};}
@@ -678,7 +720,7 @@ function supports(g,c,step,style){const n=Math.max(1,Math.round(c.len/step));for
   else if(style===3){for(const sd of [-.42,.42])g.add(PRIM.box(.12,h+.3,.12,{y0:true}),T(x+Math.cos(q.yaw)*sd,gy-.3,z-Math.sin(q.yaw)*sd,q.yaw),'#3a4a6a');g.add(PRIM.box(.95,.12,.2,{y0:true}),T(x,gy+h*.5,z,q.yaw),'#5a8ad8');}
   else if(style===4){g.add(PRIM.cyl(.12,.2,h+.3,8),T(x,gy-.3,z),'#2e2a3a');g.add(PRIM.cyl(.24,.24,.08,10),T(x,gy+h*.6,z),COL('#c88aff',1.2));g.add(PRIM.cyl(.3,.38,.12,10),T(x,gy-.05,z),'#2e2a3a');}
   else{g.add(PRIM.lathe([[.32,0],[.18,.4],[.12,h*.6],[.2,h+.25]],6),T(x,gy-.3,z),'#22222a');for(const yy of [.3,.6])g.add(PRIM.cyl(.21,.21,.05,6),T(x,gy+h*yy,z),COL('#ff5a3a',1.6));}}}
-function beltMesh(c,tier){const g=new GB(),mk=BELTS[tier].mk,acc=BELTS[tier].col;
+function beltMesh(c,tier){if(c.lift)return liftMesh(c,tier);const g=new GB(),mk=BELTS[tier].mk,acc=BELTS[tier].col;
  if(mk===1){// open steel trough, painted rails, plain rubber
   sweep(g,c,[[-.48,0,.48,0,'#2c3036'],[-.5,-.18,.5,-.18,'#202328'],[.5,-.18,.5,.1,acc],[-.5,.1,-.5,-.18,acc],[.5,.1,.42,.1,acc],[-.42,.1,-.5,.1,acc]]);supports(g,c,4,1);}
  else if(mk===2){// deeper side plates, visible rollers underneath, bolted rails
@@ -718,7 +760,7 @@ function makeThumbs(){const gl=GL.gl,W=220,H=150;const fb=gl.createFramebuffer()
 const FAC={b:new Map(),belts:new Map(),grids:[],powerDirty:true,stats:{prod:{},cons:{}},statT:0,rate:{},rateIn:{}};
 const portWorld=(b,i)=>{const p=BUILDINGS[b.k].ports[i];const c=Math.cos(b.rot),s=Math.sin(b.rot);return {p:[b.x+c*p[0]+s*p[1],b.y+(BUILDINGS[b.k].py||PORT_Y),b.z-s*p[0]+c*p[1]],d:[Math.sin(b.rot+p[2]),0,Math.cos(b.rot+p[2])],io:p[3]};};
 const inCap=n=>Math.max(6,n*3),outCap=n=>Math.max(10,n*4);
-function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot:o.rot||0,recipe:o.recipe||null,inb:o.inb||{},out:o.out||{},prog:o.prog||0,store:o.store||{},fuel:o.fuel||{},energy:o.energy||0,node:o.node??null,conn:[],wires:[],buf:o.buf||[],rr:0,run:0,anim:0};
+function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot:o.rot||0,recipe:o.recipe||null,inb:o.inb||{},out:o.out||{},prog:o.prog||0,store:o.store||{},fuel:o.fuel||{},energy:o.energy||0,node:o.node??null,conn:[],wires:[],buf:o.buf||[],clock:o.clock||1,tripped:!!o.tripped,on:o.on!==false,charge:o.charge||0,rr:0,run:0,anim:0};
  const D=BUILDINGS[b.k];b.conn=(D.ports||[]).map(()=>null);
  const mesh=MODELS.b[b.k];b.obj={mesh,model:T(b.x,b.y,b.z,b.rot),bid:b.id};R.objects.push(b.obj);
  const A=MODELS.anim[b.k];if(A)b.animDef=A;
@@ -726,7 +768,7 @@ function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot
 function removeBuilding(b){for(const bid of b.conn)if(bid!=null){const bl=FAC.belts.get(bid);if(bl)removeBelt(bl);}
  S.wires=S.wires.filter(w=>w[0]!==b.id&&w[1]!==b.id);FAC.powerDirty=true;const i=R.objects.indexOf(b.obj);if(i>=0)R.objects.splice(i,1);FAC.b.delete(b.id);}
 function newBelt(o){const A=FAC.b.get(o.from[0]),B=FAC.b.get(o.to[0]);if(!A||!B)return null;const pa=portWorld(A,o.from[1]),pb=portWorld(B,o.to[1]);
- const c=beltCurve(pa.p,pa.d,pb.p,[-pb.d[0],0,-pb.d[2]]);const bl={id:o.id??S.nextId++,tier:o.tier||'belt1',from:o.from,to:o.to,items:(o.items||[]).map(([t,d])=>({t,d})),c};
+ const c=isLift(pa.p,pb.p)?liftCurve(pa.p,pa.d,pb.p,[-pb.d[0],0,-pb.d[2]]):beltCurve(pa.p,pa.d,pb.p,[-pb.d[0],0,-pb.d[2]]);const bl={id:o.id??S.nextId++,tier:o.tier||'belt1',from:o.from,to:o.to,items:(o.items||[]).map(([t,d])=>({t,d})),c};
  bl.obj={mesh:beltMesh(c,bl.tier),model:M4.create(),belt:bl.id};R.objects.push(bl.obj);A.conn[o.from[1]]=bl.id;B.conn[o.to[1]]=bl.id;FAC.belts.set(bl.id,bl);return bl;}
 function removeBelt(bl){const A=FAC.b.get(bl.from[0]),B=FAC.b.get(bl.to[0]);if(A)A.conn[bl.from[1]]=null;if(B)B.conn[bl.to[1]]=null;const i=R.objects.indexOf(bl.obj);if(i>=0)R.objects.splice(i,1);freeMesh(bl.obj.mesh);FAC.belts.delete(bl.id);return bl;}
 // ---- what a building will take in ----
@@ -753,9 +795,9 @@ function wantsPower(b){const D=BUILDINGS[b.k];if(!D.power)return false;if(D.mach
 function pushOut(b,pi,item){const bid=b.conn[pi];if(bid==null)return false;const bl=FAC.belts.get(bid);if(!bl||!beltCanTake(bl))return false;beltPush(bl,item);return true;}
 function outPorts(b){const P=BUILDINGS[b.k].ports||[];const o=[];P.forEach((p,i)=>{if(p[3]==='out')o.push(i);});return o;}
 function updateBuilding(b,dt){const D=BUILDINGS[b.k];b.run=0;
- if(D.machine){if(b.pf>0&&machineReady(b)){const r=RECIPE[b.recipe];b.prog+=dt*b.pf;b.run=1;if(b.prog>=r.t){b.prog-=r.t;for(const [k,n] of Object.entries(r.in)){b.inb[k]-=n;stat('cons',k,n);}for(const [k,n] of Object.entries(r.out)){b.out[k]=(b.out[k]||0)+n;stat('prod',k,n);}}}
+ if(D.machine){if(b.pf>0&&machineReady(b)){const r=RECIPE[b.recipe];b.prog+=dt*b.pf*(b.clock||1);b.run=1;if(b.prog>=r.t){b.prog-=r.t;for(const [k,n] of Object.entries(r.in)){b.inb[k]-=n;stat('cons',k,n);}for(const [k,n] of Object.entries(r.out)){b.out[k]=(b.out[k]||0)+n;stat('prod',k,n);}}}
   for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>0&&pushOut(b,pi,k)){b.out[k]--;break;}}
- else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd&&b.pf>0){const rate=D.rate*PURITY[nd.purity].k;const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot<50){b.prog+=dt*b.pf;b.run=1;const iv=60/rate;while(b.prog>=iv){b.prog-=iv;b.out[nd.type]=(b.out[nd.type]||0)+1;stat('prod',nd.type,1);}}}
+ else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd&&b.pf>0){const rate=D.rate*PURITY[nd.purity].k;const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot<50){b.prog+=dt*b.pf*(b.clock||1);b.run=1;const iv=60/rate;while(b.prog>=iv){b.prog-=iv;b.out[nd.type]=(b.out[nd.type]||0)+1;stat('prod',nd.type,1);}}}
   for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>0&&pushOut(b,pi,k)){b.out[k]--;break;}}
  else if(b.k==='storage'){const keys=Object.keys(b.store).filter(k=>b.store[k]>0);if(keys.length){const k=keys[b.rr++%keys.length];if(pushOut(b,1,k)){b.store[k]--;if(!b.store[k])delete b.store[k];}}}
  else if(b.k==='splitter'){if(b.buf.length){const outs=outPorts(b).filter(i=>b.conn[i]!=null);for(let n=0;n<outs.length&&b.buf.length;n++){const pi=outs[b.rr++%outs.length];if(pushOut(b,pi,b.buf[0])){b.buf.shift();break;}}}}
@@ -763,16 +805,33 @@ function updateBuilding(b,dt){const D=BUILDINGS[b.k];b.run=0;
  else if(D.pass){if(b.buf.length&&pushOut(b,1,b.buf[0]))b.buf.shift();}}
 function stat(kind,k,n){const m=FAC.stats[kind];m[k]=(m[k]||0)+n;}
 // ---- power ----
+// grids: everything joined by power lines. An open power switch doesn't pass power through.
+const connsOf=k=>BUILDINGS[k].conns||(k==='pole'?4:2);
+const wiresOf=id=>S.wires.filter(w=>w[0]===id||w[1]===id).length;
 function rebuildGrids(){const ids=[...FAC.b.keys()],par=new Map(ids.map(i=>[i,i]));const f=x=>{while(par.get(x)!==x){par.set(x,par.get(par.get(x)));x=par.get(x);}return x;};
- for(const [a,c] of S.wires)if(par.has(a)&&par.has(c))par.set(f(a),f(c));const g=new Map();for(const id of ids){const r=f(id);if(!g.has(r))g.set(r,[]);g.get(r).push(FAC.b.get(id));}
- FAC.grids=[...g.values()].filter(l=>l.some(b=>BUILDINGS[b.k].gen||BUILDINGS[b.k].power));for(const b of FAC.b.values())b.grid=null;FAC.grids.forEach((l,i)=>{for(const b of l)b.grid=i;});FAC.powerDirty=false;}
+ for(const [a,c] of S.wires){const A=FAC.b.get(a),C=FAC.b.get(c);if(!A||!C)continue;if((A.k==='pswitch'&&!A.on)||(C.k==='pswitch'&&!C.on))continue;par.set(f(a),f(c));}
+ const g=new Map();for(const id of ids){const r=f(id);if(!g.has(r))g.set(r,[]);g.get(r).push(FAC.b.get(id));}
+ FAC.grids=[...g.values()].filter(l=>l.some(b=>BUILDINGS[b.k].gen||BUILDINGS[b.k].power||b.k==='battery'));for(const b of FAC.b.values())b.grid=null;FAC.grids.forEach((l,i)=>{for(const b of l)b.grid=i;});FAC.powerDirty=false;}
 function genReady(b){if(b.energy>0)return true;return Object.values(b.fuel).some(v=>v>0);}
-function updatePower(dt){if(FAC.powerDirty)rebuildGrids();FAC.power={use:0,cap:0,want:0};
+// Satisfactory-style: if machines ask for more than your generators (and batteries) can give, the fuse blows and the whole grid stops
+function updatePower(dt){if(FAC.powerDirty)rebuildGrids();FAC.power={use:0,cap:0,want:0,tripped:false};FAC.gridStat=[];
  for(const b of FAC.b.values())b.pf=0;
- for(const list of FAC.grids){let want=0,cap=0;for(const b of list){const D=BUILDINGS[b.k];if(D.power&&wantsPower(b))want+=D.power;if(D.gen&&genReady(b))cap+=D.gen;}
-  const pf=want>0?Math.min(1,cap/want):1,load=cap>0?Math.min(1,want/cap):0;
-  for(const b of list){const D=BUILDINGS[b.k];if(D.power)b.pf=cap>0?pf:0;if(D.gen){b.run=0;if(load>0&&genReady(b)){let need=D.gen*load*dt;b.run=load;while(need>0){if(b.energy<=0){const k=D.fuels.find(f=>(b.fuel[f]||0)>0);if(!k)break;b.fuel[k]--;stat('cons',k,1);b.energy+=FUEL[k];}const u=Math.min(need,b.energy);b.energy-=u;need-=u;}}}}
-  FAC.power.use+=Math.min(want,cap);FAC.power.cap+=cap;FAC.power.want+=want;}}
+ FAC.grids.forEach((list,gi)=>{let want=0,cap=0,store=0,storeMax=0;const tripped=list.some(b=>b.tripped);
+  for(const b of list){const D=BUILDINGS[b.k];if(D.power&&wantsPower(b))want+=D.power*Math.pow(b.clock||1,1.6);if(D.gen&&genReady(b))cap+=D.gen;if(b.k==='battery'){store+=b.charge||0;storeMax+=D.store;}}
+  const batt=list.filter(b=>b.k==='battery');const battOut=batt.reduce((a,b)=>a+((b.charge||0)>0?BUILDINGS.battery.rate:0),0);
+  let ok=!tripped;FAC.overTs=FAC.overTs||{};if(ok&&want>cap+battOut+.001){FAC.overTs[gi]=(FAC.overTs[gi]||0)+dt;if(FAC.overTs[gi]>.6){for(const b of list)if(BUILDINGS[b.k].gen||b.k==='battery'||b.k==='pole'||b.k==='pole2'||b.k==='pswitch')b.tripped=true;ok=false;FAC.overTs[gi]=0;UI.toast('⚡ Fuse blown! Your machines need '+Math.round(want)+' MW but you only make '+Math.round(cap)+' MW. Add generators, then reset the fuse at a generator.','bad');AUDIO.fuse();}}else if(want<=cap+battOut)FAC.overTs[gi]=0;
+  const load=ok&&cap>0?Math.min(1,want/cap):0;
+  if(ok)for(const b of list){const D=BUILDINGS[b.k];if(D.power)b.pf=(cap+battOut>0)?1:0;}
+  // generators burn only what's needed; spare power charges batteries, shortfalls drain them
+  let surplus=ok?Math.max(0,cap-want):0,deficit=ok?Math.max(0,want-cap):0;
+  for(const b of list){const D=BUILDINGS[b.k];if(D.gen){b.run=0;if(ok&&genReady(b)){const share=cap>0?D.gen/cap:0;const charge=Math.min(surplus,batt.reduce((a,x)=>a+((x.charge||0)<D.store?BUILDINGS.battery.rate:0),0));let need=(D.gen*load+charge*share)*dt;b.run=Math.min(1,load+(cap>0?charge/cap:0));
+     while(need>0){if(b.energy<=0){const k=D.fuels.find(f=>(b.fuel[f]||0)>0);if(!k)break;b.fuel[k]--;stat('cons',k,1);b.energy+=FUEL[k];}const u=Math.min(need,b.energy);b.energy-=u;need-=u;}}}}
+  for(const b of batt){const D=BUILDINGS.battery;b.charge=b.charge||0;if(!ok){b.flow=0;continue;}if(deficit>0){const out=Math.min(deficit,D.rate,b.charge/dt);b.charge-=out*dt;deficit-=out;b.flow=-out;}else{const inn=Math.min(surplus,D.rate,(D.store-b.charge)/dt);b.charge+=inn*dt;surplus-=inn;b.flow=inn;}}
+  const st={use:ok?want:0,cap,want,tripped:!ok&&tripped||list.some(b=>b.tripped),store,storeMax};FAC.gridStat[gi]=st;
+  FAC.power.use+=st.use;FAC.power.cap+=cap;FAC.power.want+=want;if(st.tripped)FAC.power.tripped=true;});
+ // a little history for the power graph
+ FAC.histT=(FAC.histT||0)+dt;if(FAC.histT>=1){FAC.histT=0;(FAC.hist=FAC.hist||[]).push([FAC.power.use,FAC.power.cap,FAC.power.want]);if(FAC.hist.length>180)FAC.hist.shift();}}
+function resetFuse(b){if(b.grid==null)return;for(const x of FAC.grids[b.grid]||[])x.tripped=false;FAC.overTs={};UI.toast('Fuse reset','good');AUDIO.place();}
 // ---- one simulation step ----
 function simStep(dt){updatePower(dt);for(const bl of FAC.belts.values())updateBelt(bl,dt);for(const b of FAC.b.values())updateBuilding(b,dt);
  FAC.statT+=dt;if(FAC.statT>=10){// items per minute, smoothed
@@ -798,7 +857,7 @@ const FX={list:[]};
 // ===== Little live screens on machines: what it makes, how fast, what's inside =====
 // mount: local position of the screen centre, which way it faces (ry), and size in metres
 const SCREEN_MOUNT={miner:[0,2.25,.63,0,.9,.55],miner2:[0,2.25,.63,0,.9,.55],smelter:[1.52,1.75,.9,Math.PI/2,.95,.58],constructor:[1.82,2.55,.2,Math.PI/2,1,.6],assembler:[2.62,3.0,-1.6,Math.PI/2,1.1,.66],foundry:[3.02,2.8,2.4,Math.PI/2,1.1,.66],
- burner:[0,2.35,1.48,0,.8,.48],coalgen:[2.02,2.6,-1.8,Math.PI/2,1,.6],storage:[1.52,1.9,0,Math.PI/2,.9,.55],hub:[-2.4,3.05,1.7,0,1.3,.5]};
+ burner:[0,2.35,1.48,0,.8,.48],coalgen:[2.02,2.6,-1.8,Math.PI/2,1,.6],storage:[1.52,1.9,0,Math.PI/2,.9,.55],battery:[0,1.6,1.78,0,.9,.55],pswitch:[0,1.2,.34,0,.42,.3],hub:[-2.4,3.05,1.7,0,1.3,.5]};
 const SCR={pool:[],W:192,H:116,imgs:{},t:0};
 function screenBezel(g,k){const m=SCREEN_MOUNT[k];if(!m)return;const [x,y,z,ry,w,h]=m;g.add(RB(w+.12,h+.12,.08,.04),T(x,y-h/2-.06,z,ry,0,0),C_DARK);}
 function initScreens(){const gl=GL.gl;
@@ -814,12 +873,14 @@ function drawScreen(s,b){const x=s.cx,W=SCR.W,H=SCR.H,D=BUILDINGS[b.k];const [st
  x.fillStyle=sc;x.fillRect(0,0,W,16);x.fillStyle='#08130f';x.font='bold 11px system-ui,sans-serif';x.textBaseline='middle';x.fillText((cls==='good'?'● ':cls==='bad'?'✕ ':'■ ')+(st||D.n).toUpperCase().slice(0,30),5,8.5);
  const icon=(k,X,Y,S)=>{const im=SCR.imgs[k];if(im&&im.complete)x.drawImage(im,X,Y,S,S);};const txt=(t,X,Y,sz=12,c='#e8f4f2',bold=1)=>{x.fillStyle=c;x.font=(bold?'bold ':'')+sz+'px system-ui,sans-serif';x.fillText(t,X,Y);};
  const bar=(X,Y,w,h,f,c='#3fd08a')=>{x.fillStyle='rgba(255,255,255,.12)';x.fillRect(X,Y,w,h);x.fillStyle=c;x.fillRect(X,Y,w*clamp(f,0,1),h);};
- if(D.machine){const r=RECIPE[b.recipe];if(!r){txt('NO RECIPE',10,52,16,'#f2b440');txt('Tap to choose',10,74,11,'#9ab',0);}else{const ok=Object.keys(r.out)[0],rate=r.out[ok]*60/r.t;icon(ok,6,20,48);txt(ITEMS[ok].n,58,30,12);txt((rate*(b.run?b.pf:1)).toFixed(rate%1?1:0)+' /min',58,48,15,'#ffd27a');bar(58,58,W-66,6,b.prog/r.t,sc);
+ if(D.machine){const r=RECIPE[b.recipe];if(!r){txt('NO RECIPE',10,52,16,'#f2b440');txt('Tap to choose',10,74,11,'#9ab',0);}else{const ok=Object.keys(r.out)[0],rate=r.out[ok]*60/r.t;icon(ok,6,20,48);txt(ITEMS[ok].n,58,30,12);txt((rate*(b.clock||1)*(b.run?b.pf:1)).toFixed(1).replace('.0','')+' /min',58,48,15,'#ffd27a');bar(58,58,W-66,6,b.prog/r.t,sc);
    let X=6;for(const [k,n] of Object.entries(r.in)){icon(k,X,74,20);txt(String(b.inb[k]||0),X+22,85,11);X+=56;}icon(ok,W-58,74,20);txt('→ '+(b.out[ok]||0),W-36,85,11,'#ffd27a');}
-  txt(D.power+' MW',W-46,107,10,'#7ab',0);}
- else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd){icon(nd.type,6,20,48);txt(ITEMS[nd.type].n,58,30,12);txt(D.rate*PURITY[nd.purity].k*(b.run?b.pf:1)+' /min',58,48,15,'#ffd27a');txt(PURITY[nd.purity].n+' node',58,66,11,'#9ab',0);const n=b.out[nd.type]||0;txt('Buffer '+n+'/50',6,96,11);bar(80,90,W-88,6,n/50,'#58c8e0');}}
+  txt(Math.round((b.clock||1)*100)+'% · '+(D.power*Math.pow(b.clock||1,1.6)).toFixed(1)+' MW',W-92,107,10,'#7ab',0);}
+ else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd){icon(nd.type,6,20,48);txt(ITEMS[nd.type].n,58,30,12);txt(Math.round(D.rate*PURITY[nd.purity].k*(b.clock||1)*(b.run?b.pf:1))+' /min',58,48,15,'#ffd27a');txt(PURITY[nd.purity].n+' node',58,66,11,'#9ab',0);const n=b.out[nd.type]||0;txt('Buffer '+n+'/50',6,96,11);bar(80,90,W-88,6,n/50,'#58c8e0');}}
  else if(D.gen){const tot=Object.values(b.fuel).reduce((a,c)=>a+c,0);const f=D.fuels.find(k=>(b.fuel[k]||0)>0)||D.fuels[D.fuels.length>1?2:0];icon(f,6,22,44);txt(Math.round(D.gen*(b.run||0))+' / '+D.gen+' MW',56,34,15,'#ffd27a');txt('Fuel '+tot,56,54,12);bar(6,74,W-12,8,(b.run||0),sc);txt('Load '+Math.round((b.run||0)*100)+'%',6,98,11,'#9ab',0);}
  else if(b.k==='storage'){const it=Object.entries(b.store).filter(([,v])=>v>0).sort((a,c)=>c[1]-a[1]);const tot=it.reduce((a,[,v])=>a+v,0);txt(tot+' / '+D.cap,6,30,14,'#ffd27a');bar(6,40,W-12,6,tot/D.cap,'#58c8e0');it.slice(0,4).forEach(([k,v],i)=>{icon(k,6+i*46,52,26);txt(String(v),6+i*46,92,11);});}
+ else if(b.k==='battery'){const Dd=BUILDINGS.battery,f=(b.charge||0)/Dd.store;txt(Math.round(f*100)+'%',8,44,24,'#ffd27a');bar(8,58,W-16,14,f,'#3fd08a');txt((b.flow||0)>.1?'▲ charging '+Math.round(b.flow)+' MW':(b.flow||0)<-.1?'▼ supplying '+Math.round(-b.flow)+' MW':'idle',8,96,12);}
+ else if(b.k==='pswitch'){x.fillStyle=b.on?'#3fd08a':'#ff5a4a';x.fillRect(0,16,W,H-16);txt(b.on?'ON':'OFF',W/2-26,76,34,'#08130f');}
  else if(b.k==='hub'){const M=curMilestone();if(M){txt('MILESTONE '+(S.tier+1)+': '+M.n.toUpperCase(),6,28,11,'#ffd27a');Object.entries(M.need).slice(0,4).forEach(([k,v],i)=>{const g=S.hub[k]||0;icon(k,6+i*46,38,24);txt(g+'/'+v,6+i*46,74,10);bar(6+i*46,80,40,4,g/v,'#3fd08a');});}else txt('ALL MILESTONES DONE',6,50,13,'#3fd08a');}
  // scanline sheen
  x.fillStyle='rgba(255,255,255,.035)';for(let y=0;y<H;y+=3)x.fillRect(0,y,W,1);}
@@ -837,11 +898,15 @@ function drawScreens(){const gl=GL.gl,p=GL.progs.screen;SCR.t+=1;const near=[];
 const PL={x:0,y:12,z:-12,vy:0,ground:false,yaw:0,pitch:-.1,eye:1.65,speed:0};
 const INPUT={keys:{},jx:0,jy:0,joyId:null,lookId:null,last:null,locked:false,act:false,actT:0};
 const touchMode=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
-function solidAt(x,z,y){// highest walkable surface under (x,z) at or below y+0.6
- let top=ground(x,z);for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(b.k==='pole')continue;const hw=(b.rot%Math.PI?D.d:D.w)/2,hd=(b.rot%Math.PI?D.w:D.d)/2;
-  if(Math.abs(x-b.x)<hw&&Math.abs(z-b.z)<hd){const h=b.y+(b.k==='foundation'?1:b.k==='hub'?.5:D.h);if(h<=y+.6&&h>top)top=h;}}return top;}
-function blockedAt(x,z,y){for(const b of FAC.b.values()){const D=BUILDINGS[b.k];const r=.3;let hw=(Math.abs(Math.sin(b.rot))>.5?D.d:D.w)/2+r,hd=(Math.abs(Math.sin(b.rot))>.5?D.w:D.d)/2+r;
-  if(b.k==='pole'){hw=hd=.5;}const top=b.y+(b.k==='foundation'?1:b.k==='hub'?.5:D.h);if(Math.abs(x-b.x)<hw&&Math.abs(z-b.z)<hd&&y<top-.5&&y+1.8>b.y)return true;}
+// ---- standing on and bumping into buildings ----
+function bLocal(b,x,z){const c=Math.cos(b.rot),s=Math.sin(b.rot),dx=x-b.x,dz=z-b.z;return [c*dx-s*dz,s*dx+c*dz];}
+// height of a building's walkable top at a local point (null = you can't stand there)
+function bTop(b,lx,lz){const D=BUILDINGS[b.k];if(D.surf==='ramp')return b.y+D.rise*clamp(lz/D.d+.5,0,1);if(D.surf==='deck')return b.y+(D.top||D.h);if(b.k==='hub')return b.y+.5;if(b.k==='pole'||b.k==='cpole'||b.k==='cpoleT')return null;return b.y+D.h;}
+function solidAt(x,z,y){let top=ground(x,z);for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(Math.abs(b.x-x)>9||Math.abs(b.z-z)>9)continue;const [lx,lz]=bLocal(b,x,z);if(Math.abs(lx)>D.w/2||Math.abs(lz)>D.d/2)continue;const h=bTop(b,lx,lz);if(h!=null&&h<=y+.6&&h>top)top=h;}return top;}
+function blockedAt(x,z,y){for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(Math.abs(b.x-x)>9||Math.abs(b.z-z)>9)continue;const [lx,lz]=bLocal(b,x,z);let hw=D.w/2+.3,hd=D.d/2+.3;if(b.k==='pole'||b.k==='cpole'||b.k==='cpoleT'){hw=hd=.45;}
+  if(Math.abs(lx)>hw||Math.abs(lz)>hd)continue;
+  if(D.surf==='ramp'||D.surf==='deck'){const h=bTop(b,clamp(lx,-D.w/2,D.w/2),clamp(lz,-D.d/2,D.d/2));const under=D.surf==='deck'&&D.top>2?b.y+D.top-.4:b.y;if(y<h-.6&&y+1.8>under)return true;continue;}
+  const top=b.y+(b.k==='hub'?.5:D.h);if(y<top-.5&&y+1.8>b.y)return true;}
  for(const f of WORLD.flora)if(f.alive&&f.kind!=='bush'&&Math.abs(f.x-x)<2&&Math.abs(f.z-z)<2&&Math.hypot(f.x-x,f.z-z)<(f.kind==='rock'?1.1:.5)*f.s)return true;
  return false;}
 function updatePlayer(dt){let mx=INPUT.jx,my=INPUT.jy;const k=INPUT.keys;if(k.KeyW||k.ArrowUp)my=1;if(k.KeyS||k.ArrowDown)my=-1;if(k.KeyA||k.ArrowLeft)mx=-1;if(k.KeyD||k.ArrowRight)mx=1;
@@ -873,14 +938,14 @@ function aimRay(){const d=camDir();return {o:R.cam.slice(),d};}
 function rayGround(o,d,maxT=60){let t=0,prev=o[1]-ground(o[0],o[2]);for(let i=0;i<240&&t<maxT;i++){t+=.25+t*.02;const x=o[0]+d[0]*t,y=o[1]+d[1]*t,z=o[2]+d[2]*t,h=y-ground(x,z);if(h<0){// refine
     let a=t-(.25+t*.02),b=t;for(let k=0;k<8;k++){const m=(a+b)/2;if(o[1]+d[1]*m-ground(o[0]+d[0]*m,o[2]+d[2]*m)<0)b=m;else a=m;}return {t:b,p:[o[0]+d[0]*b,o[1]+d[1]*b,o[2]+d[2]*b]};}prev=h;}return null;}
 // ray vs building boxes (rotations are multiples of 90°)
-function rayBuildings(o,d,maxT=40){let best=null;for(const b of FAC.b.values()){const D=BUILDINGS[b.k];const sw=Math.abs(Math.sin(b.rot))>.5;const hx=(sw?D.d:D.w)/2,hz=(sw?D.w:D.d)/2,h=b.k==='foundation'?1:b.k==='hub'?3.4:D.h;
+function rayBuildings(o,d,maxT=40){let best=null;for(const b of FAC.b.values()){const D=BUILDINGS[b.k];const sw=Math.abs(Math.sin(b.rot))>.5;const hx=(sw?D.d:D.w)/2,hz=(sw?D.w:D.d)/2,h=D.surf==='deck'?(D.top||D.h):b.k==='hub'?3.4:D.h;
   const mn=[b.x-hx,b.y,b.z-hz],mx=[b.x+hx,b.y+h,b.z+hz];let t0=0,t1=maxT;for(let a=0;a<3;a++){if(Math.abs(d[a])<1e-6){if(o[a]<mn[a]||o[a]>mx[a]){t0=1e9;break;}continue;}let u=(mn[a]-o[a])/d[a],v=(mx[a]-o[a])/d[a];if(u>v)[u,v]=[v,u];t0=Math.max(t0,u);t1=Math.min(t1,v);if(t0>t1)break;}
   if(t0<=t1&&t0<maxT&&(!best||t0<best.t)){const p=[o[0]+d[0]*t0,o[1]+d[1]*t0,o[2]+d[2]*t0];let face='side';if(Math.abs(p[1]-mx[1])<.02)face='top';best={t:t0,b,p,face};}}return best;}
 function rayBelts(o,d,maxT=30){let best=null;for(const bl of FAC.belts.values()){const m=bl.obj.mesh;const dc=v3.sub(m.center,o);const tc=v3.dot(dc,d);if(tc<0||tc>maxT+m.radius)continue;const pc=[o[0]+d[0]*tc-m.center[0],o[1]+d[1]*tc-m.center[1],o[2]+d[2]*tc-m.center[2]];if(Math.hypot(...pc)>m.radius)continue;
   for(let i=0;i<bl.c.pts.length;i+=2){const p=bl.c.pts[i];const w=v3.sub(p,o);const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-p[0],o[1]+d[1]*t-p[1],o[2]+d[2]*t-p[2]];if(Math.hypot(...q)<.7&&(!best||t<best.t))best={t,bl,i};}}return best;}
 function rayNodes(o,d,maxT=8){let best=null;for(const nd of WORLD.nodes){const w=[nd.x-o[0],nd.y+.8-o[1],nd.z-o[2]];const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-nd.x,o[1]+d[1]*t-nd.y-.8,o[2]+d[2]*t-nd.z];if(Math.hypot(...q)<2.2&&(!best||t<best.t))best={t,nd};}return best;}
-function rayFlora(o,d,maxT=6){let best=null;for(const f of WORLD.flora){if(!f.alive||f.kind==='rock')continue;if(Math.abs(f.x-o[0])>maxT+3||Math.abs(f.z-o[2])>maxT+3)continue;const cy=f.kind==='bush'?.5:2;const w=[f.x-o[0],f.y+cy*f.s-o[1],f.z-o[2]];const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-f.x,o[1]+d[1]*t-f.y-cy*f.s,o[2]+d[2]*t-f.z];const r=(f.kind==='bush'?1:1.4)*f.s;
-  if(Math.hypot(q[0],q[2])<(f.kind==='bush'?1:.7)*f.s&&Math.abs(q[1])<(f.kind==='bush'?1:2.6)*f.s&&(!best||t<best.t))best={t,f};}return best;}
+function rayFlora(o,d,maxT=6){let best=null;for(const f of WORLD.flora){if(!f.alive||f.kind==='rock')continue;if(Math.abs(f.x-o[0])>maxT+3||Math.abs(f.z-o[2])>maxT+3)continue;const cy=f.kind==='bush'||f.kind==='slug'?.4:2;const w=[f.x-o[0],f.y+cy*f.s-o[1],f.z-o[2]];const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-f.x,o[1]+d[1]*t-f.y-cy*f.s,o[2]+d[2]*t-f.z];const r=(f.kind==='bush'?1:1.4)*f.s;
+  if(Math.hypot(q[0],q[2])<(f.kind==='bush'||f.kind==='slug'?1:.7)*f.s&&Math.abs(q[1])<(f.kind==='bush'||f.kind==='slug'?1:2.6)*f.s&&(!best||t<best.t))best={t,f};}return best;}
 
 // ---- 08-build.js ----
 // ===== Building, belts, dismantling, hand work =====
@@ -894,50 +959,94 @@ function refund(cost,n=1){for(const [k,v] of Object.entries(cost))addInv(k,v*n);
 function addInv(k,n){S.inv[k]=(S.inv[k]||0)+n;if(S.inv[k]<=0)delete S.inv[k];}
 function mergeCost(a,n,b){const o={};for(const [k,v] of Object.entries(a))o[k]=(o[k]||0)+v*n;for(const [k,v] of Object.entries(b))o[k]=(o[k]||0)+v;return o;}
 function costText(cost,n=1){return Object.entries(cost).map(([k,v])=>v*n+' '+ITEMS[k].n).join(' · ');}
-BUILD.start=function(k){BUILD.cancel();if(BELTS[k]){BUILD.mode='belt';BUILD.beltTier=k;}else{BUILD.mode='place';BUILD.k=k;}UI.closePanel();UI.hint(BUILD.mode==='belt'?(touchMode?'Aim at a port and tap Connect, then aim at a second port':'Aim at a port and click, then click a second port. Right-click cancels.'):(touchMode?'Aim where it goes · Rotate · Place':'Click to place · R or wheel rotates · Right-click cancels'));};
+const NUDGE=new Set(['foundation','ramp','stairs','catwalk','wall','cpole','cpoleT','storage']);
+const ZOOP={foundation:'grid',wall:'x',catwalk:'z',ramp:'grid',cpole:'z',cpoleT:'z'};
+BUILD.dy=0;BUILD.zoop=1;
+BUILD.start=function(k){BUILD.cancel();if(BELTS[k]){BUILD.mode='belt';BUILD.beltTier=k;}else{BUILD.mode='place';BUILD.k=k;BUILD.zoop=1;if(!NUDGE.has(k))BUILD.dy=0;}UI.closePanel();UI.hint(BUILD.mode==='belt'?(touchMode?'Aim at a port and tap Connect, then aim at a second port':'Aim at a port and click, then click a second port. Right-click cancels.'):(touchMode?'Aim where it goes · Rotate · Place':'Click to place · R rotates · T / G raise and lower · F builds a row · Right-click cancels'));};
+function wireGhost(p,q,tint){const dx=q[0]-p[0],dy=q[1]-p[1],dz=q[2]-p[2],L=Math.hypot(dx,dy,dz)||.01;if(!FX._wg){const g=new GB();g.add(PRIM.box(.12,.12,1),T(0,0,.5),'#ffffff');FX._wg=g.build();}return {mesh:FX._wg,model:T(p[0],p[1],p[2],Math.atan2(dx,dz),-Math.atan2(dy,Math.hypot(dx,dz)),0,1,1,L),tint};}
+BUILD.wire=function(){BUILD.cancel();BUILD.mode='wire';BUILD.wireA=null;UI.closePanel();UI.hint(touchMode?'Aim at a pole or machine and tap Connect, then at the next one':'Click a pole or machine, then the next one. Right-click cancels.');};
 BUILD.dismantle=function(){BUILD.cancel();BUILD.mode='dismantle';UI.hint('Aim at a building or belt to remove it. Everything is refunded.');};
-BUILD.cancel=function(){BUILD.mode=null;BUILD.k=null;BUILD.beltA=null;BUILD.ghost=null;R.ghosts.length=0;if(BUILD.ghostBelt){freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt=null;}UI.hint('');};
+BUILD.cancel=function(){BUILD.mode=null;BUILD.wireA=null;BUILD.k=null;BUILD.beltA=null;BUILD.ghost=null;BUILD.preset=null;R.ghosts.length=0;if(BUILD.ghostBelt){freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt=null;}UI.hint('');};
 BUILD.rotate=function(s=1){const st=BUILD.k&&BUILDINGS[BUILD.k].pass?Math.PI/4:Math.PI/2;BUILD.rot=(BUILD.rot+s*st+TAU)%TAU;};
+BUILD.nudge=function(d){if(!NUDGE.has(BUILD.k))return;BUILD.dy=clamp(BUILD.dy+d,-4,24);UI._mk='';AUDIO.click();};
+BUILD.cycleZoop=function(){if(!ZOOP[BUILD.k])return;const o=[1,2,3,5,8];BUILD.zoop=o[(o.indexOf(BUILD.zoop)+1)%o.length];UI._mk='';AUDIO.click();};
 // ---- placement ghost ----
+function groundSpan(x,z,w,dd){let hi=-1e9,lo=1e9;for(const [sx,sz] of [[0,0],[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]]){const g=ground(x+sx*w/2*.95,z+sz*dd/2*.95);hi=Math.max(hi,g);lo=Math.min(lo,g);}return [lo,hi];}
 function placeTarget(){const k=BUILD.k,D=BUILDINGS[k],{o,d}=aimRay();const hb=rayBuildings(o,d,30),hg=rayGround(o,d,30);let p,base=null;
- if(hb&&(!hg||hb.t<hg.t)&&hb.face==='top'&&hb.b.k==='foundation'){base=hb.b;p=hb.p;}else if(hg)p=hg.p;else{const t=12;p=[o[0]+d[0]*t,o[1]+d[1]*t,o[2]+d[2]*t];}
- const [w,dd]=fp(k,BUILD.rot);let x,z,y,node=null;
+ // splitters and mergers dropped onto a belt cut into it
+ if(k==='splitter'||k==='merger'){const hl=rayBelts(o,d,24);if(hl&&(!hb||hl.t<hb.t)&&(!hg||hl.t<hg.t+.5)){const bl=hl.bl;const s0=clamp(bl.c.cum[hl.i],1.6,bl.c.len-1.6);if(bl.c.len>3.4){const q=curveAt(bl.c,s0);return {x:q.p[0],y:q.p[1]-PORT_Y,z:q.p[2],rot:q.yaw,splice:{bl,s:s0},list:null};}}}
+ const grid=k==='foundation'||k==='ramp'||k==='catwalk';
+ if(hb&&(!hg||hb.t<hg.t)&&hb.face==='top'&&(hb.b.k==='foundation'||hb.b.k==='catwalk')){base=hb.b;p=hb.p;}else if(hg)p=hg.p;else{const t=12;p=[o[0]+d[0]*t,o[1]+d[1]*t,o[2]+d[2]*t];}
+ const [w,dd]=fp(k,BUILD.rot);let x,z,y,node=null,rot=BUILD.rot;
  if(k==='miner'||k==='miner2'){let best=null;for(const nd of WORLD.nodes){const dist=Math.hypot(nd.x-p[0],nd.z-p[2]);if(dist<5&&(!best||dist<best.d))best={nd,d:dist};}
   if(best){node=best.nd;x=node.x;z=node.z;y=node.y+.2;}else{x=p[0];z=p[2];y=ground(x,z);}}
- else if(base){const s=k==='foundation'?4:.5;x=base.x+Math.round((p[0]-base.x)/s)*s;z=base.z+Math.round((p[2]-base.z)/s)*s;y=base.y+1;}
- else{const s=k==='foundation'?4:.5;const ox=k==='foundation'?0:(w%2?.5:0),oz=k==='foundation'?0:(dd%2?.5:0);x=Math.round((p[0]-ox)/s)*s+ox;z=Math.round((p[2]-oz)/s)*s+oz;
-  // sit on the highest ground under the footprint; foundations may stand on other foundations' sides by snapping to their level
-  let hi=-1e9,lo=1e9;for(const [sx,sz] of [[0,0],[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]]){const g=ground(x+sx*w/2*.95,z+sz*dd/2*.95);hi=Math.max(hi,g);lo=Math.min(lo,g);}y=k==='foundation'?lo-.3:hi;
-  if(k==='foundation'){// line up with a neighbouring foundation's height and grid
-   for(const b of FAC.b.values())if(b.k==='foundation'&&Math.hypot(b.x-p[0],b.z-p[2])<7){x=b.x+Math.round((p[0]-b.x)/4)*4;z=b.z+Math.round((p[2]-b.z)/4)*4;y=b.y;break;}}
+ else if(k==='wall'){// walls hug the nearest edge of the 4 m grid (or of the foundation you aim at)
+  const ref=base||[...FAC.b.values()].find(b=>b.k==='foundation'&&Math.hypot(b.x-p[0],b.z-p[2])<4);const bx=ref?ref.x:0,bz=ref?ref.z:0;const cx=bx+Math.round((p[0]-bx)/4)*4,cz=bz+Math.round((p[2]-bz)/4)*4;const fx=p[0]-cx,fz=p[2]-cz;
+  if(Math.abs(fx)>Math.abs(fz)){x=cx+Math.sign(fx)*2;z=cz;rot=Math.PI/2;}else{x=cx;z=cz+Math.sign(fz||1)*2;rot=0;}y=ref?ref.y+(BUILDINGS[ref.k].top||1):groundSpan(x,z,4,1)[0]-.1;BUILD.slope=0;}
+ else if(base){const s=grid?4:.5;x=base.x+Math.round((p[0]-base.x)/s)*s;z=base.z+Math.round((p[2]-base.z)/s)*s;y=base.y+(BUILDINGS[base.k].top||1);}
+ else{const s=grid?4:.5;const ox=grid?0:(w%2?.5:0),oz=grid?0:(dd%2?.5:0);x=Math.round((p[0]-ox)/s)*s+ox;z=Math.round((p[2]-oz)/s)*s+oz;
+  const [lo,hi]=groundSpan(x,z,w,dd);y=grid?lo-.3:hi;
+  if(grid){for(const b of FAC.b.values())if((b.k==='foundation'||b.k==='ramp'||b.k==='catwalk')&&Math.hypot(b.x-p[0],b.z-p[2])<7){x=b.x+Math.round((p[0]-b.x)/4)*4;z=b.z+Math.round((p[2]-b.z)/4)*4;y=b.y;break;}}
   BUILD.slope=hi-lo;}
- return {x,y,z,node,base};}
+ if(NUDGE.has(k))y+=BUILD.dy;
+ // a row of copies ("zoop") along the way you're facing
+ let list=null;if(ZOOP[k]&&BUILD.zoop>1){const cd=camDir();let ax;if(ZOOP[k]==='grid')ax=Math.abs(cd[0])>Math.abs(cd[2])?[Math.sign(cd[0]),0]:[0,Math.sign(cd[2])];else{const c=Math.cos(rot),sn=Math.sin(rot);ax=ZOOP[k]==='x'?[c,-sn]:[sn,c];if(ax[0]*cd[0]+ax[1]*cd[2]<0)ax=[-ax[0],-ax[1]];}
+  const st=k==='cpole'||k==='cpoleT'?4:4;list=[];for(let i=0;i<BUILD.zoop;i++)list.push({x:x+ax[0]*st*i,y,z:z+ax[1]*st*i,rot,node:null,base:i?null:base,zoop:true});}
+ return {x,y,z,node,base,rot,list};}
 function placeValid(t){const k=BUILD.k,D=BUILDINGS[k];if(!canAfford(D.cost))return 'Not enough parts: needs '+costText(D.cost);
  if((k==='miner'||k==='miner2')){if(!t.node)return 'Miners go on a resource node';for(const b of FAC.b.values())if(b.node===t.node.id)return 'That node already has a miner';}
  if(Math.hypot(t.x-PL.x,t.z-PL.z)>40)return 'Too far away';
  if(k==='skyhook'&&[...FAC.b.values()].some(b=>b.k==='skyhook'))return 'You already have a Skyhook';
- if(!t.base&&k!=='foundation'&&k!=='pole'&&BUILD.slope>3.2&&!t.node)return 'Too steep here: build a foundation first';
- const [w,d]=fp(k,BUILD.rot);for(const b of FAC.b.values()){if(t.base&&b===t.base)continue;const [bw,bd]=fp(b.k,b.rot);const top=b.y+(b.k==='foundation'?1:BUILDINGS[b.k].h);if(t.y>=top-.01||t.y+D.h<=b.y+.01)continue;
+ if(t.splice)return '';
+ if(!t.base&&!t.zoop&&!NUDGE.has(k)&&k!=='pole'&&BUILD.slope>3.2&&!t.node)return 'Too steep here: build a foundation first';
+ const [w,d]=fp(k,t.rot);const top0=t.y+(D.top||D.h);for(const b of FAC.b.values()){if(t.base&&b===t.base)continue;const BD=BUILDINGS[b.k];const [bw,bd]=fp(b.k,b.rot);const top=b.y+(BD.top||BD.h);if(t.y>=top-.01||top0<=b.y+.01)continue;
   if(Math.abs(t.x-b.x)<(w+bw)/2-.05&&Math.abs(t.z-b.z)<(d+bd)/2-.05)return 'Something is in the way';}
- const pr=Math.hypot(t.x-PL.x,t.z-PL.z);const [hw,hd]=[w/2,d/2];if(k!=='foundation'&&Math.abs(PL.x-t.x)<hw+.3&&Math.abs(PL.z-t.z)<hd+.3&&PL.y<t.y+D.h&&PL.y+1.8>t.y)return 'You are standing in the way';
+ if(D.surf!=='deck'&&D.surf!=='ramp'&&Math.abs(PL.x-t.x)<w/2+.3&&Math.abs(PL.z-t.z)<d/2+.3&&PL.y<t.y+D.h&&PL.y+1.8>t.y)return 'You are standing in the way';
  return '';}
-function placeBuilding(){const t=BUILD.target;if(!t)return;const why=placeValid(t);if(why){UI.toast(why,'warn');AUDIO.bad();return;}const D=BUILDINGS[BUILD.k];pay(D.cost);
- const b=newBuilding({k:BUILD.k,x:t.x,y:t.y,z:t.z,rot:BUILD.rot,node:t.node?t.node.id:null});if(D.machine){const rs=RECIPES.filter(r=>r.m===D.machine&&unlocked(r));if(rs.length===1)b.recipe=rs[0].id;}
- autoWire(b);clearFloraAround(b);AUDIO.place();FX.puff(t.x,t.y,t.z);saveSoon();
+function placeOne(t){const D=BUILDINGS[BUILD.k];pay(D.cost);const b=newBuilding({k:BUILD.k,x:t.x,y:t.y,z:t.z,rot:t.rot,node:t.node?t.node.id:null});
+ if(D.machine){const rs=RECIPES.filter(r=>r.m===D.machine&&unlocked(r));if(BUILD.preset&&BUILD.preset.k===BUILD.k&&RECIPE[BUILD.preset.recipe]&&unlocked(RECIPE[BUILD.preset.recipe]))b.recipe=BUILD.preset.recipe;else if(rs.length===1)b.recipe=rs[0].id;if(BUILD.preset&&BUILD.preset.k===BUILD.k)b.clock=Math.min(BUILD.preset.clock||1,maxClock());}
+ autoWire(b);clearFloraAround(b);FX.puff(t.x,t.y,t.z);return b;}
+function placeBuilding(){const t=BUILD.target;if(!t)return;
+ if(t.list){let n=0;for(const q of t.list){if(placeValid(q))continue;placeOne(q);n++;}if(!n){UI.toast(placeValid(t.list[0])||'Nothing could be placed','warn');AUDIO.bad();return;}AUDIO.place();if(n<t.list.length)UI.toast('Placed '+n+' of '+t.list.length+' (the rest were blocked or unaffordable)','info');saveSoon();return;}
+ const why=placeValid(t);if(why){UI.toast(why,'warn');AUDIO.bad();return;}
+ if(t.splice)return spliceBelt(t);
+ const b=placeOne(t);AUDIO.place();saveSoon();const D=BUILDINGS[BUILD.k];
  if(D.machine&&!b.recipe)setTimeout(()=>UI.toast('Tap the '+D.n.toLowerCase()+' to pick a recipe','info'),400);}
+// cut a belt and drop a splitter or merger into the gap
+function spliceBelt(t){const {bl,s}=t.splice,k=BUILD.k,D=BUILDINGS[k];pay(D.cost);const from=bl.from,to=bl.to,tier=bl.tier,items=bl.items.map(i=>({t:i.t,d:i.d}));removeBelt(bl);
+ const b=newBuilding({k,x:t.x,y:t.y,z:t.z,rot:t.rot});const inP=0,outP=k==='splitter'?1:3;
+ const b1=newBelt({tier,from,to:[b.id,inP]}),b2=newBelt({tier,from:[b.id,outP],to});
+ if(b1&&b2){for(const it of items){if(it.d<s-1)b1.items.push({t:it.t,d:Math.min(it.d,b1.c.len)});else if(it.d>s+1)b2.items.push({t:it.t,d:Math.max(0,it.d-(bl.c.len-b2.c.len))});else b.buf.length<2&&b.buf.push(it.t);}
+  b1.items.sort((a,c)=>c.d-a.d);b2.items.sort((a,c)=>c.d-a.d);}
+ AUDIO.place();FX.puff(t.x,t.y,t.z);UI.toast(D.n+' spliced into the belt','good');saveSoon();}
+const maxClock=()=>1+.5*Math.min(3,S.inv.power_shard||0);
 function clearFloraAround(b){const [w,d]=fp(b.k,b.rot);let ch=false;for(const f of WORLD.flora)if(f.alive&&Math.abs(f.x-b.x)<w/2+1&&Math.abs(f.z-b.z)<d/2+1){f.alive=false;S.chopped.push(f.i);ch=true;}if(ch)refreshFlora();}
-// ---- power wiring: done for you ----
-function autoWire(b){const D=BUILDINGS[b.k];if(!isPower(b.k)&&b.k!=='pole')return;const range=30,cands=[];
- for(const o of FAC.b.values()){if(o===b)continue;const dd=Math.hypot(o.x-b.x,o.z-b.z);if(dd>range)continue;if(b.k==='pole'){if(o.k==='pole'||(isPower(o.k)&&!S.wires.some(w=>w[0]===o.id||w[1]===o.id)))cands.push([dd,o]);}else if(o.k==='pole')cands.push([dd,o]);}
- cands.sort((a,c)=>a[0]-c[0]);let n=0;const max=b.k==='pole'?6:1;for(const [,o] of cands){if(n>=max)break;if(o.k==='pole'&&S.wires.filter(w=>w[0]===o.id||w[1]===o.id).length>=6)continue;S.wires.push([b.id,o.id]);n++;}
- // a generator or machine with no pole nearby links straight to the closest powered building
- if(!n&&b.k!=='pole'){let best=null;for(const o of FAC.b.values()){if(o===b||!isPower(o.k))continue;const dd=Math.hypot(o.x-b.x,o.z-b.z);if(dd<20&&(!best||dd<best[0]))best=[dd,o];}if(best)S.wires.push([b.id,best[1].id]);}
+// ---- power lines ----
+const isGridPart=k=>isPower(k)||k==='pole'||k==='pole2'||k==='pswitch'||k==='battery';
+const isPoleK=k=>k==='pole'||k==='pole2';
+function wireLen(a,b){const p=wirePoint(a),q=wirePoint(b);return Math.hypot(q[0]-p[0],q[1]-p[1],q[2]-p[2]);}
+const wireCost=L=>({wire:Math.max(1,Math.ceil(L/6))});
+function canWire(a,b){if(a===b)return 'Pick something else';if(S.wires.some(w=>(w[0]===a.id&&w[1]===b.id)||(w[0]===b.id&&w[1]===a.id)))return 'Already connected';const L=wireLen(a,b);if(L>30.5)return 'Too far: power lines reach 30 m';
+ if(wiresOf(a.id)>=connsOf(a.k))return BUILDINGS[a.k].n+' has no free connections ('+connsOf(a.k)+' max)';if(wiresOf(b.id)>=connsOf(b.k))return BUILDINGS[b.k].n+' has no free connections ('+connsOf(b.k)+' max)';return '';}
+// auto-wire: a convenience for phones. Poles grab what's near them, machines grab the nearest pole with a free slot.
+function autoWire(b){if(!isGridPart(b.k)||b.k==='pswitch'||!S.settings.autoWire)return;const cands=[];
+ for(const o of FAC.b.values()){if(o===b||!isGridPart(o.k)||o.k==='pswitch')continue;const dd=wireLen(b,o);if(dd>30)continue;if(isPoleK(b.k)){if(isPoleK(o.k)||!S.wires.some(w=>w[0]===o.id||w[1]===o.id))cands.push([dd+(isPoleK(o.k)?0:.01),o]);}else if(isPoleK(o.k))cands.push([dd,o]);}
+ cands.sort((a,c)=>a[0]-c[0]);let n=0;const max=isPoleK(b.k)?connsOf(b.k):1;let poles=0;for(const [,o] of cands){if(n>=max)break;if(isPoleK(b.k)&&isPoleK(o.k)&&poles>=2)continue;if(canWire(b,o))continue;S.wires.push([b.id,o.id]);n++;if(isPoleK(o.k))poles++;}
+ if(!n&&!isPoleK(b.k)){let best=null;for(const o of FAC.b.values()){if(o===b||!isGridPart(o.k)||o.k==='pswitch')continue;const dd=wireLen(b,o);if(dd<20&&!canWire(b,o)&&(!best||dd<best[0]))best=[dd,o];}if(best)S.wires.push([b.id,best[1].id]);}
  FAC.powerDirty=true;}
+function wireAim(){const {o,d}=aimRay();const h=rayBuildings(o,d,40);return h&&isGridPart(h.b.k)?h.b:null;}
+function wireAction(){const t=wireAim();if(!t){UI.toast('Aim at a power pole, generator or machine','info');return;}
+ if(!BUILD.wireA){if(wiresOf(t.id)>=connsOf(t.k)){UI.toast(BUILDINGS[t.k].n+' has no free connections','warn');return;}BUILD.wireA=t;AUDIO.click();UI.hint('Now aim at what to connect it to');return;}
+ const why=canWire(BUILD.wireA,t);if(why){UI.toast(why,'warn');AUDIO.bad();return;}const c=wireCost(wireLen(BUILD.wireA,t));if(!canAfford(c)){UI.toast('Needs '+costText(c),'warn');return;}
+ pay(c);S.wires.push([BUILD.wireA.id,t.id]);FAC.powerDirty=true;AUDIO.place();BUILD.wireA=isPoleK(t.k)?t:null;UI.hint(BUILD.wireA?'Connected. Keep going from this pole, or cancel':'Connected');saveSoon();}
+function wireUnderAim(){const {o,d}=aimRay();let best=null;for(const w of S.wires){const A=FAC.b.get(w[0]),B=FAC.b.get(w[1]);if(!A||!B)continue;const p=wirePoint(A),q=wirePoint(B);
+  const u=d,v=v3.sub(q,p),w0=v3.sub(o,p);const b=v3.dot(u,v),c=v3.dot(v,v),dd=v3.dot(u,w0),e=v3.dot(v,w0);const den=c-b*b;if(den<1e-6)continue;let sc=(b*e-c*dd)/den,tc=(e-b*dd)/den;if(sc<0||sc>25)continue;tc=clamp(tc,0,1);
+  const P1=[o[0]+u[0]*sc,o[1]+u[1]*sc,o[2]+u[2]*sc],P2=[p[0]+v[0]*tc,p[1]+v[1]*tc,p[2]+v[2]*tc];const dist=Math.hypot(P1[0]-P2[0],P1[1]-P2[1],P1[2]-P2[2]);if(dist<.45&&(!best||sc<best.t))best={t:sc,w};}return best;}
 // ---- belts ----
 function portUnderAim(){const {o,d}=aimRay();let best=null;for(const b of FAC.b.values()){const P=BUILDINGS[b.k].ports||[];if(Math.hypot(b.x-o[0],b.z-o[2])>40)continue;for(let i=0;i<P.length;i++){const w=portWorld(b,i);const c=[w.p[0],w.p[1]+.3,w.p[2]];const v=v3.sub(c,o),t=v3.dot(v,d);if(t<0||t>28)continue;const q=[o[0]+d[0]*t-c[0],o[1]+d[1]*t-c[1],o[2]+d[2]*t-c[2]];const e=Math.hypot(...q);if(e<1.1+t*.03&&(!best||e/(1+t*.05)<best.e))best={b,i,e:e/(1+t*.05),w,t};}}return best;}
 function beltCheck(A,B){if(!A||!B)return 'Pick two ports';if(A.b===B.b)return 'Pick a port on another building';const a=A.w.io,b=B.w.io;if(a===b)return a==='in'?'Both are inputs: connect an output to an input':'Both are outputs: connect an output to an input';
- if(A.b.conn[A.i]!=null||B.b.conn[B.i]!=null)return 'That port is already connected';const o=a==='out'?A:B,i=a==='out'?B:A;const c=beltCurve(o.w.p,o.w.d,i.w.p,[-i.w.d[0],0,-i.w.d[2]]);
- if(c.len>60)return 'Too long: belts reach up to 60 m';const dy=Math.abs(i.w.p[1]-o.w.p[1]),dh=Math.hypot(i.w.p[0]-o.w.p[0],i.w.p[2]-o.w.p[2]);if(dy>dh*.7+1)return 'Too steep for a belt';
+ if(A.b.conn[A.i]!=null||B.b.conn[B.i]!=null)return 'That port is already connected';const o=a==='out'?A:B,i=a==='out'?B:A;const lift=isLift(o.w.p,i.w.p);const c=lift?liftCurve(o.w.p,o.w.d,i.w.p,[-i.w.d[0],0,-i.w.d[2]]):beltCurve(o.w.p,o.w.d,i.w.p,[-i.w.d[0],0,-i.w.d[2]]);
+ if(c.len>60)return 'Too long: belts reach up to 60 m';const dy=Math.abs(i.w.p[1]-o.w.p[1]),dh=Math.hypot(i.w.p[0]-o.w.p[0],i.w.p[2]-o.w.p[2]);if(!lift&&dy>dh*.7+1)return 'Too steep: bring the ports closer together (within 3 m sideways) to make a conveyor lift';
  const B_=BELTS[BUILD.beltTier],n=Math.max(1,Math.ceil(c.len/B_.per));if(!canAfford(B_.cost,n))return 'Needs '+costText(B_.cost,n);return {o,i,c,n};}
 // aiming at open ground while dragging a belt drops a conveyor pole there and carries on from it
 function freePole(){const A=BUILD.beltA;if(!A)return null;const {o,d}=aimRay();const hg=rayGround(o,d,30);if(!hg)return null;const x=Math.round(hg.p[0]*2)/2,z=Math.round(hg.p[2]*2)/2;
@@ -956,9 +1065,10 @@ function beltAction(){const P=portUnderAim();if(!BUILD.beltA){// upgrading an ex
 function upgradeBelt(bl){const cur=BELTS[bl.tier].mk,nw=BELTS[BUILD.beltTier];if(nw.mk<=cur){UI.toast('Select a higher belt tier to upgrade this one','info');return;}const n=Math.max(1,Math.ceil(bl.c.len/nw.per));if(!canAfford(nw.cost,n)){UI.toast('Upgrade needs '+costText(nw.cost,n),'warn');return;}
  pay(nw.cost,n);refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));const items=bl.items.map(it=>[it.t,it.d]);removeBelt(bl);newBelt({id:bl.id,tier:BUILD.beltTier,from:bl.from,to:bl.to,items});AUDIO.place();UI.toast('Upgraded to '+nw.n,'good');saveSoon();}
 // ---- dismantle ----
-function dismantleTarget(){const {o,d}=aimRay();const hb=rayBuildings(o,d,30),hl=rayBelts(o,d,30);if(hl&&(!hb||hl.t<hb.t))return {belt:hl.bl};if(hb&&hb.b.k!=='hub')return {b:hb.b};return null;}
+function dismantleTarget(){const {o,d}=aimRay();const hb=rayBuildings(o,d,30),hl=rayBelts(o,d,30),hw=wireUnderAim();if(hw&&(!hb||hw.t<hb.t)&&(!hl||hw.t<hl.t))return {wire:hw.w};if(hl&&(!hb||hl.t<hb.t))return {belt:hl.bl};if(hb&&hb.b.k!=='hub')return {b:hb.b};return null;}
 function dismantle(){const t=BUILD.target;if(!t){UI.toast('Aim at something to remove','info');return;}
- if(t.belt){const bl=t.belt;refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));for(const it of bl.items)addInv(it.t,1);removeBelt(bl);}
+ if(t.wire){const A=FAC.b.get(t.wire[0]),B=FAC.b.get(t.wire[1]);if(A&&B)refund(wireCost(wireLen(A,B)));S.wires=S.wires.filter(w=>w!==t.wire);FAC.powerDirty=true;}
+ else if(t.belt){const bl=t.belt;refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));for(const it of bl.items)addInv(it.t,1);removeBelt(bl);}
  else{const b=t.b,D=BUILDINGS[b.k];for(const bid of b.conn)if(bid!=null){const bl=FAC.belts.get(bid);if(bl){refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));for(const it of bl.items)addInv(it.t,1);}}
   refund(D.cost);for(const m of [b.inb,b.out,b.store,b.fuel])for(const [k,v] of Object.entries(m))if(v>0)addInv(k,v);for(const it of b.buf)addInv(it,1);
   // things standing on a foundation come down with it would be confusing: block instead
@@ -967,14 +1077,16 @@ function dismantle(){const t=BUILD.target;if(!t){UI.toast('Aim at something to r
  AUDIO.remove();saveSoon();}
 // ---- per-frame: ghosts and highlights ----
 function updateBuildMode(){R.ghosts.length=0;BUILD.target=null;if(!BUILD.mode)return;
- if(BUILD.mode==='place'){const t=placeTarget();BUILD.target=t;const why=placeValid(t);BUILD.why=why;R.ghosts.push({mesh:MODELS.b[BUILD.k],model:T(t.x,t.y,t.z,BUILD.rot),tint:why?[1,.3,.25,.45]:[.3,1,.7,.45]});}
+ if(BUILD.mode==='place'){const t=placeTarget();BUILD.target=t;const L=t.list||[t];let first='';for(const q of L){const why=placeValid(q);if(q===L[0])first=why;R.ghosts.push({mesh:MODELS.b[BUILD.k],model:T(q.x,q.y,q.z,q.rot),tint:why?[1,.3,.25,.45]:[.3,1,.7,.45]});}BUILD.why=first;if(t.splice&&!first)BUILD.why='Splice into the belt';}
  else if(BUILD.mode==='belt'){const P=portUnderAim();BUILD.target=P;if(P){const w=P.w;R.ghosts.push({mesh:FX.portMark(),model:T(w.p[0],w.p[1]-.2,w.p[2],Math.atan2(w.d[0],w.d[2])),tint:P.b.conn[P.i]!=null?[1,.8,.2,.6]:w.io==='out'?[.3,1,.6,.6]:[1,.8,.2,.6]});}
   if(BUILD.beltA){const A=BUILD.beltA;R.ghosts.push({mesh:FX.portMark(),model:T(A.w.p[0],A.w.p[1]-.2,A.w.p[2],Math.atan2(A.w.d[0],A.w.d[2])),tint:[.3,.8,1,.7]});
-   const r=P?beltCheck(A,P):'Aim at a second port';const key=P?P.b.id+':'+P.i:'';if(typeof r!=='string'){if(!BUILD.ghostBelt||BUILD.ghostBelt.key!==key){if(BUILD.ghostBelt)freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt={key,mesh:beltMesh(r.c,BUILD.beltTier),n:r.n};}R.ghosts.push({mesh:BUILD.ghostBelt.mesh,model:M4.create(),tint:[.3,1,.7,.45]});BUILD.why='';UI.hint(Math.round(r.c.len)+' m · '+costText(BELTS[BUILD.beltTier].cost,r.n));}
+   const r=P?beltCheck(A,P):'Aim at a second port';const key=P?P.b.id+':'+P.i:'';if(typeof r!=='string'){if(!BUILD.ghostBelt||BUILD.ghostBelt.key!==key){if(BUILD.ghostBelt)freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt={key,mesh:beltMesh(r.c,BUILD.beltTier),n:r.n};}R.ghosts.push({mesh:BUILD.ghostBelt.mesh,model:M4.create(),tint:[.3,1,.7,.45]});BUILD.why='';UI.hint((r.c.lift?'Conveyor lift · ':'')+Math.round(r.c.len)+' m · '+costText(BELTS[BUILD.beltTier].cost,r.n));}
    else{BUILD.why=r;if(P)UI.hint(r);}
    if(!P){const fp_=freePole();if(fp_){const r2=beltCheck(A,fp_.P);R.ghosts.push({mesh:MODELS.b[fp_.k],model:T(fp_.fake.x,fp_.fake.y,fp_.fake.z,fp_.fake.rot),tint:typeof r2==='string'?[1,.3,.25,.45]:[.3,1,.7,.45]});
     if(typeof r2!=='string'){const key='free:'+fp_.fake.x+','+fp_.fake.z;if(!BUILD.ghostBelt||BUILD.ghostBelt.key!==key){if(BUILD.ghostBelt)freeMesh(BUILD.ghostBelt.mesh);BUILD.ghostBelt={key,mesh:beltMesh(r2.c,BUILD.beltTier),n:r2.n};}R.ghosts.push({mesh:BUILD.ghostBelt.mesh,model:M4.create(),tint:[.3,1,.7,.45]});BUILD.why='';UI.hint(Math.round(r2.c.len)+' m + conveyor pole');}else{BUILD.why=r2;UI.hint(r2);}}}}}
- else if(BUILD.mode==='dismantle'){const t=dismantleTarget();BUILD.target=t;if(t){if(t.belt)R.ghosts.push({mesh:t.belt.obj.mesh,model:M4.create(),tint:[1,.25,.2,.5]});else R.ghosts.push({mesh:t.b.obj.mesh,model:t.b.obj.model,tint:[1,.25,.2,.5]});}}}
+ else if(BUILD.mode==='wire'){const t=wireAim();BUILD.target=t;if(t)R.ghosts.push({mesh:t.obj.mesh,model:t.obj.model,tint:[.4,.85,1,.28]});if(BUILD.wireA){const p=wirePoint(BUILD.wireA);let q,why='Aim at something to connect';if(t){q=wirePoint(t);why=canWire(BUILD.wireA,t);}else{const {o,d}=aimRay();const h=rayGround(o,d,30);q=h?h.p:[o[0]+d[0]*12,o[1]+d[1]*12,o[2]+d[2]*12];}
+   R.ghosts.push(wireGhost(p,q,why?[1,.35,.25,.85]:[.3,1,.7,.85]));BUILD.why=why;if(t&&!why)UI.hint(Math.round(wireLen(BUILD.wireA,t))+' m · '+costText(wireCost(wireLen(BUILD.wireA,t))));else if(t)UI.hint(why);}}
+ else if(BUILD.mode==='dismantle'){const t=dismantleTarget();BUILD.target=t;if(t){if(t.wire){const A=FAC.b.get(t.wire[0]),B=FAC.b.get(t.wire[1]);if(A&&B)R.ghosts.push(wireGhost(wirePoint(A),wirePoint(B),[1,.25,.2,.8]));}else if(t.belt)R.ghosts.push({mesh:t.belt.obj.mesh,model:M4.create(),tint:[1,.25,.2,.5]});else R.ghosts.push({mesh:t.b.obj.mesh,model:t.b.obj.model,tint:[1,.25,.2,.5]});}}}
 // ---- hand work: mining ore and harvesting plants ----
 const HAND={t:0,what:null};
 function handTarget(){const {o,d}=aimRay();const n=rayNodes(o,d,7),f=rayFlora(o,d,6),b=rayBuildings(o,d,9);let best=null;
@@ -982,13 +1094,13 @@ function handTarget(){const {o,d}=aimRay();const n=rayNodes(o,d,7),f=rayFlora(o,
 function updateHand(dt,holding){const t=handTarget();HAND.what=t;if(!holding||!t||t.kind==='building'){HAND.t=0;return;}
  HAND.t+=dt;const need=t.kind==='node'?.55/(t.nd.purity===2?1.4:1):.9;if(HAND.t>=need){HAND.t=0;
   if(t.kind==='node'){addInv(t.nd.type,1);AUDIO.mine();FX.chips(t.nd,ITEMS[t.nd.type].c);UI.pop('+1 '+ITEMS[t.nd.type].n);}
-  else{const f=t.f;f.alive=false;S.chopped.push(f.i);refreshFlora();if(f.kind==='bush'){addInv('leaves',6);UI.pop('+6 Leaves');}else{addInv('wood',4);addInv('leaves',10);UI.pop('+4 Wood · +10 Leaves');}AUDIO.chop();FX.puff(f.x,f.y+1,f.z,COL(f.pal[f.pal.length-1]));}}}
+  else{const f=t.f;f.alive=false;S.chopped.push(f.i);refreshFlora();if(f.kind==='slug'){addInv('slug',1);UI.pop('+1 Power slug');AUDIO.fanfare();FX.puff(f.x,f.y+.5,f.z,COL('#ffd04a',1));return;}if(f.kind==='bush'){addInv('leaves',6);UI.pop('+6 Leaves');}else{addInv('wood',4);addInv('leaves',10);UI.pop('+4 Wood · +10 Leaves');}AUDIO.chop();FX.puff(f.x,f.y+1,f.z,COL(f.pal[f.pal.length-1]));}}}
 
 // ---- 09-game.js ----
 // ===== Game state, progression, crafting, saving, sound, effects =====
 const SAVE_KEY='ff_save_v1';
 let S=null;
-function newState(){return {v:1,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
+function newState(){return {v:1,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true,autoWire:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
 // ---- milestones ----
 const curMilestone=()=>MILESTONES[S.tier]||null;
 function hubWants(item){const M=curMilestone();if(!M||!M.need[item])return 0;return M.need[item]-(S.hub[item]||0);}
@@ -1004,7 +1116,7 @@ function benchRecipes(){return RECIPES.filter(r=>r.bench&&unlocked(r));}
 function craft(r,times=1){let made=0;for(let t=0;t<times;t++){if(!Object.entries(r.in).every(([k,v])=>(S.inv[k]||0)>=v))break;for(const [k,v] of Object.entries(r.in))addInv(k,-v);for(const [k,v] of Object.entries(r.out))addInv(k,v);made++;}if(made){AUDIO.craft();}return made;}
 // ---- save / load ----
 function serialize(){S.player={x:PL.x,y:PL.y,z:PL.z,yaw:PL.yaw,pitch:PL.pitch};S.time=Date.now();
- S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog}));
+ S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog,clock:b.clock,tripped:b.tripped||undefined,on:b.on,charge:b.charge||undefined}));
  S.belts=[...FAC.belts.values()].map(bl=>({id:bl.id,tier:bl.tier,from:bl.from,to:bl.to,items:bl.items.map(i=>[i.t,Math.round(i.d*100)/100])}));return JSON.stringify(S);}
 function saveGame(){try{localStorage.setItem(SAVE_KEY,serialize());}catch(e){}}
 let _saveT=null;function saveSoon(){clearTimeout(_saveT);_saveT=setTimeout(saveGame,1500);}
@@ -1024,6 +1136,7 @@ const AUDIO={ctx:null,init(){if(this.ctx||!S.settings.sound)return;try{this.ctx=
  click(){this.tone(880,.06,{type:'triangle',vol:.06});},place(){this.tone(220,.12,{type:'square',vol:.07,slide:.6});this.noise(.12,{freq:700,vol:.12});this.tone(660,.1,{type:'triangle',vol:.06,when:.06});},
  remove(){this.tone(440,.18,{type:'sawtooth',vol:.05,slide:.4});this.noise(.15,{freq:900,vol:.1});},bad(){this.tone(160,.18,{type:'square',vol:.06});},
  mine(){this.noise(.08,{freq:2200,vol:.16});this.tone(140+Math.random()*60,.08,{type:'triangle',vol:.08});},chop(){this.noise(.25,{freq:500,vol:.2});},craft(){this.tone(520,.08,{type:'triangle',vol:.07});this.tone(780,.1,{type:'triangle',vol:.07,when:.07});},
+ fuse(){this.noise(.4,{freq:3000,vol:.25});this.tone(90,.6,{type:'sawtooth',vol:.12,slide:.4});},flip(){this.tone(300,.05,{type:'square',vol:.08});this.tone(600,.05,{type:'square',vol:.06,when:.05});},
  fanfare(){[523,659,784,1047].forEach((f,i)=>this.tone(f,.32,{type:'triangle',vol:.1,when:i*.12}));}};
 // ---- particles ----
 FX.parts=[];
@@ -1074,19 +1187,20 @@ UI.frame=function(dt){UI._t=(UI._t||0)+dt;
  let label='',look='',holdK=0;const H=HAND.what;
  if(BUILD.mode==='place'){label='Place';look=BUILD.why||BUILDINGS[BUILD.k].n+' · '+costText(BUILDINGS[BUILD.k].cost);}
  else if(BUILD.mode==='belt'){label=BUILD.beltA?'Connect':'Start';const P=BUILD.target;look=P?(P.b.conn[P.i]!=null?'Connected port: build over to upgrade':(P.w.io==='out'?'Output':'Input')+' · '+BUILDINGS[P.b.k].n):BELTS[BUILD.beltTier].n;}
- else if(BUILD.mode==='dismantle'){label='Remove';const t=BUILD.target;look=t?(t.belt?BELTS[t.belt.tier].n:BUILDINGS[t.b.k].n):'Aim at something';}
- else if(H){if(H.kind==='node'){label='Mine';look=PURITY[H.nd.purity].n+' '+NODE_TYPES[H.nd.type].n+' node · hold to mine';holdK=HAND.t/.55;}else if(H.kind==='flora'){label='Harvest';look=(H.f.kind==='bush'?'Bush · leaves':'Tree · wood and leaves');holdK=HAND.t/.9;}else{label='Open';look=BUILDINGS[H.b.k].n+bStatusShort(H.b);}}
+ else if(BUILD.mode==='wire'){label=BUILD.wireA?'Connect':'Start';const t=BUILD.target;look=t?BUILDINGS[t.k].n+' · '+wiresOf(t.id)+'/'+connsOf(t.k)+' lines':'Aim at a pole, generator or machine';}
+ else if(BUILD.mode==='dismantle'){label='Remove';const t=BUILD.target;look=t?(t.wire?'Power line':t.belt?BELTS[t.belt.tier].n:BUILDINGS[t.b.k].n):'Aim at something';}
+ else if(H){if(H.kind==='node'){label='Mine';look=PURITY[H.nd.purity].n+' '+NODE_TYPES[H.nd.type].n+' node · hold to mine';holdK=HAND.t/.55;}else if(H.kind==='flora'){label='Harvest';look=(H.f.kind==='slug'?'Power slug! Grab it to craft power shards':H.f.kind==='bush'?'Bush · leaves':'Tree · wood and leaves');holdK=HAND.t/.9;}else{label='Open';look=BUILDINGS[H.b.k].n+bStatusShort(H.b);}}
  const act=$('#act');act.classList.toggle('hide',!label);act.firstElementChild.textContent=label;act.classList.toggle('red',BUILD.mode==='dismantle');act.querySelector('circle').style.strokeDashoffset=String(289*(1-clamp(holdK,0,1)));
  const lk=$('#look');if(lk._v!==look){lk._v=look;lk.textContent=look;lk.style.display=look?'':'none';}
- const mk=BUILD.mode||'';if(UI._mk!==mk){UI._mk=mk;$('#modeBtns').innerHTML=mk?`${mk==='place'?`<button class="rb" data-a="rot" title="Rotate (R)">${ICO.rot}</button>`:''}${mk==='belt'?`<button class="rb tier" data-a="tab" data-v="build">${BELTS[BUILD.beltTier].n.replace('Conveyor Belt ','')}</button><button class="rb tier" data-a="tallPole">${BUILD.tallPole?'Tall pole':'Low pole'}</button>`:''}<button class="rb" data-a="cancel" title="Cancel">${ICO.x}</button>`:`<button class="rb" data-a="dismantle" title="Dismantle (X)">${ICO.bin}</button>`;}
+ const mk=BUILD.mode||'';const mkk=mk+BUILD.k+BUILD.dy+BUILD.zoop+BUILD.beltTier+BUILD.tallPole;if(UI._mk!==mkk){UI._mk=mkk;$('#modeBtns').innerHTML=mk?`${mk==='place'?`${NUDGE.has(BUILD.k)?`<button class="rb" data-a="nudge" data-v="-1" title="Lower (G)">▼</button><button class="rb tier" data-a="nudge" data-v="0">${BUILD.dy>0?'+':''}${BUILD.dy} m</button><button class="rb" data-a="nudge" data-v="1" title="Raise (T)">▲</button>`:''}${ZOOP[BUILD.k]?`<button class="rb tier" data-a="zoop" title="Build a row (F)">×${BUILD.zoop}</button>`:''}<button class="rb" data-a="rot" title="Rotate (R)">${ICO.rot}</button>`:''}${mk==='belt'?`<button class="rb tier" data-a="tab" data-v="build">${BELTS[BUILD.beltTier].n.replace('Conveyor Belt ','')}</button><button class="rb tier" data-a="tallPole">${BUILD.tallPole?'Tall pole':'Low pole'}</button>`:''}<button class="rb" data-a="cancel" title="Cancel">${ICO.x}</button>`:`<button class="rb" data-a="dismantle" title="Dismantle (X)">${ICO.bin}</button>`;}
  if(UI._t<.25)return;UI._t=0;
- const P=FAC.power||{use:0,cap:0,want:0};const pw=$('#pow');pw.innerHTML=`⚡ ${Math.round(P.use)}/${Math.round(P.cap)} MW`;pw.classList.toggle('bad',P.want>P.cap+.01);
+ const P=FAC.power||{use:0,cap:0,want:0};const pw=$('#pow');pw.innerHTML=P.tripped?'⚡ FUSE BLOWN':`⚡ ${Math.round(P.use)}/${Math.round(P.cap)} MW`;pw.classList.toggle('bad',!!P.tripped||P.want>P.cap+.01);
  UI.msCard();if(UI.panel)UI.liveRefresh();};
 UI.msCard=function(){const el=$('#ms');const M=curMilestone();let h='';if(M){h=`<small>MILESTONE ${S.tier+1} OF ${MILESTONES.length}</small><b>${esc(M.n)}</b>`+Object.entries(M.need).map(([k,v])=>{const g=S.hub[k]||0,have=S.inv[k]||0;return `<div class="mr">${swatch(k)}<span>${esc(ITEMS[k].n)}</span><em>${fmt(g)}/${fmt(v)}</em><i style="width:${Math.min(100,g/v*100)}%"></i>${have&&g<v?`<u>+${fmt(Math.min(have,v-g))}</u>`:''}</div>`;}).join('');}
  else{const Ph=curPhase();h=Ph?`<small>SKYHOOK</small><b>${esc(Ph.n)}</b>`+Object.entries(Ph.need).map(([k,v])=>{const g=S.sky.got[k]||0;return `<div class="mr">${swatch(k)}<span>${esc(ITEMS[k].n)}</span><em>${fmt(g)}/${fmt(v)}</em><i style="width:${Math.min(100,g/v*100)}%"></i></div>`;}).join(''):`<small>MISSION</small><b>Complete!</b>`;}
  if(el._h!==h){el._h=h;el.innerHTML=h;}el.dataset.a='tab';el.dataset.v='hub';};
-function bStatus(b){const D=BUILDINGS[b.k];if(D.machine){if(!b.recipe)return ['Pick a recipe','warn'];if(b.grid==null)return ['Not connected to power','bad'];if(b.run)return [b.pf<1?'Running slowly: not enough power':'Running','good'];const r=RECIPE[b.recipe];for(const [k,n] of Object.entries(r.out))if((b.out[k]||0)+n>outCap(n))return ['Output full: connect a belt or take items','warn'];if(b.pf===0&&machineReady(b))return ['No power: add fuel to a generator','bad'];return ['Waiting for '+Object.keys(r.in).filter(k=>(b.inb[k]||0)<r.in[k]).map(k=>ITEMS[k].n.toLowerCase()).join(' and '),'warn'];}
- if(b.k==='miner'||b.k==='miner2'){if(b.grid==null)return ['Not connected to power','bad'];if(b.run)return [b.pf<1?'Mining slowly: not enough power':'Mining','good'];const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot>=50)return ['Output full: connect a belt','warn'];return ['No power: add fuel to a generator','bad'];}
+function bStatus(b){const D=BUILDINGS[b.k];const gs=b.grid!=null&&FAC.gridStat?FAC.gridStat[b.grid]:null;if(gs&&gs.tripped&&(D.machine||D.power||D.gen))return ['Fuse blown: reset it at a generator','bad'];if(D.machine){if(!b.recipe)return ['Pick a recipe','warn'];if(b.grid==null)return ['Not connected to power','bad'];if(b.run)return [(b.clock||1)!==1?'Running at '+Math.round((b.clock||1)*100)+'%':'Running','good'];const r=RECIPE[b.recipe];for(const [k,n] of Object.entries(r.out))if((b.out[k]||0)+n>outCap(n))return ['Output full: connect a belt or take items','warn'];if(b.pf===0&&machineReady(b))return ['No power: add fuel to a generator','bad'];return ['Waiting for '+Object.keys(r.in).filter(k=>(b.inb[k]||0)<r.in[k]).map(k=>ITEMS[k].n.toLowerCase()).join(' and '),'warn'];}
+ if(b.k==='miner'||b.k==='miner2'){if(b.grid==null)return ['Not connected to power','bad'];if(b.run)return ['Mining','good'];const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot>=50)return ['Output full: connect a belt','warn'];return ['No power: add fuel to a generator','bad'];}
  if(D.gen){if(b.run)return ['Generating '+Math.round(D.gen*b.run)+' MW','good'];return genReady(b)?['Ready · nothing to power yet','info']:['Out of fuel','bad'];}
  return ['',''];}
 const bStatusShort=b=>{const [s]=bStatus(b);return s?' · '+s:'';};
@@ -1095,12 +1209,15 @@ UI.open=function(tab,b){UI.panel=true;UI.tab=tab;UI.bld=b||null;$('#sheet').clas
 UI.closePanel=function(){UI.panel=false;UI.tab=null;UI.bld=null;$('#sheet').classList.add('hide');};
 UI.refresh=function(){if(!UI.panel)return;const tabs=[['build','Build'],['inv','Inventory'],['hub','HUB'],['map','Map'],['stats','Production'],['menu','Settings'],['help','Help']];
  $('#sheet .tabs').innerHTML=UI.bld?`<b class="ttl">${esc(BUILDINGS[UI.bld.k].n)}</b>`:tabs.map(([k,n])=>`<button class="${UI.tab===k?'on':''}" data-a="tab" data-v="${k}">${n}</button>`).join('');
- const body=$('#sheet .body');body.innerHTML=UI.bld?UI.bldView(UI.bld):(UI.views[UI.tab]||(()=>''))();if(UI.tab==='map'&&!UI.bld)UI.drawMap();};
-UI.liveRefresh=function(){if(UI.bld||UI.tab==='hub'||UI.tab==='stats'){const body=$('#sheet .body');const st=body.scrollTop;const h=UI.bld?UI.bldView(UI.bld):UI.views[UI.tab]();if(body._h!==h){body._h=h;body.innerHTML=h;body.scrollTop=st;}}};
+ const body=$('#sheet .body');body.innerHTML=UI.bld?UI.bldView(UI.bld):(UI.views[UI.tab]||(()=>''))();if(UI.tab==='map'&&!UI.bld)UI.drawMap();UI.drawGraphs();};
+UI.liveRefresh=function(){if(UI.bld||UI.tab==='hub'||UI.tab==='stats'){const body=$('#sheet .body');const st=body.scrollTop;const h=UI.bld?UI.bldView(UI.bld):UI.views[UI.tab]();if(body._h!==h){body._h=h;body.innerHTML=h;body.scrollTop=st;}UI.drawGraphs();}};
+UI.drawGraphs=function(){for(const c of document.querySelectorAll('.pgraph')){const x=c.getContext('2d'),W=c.width,H=c.height,h=FAC.hist||[];x.clearRect(0,0,W,H);x.fillStyle='rgba(255,255,255,.04)';x.fillRect(0,0,W,H);if(h.length<2)continue;const mx=Math.max(10,...h.map(r=>Math.max(r[1],r[2])))*1.15;
+ const line=(i,col,fill)=>{x.beginPath();h.forEach((r,j)=>{const px=j/(180-1)*W,py=H-r[i]/mx*H;j?x.lineTo(px,py):x.moveTo(px,py);});if(fill){x.lineTo((h.length-1)/179*W,H);x.lineTo(0,H);x.fillStyle=fill;x.fill();}else{x.strokeStyle=col;x.lineWidth=2.5;x.stroke();}};
+ line(1,null,'rgba(63,196,174,.18)');line(1,'#3fc4ae');line(2,'#f2b440');line(0,'#f08a32');x.font='bold 12px system-ui';x.fillStyle='#3fc4ae';x.fillText('Capacity',8,16);x.fillStyle='#f2b440';x.fillText('Demand',80,16);x.fillStyle='#f08a32';x.fillText('Consumption',142,16);x.fillStyle='#9aa3ad';x.fillText(Math.round(mx)+' MW',W-60,16);x.fillText('last 3 min',W-70,H-6);}};
 UI.views={
  build(){const cats=[['production','Production'],['logistics','Logistics'],['power','Power'],['structure','Structures'],['special','Special']];let h='<div class="cats">';
   h+=`<div class="cat"><h4>Conveyor belts</h4><div class="grid">`+Object.entries(BELTS).map(([k,B])=>card(k,B.n,B.desc,B.cost,unlocked(B),B.tier,BUILD.mode==='belt'&&BUILD.beltTier===k,B.col)).join('')+`</div></div>`;
-  for(const [c,n] of cats){const list=Object.entries(BUILDINGS).filter(([k,D])=>D.cat===c&&k!=='hub');if(!list.length)continue;h+=`<div class="cat"><h4>${n}</h4><div class="grid">`+list.map(([k,D])=>card(k,D.n,D.desc||(D.machine?'Power '+D.power+' MW':''),D.cost,unlocked(D),D.tier,false)).join('')+`</div></div>`;}
+  for(const [c,n] of cats){const list=Object.entries(BUILDINGS).filter(([k,D])=>D.cat===c&&k!=='hub');if(!list.length)continue;h+=`<div class="cat"><h4>${n}</h4><div class="grid">`+(c==='power'?`<button class="bcard ${BUILD.mode==='wire'?'sel':''}" data-a="wireTool"><div class="bi">${UI.icons['item:wire']?`<img src="${UI.icons['item:wire']}">`:''}</div><b>Power Line</b><small><span>1 Wire per 6 m</span></small><p>Run power by hand between poles, generators and machines. Up to 30 m.</p></button>`:'')+list.map(([k,D])=>card(k,D.n,D.desc||(D.machine?'Power '+D.power+' MW':''),D.cost,unlocked(D),D.tier,false)).join('')+`</div></div>`;}
   return h+'</div>';
   function card(k,n,desc,cost,ok,tier,sel,col){const aff=canAfford(cost);return `<button class="bcard ${ok?'':'lock'} ${sel?'sel':''}" ${ok?`data-a="pick" data-v="${k}"`:''}><div class="bi">${UI.icons[k]?`<img src="${UI.icons[k]}">`:''}</div><b>${esc(n)}</b>${ok?`<small>${Object.entries(cost).map(([i,v])=>`<span class="${(S.inv[i]||0)>=v?'':'no'}">${v} ${esc(ITEMS[i].n)}</span>`).join('')}</small>`:`<small class="lk">Unlocks at milestone ${tier}</small>`}${ok&&desc?`<p>${esc(desc)}</p>`:''}</button>`;}},
  inv(){const items=Object.entries(S.inv).filter(([,v])=>v>0).sort((a,b)=>Object.keys(ITEMS).indexOf(a[0])-Object.keys(ITEMS).indexOf(b[0]));
@@ -1112,9 +1229,10 @@ UI.views={
   h+=`<h4>Milestones</h4>`+MILESTONES.map((m,i)=>`<div class="mrow ${i<S.tier?'done':i===S.tier?'cur':''}"><b>${i<S.tier?'✓':i+1}</b><span>${esc(m.n)}<small>${esc(m.unlock)}</small></span></div>`).join('');return h;},
  map(){return `<canvas id="mapc" width="640" height="640"></canvas><p class="mut">Ore nodes: <span class="it">${Object.entries(NODE_TYPES).map(([k,n])=>`<i class="sw" style="background:${n.c}"></i>${n.n}`).join(' ')}</span></p>`;},
  stats(){const ks=[...new Set([...Object.keys(FAC.rate),...Object.keys(FAC.rateIn)])].filter(k=>(FAC.rate[k]||0)>.05||(FAC.rateIn[k]||0)>.05);
-  return `<p class="mut">Average items per minute across your whole factory (updates every 10 s).</p>`+(ks.length?`<table class="st"><tr><th>Item</th><th>Made</th><th>Used</th><th>Net</th></tr>`+ks.map(k=>{const p=FAC.rate[k]||0,c=FAC.rateIn[k]||0,n=p-c;return `<tr><td>${itemTag(k)}</td><td>${p.toFixed(1)}</td><td>${c.toFixed(1)}</td><td class="${n<-.05?'neg':n>.05?'pos':''}">${n>0?'+':''}${n.toFixed(1)}</td></tr>`;}).join('')+'</table>':'<p>Nothing is being made yet.</p>')+`<h4>Power</h4><p>${Math.round(FAC.power?FAC.power.use:0)} MW used of ${Math.round(FAC.power?FAC.power.cap:0)} MW available${FAC.power&&FAC.power.want>FAC.power.cap?' · <b class="neg">machines are slowed: build more generators</b>':''}</p>`;},
+  return `<p class="mut">Average items per minute across your whole factory (updates every 10 s).</p>`+(ks.length?`<table class="st"><tr><th>Item</th><th>Made</th><th>Used</th><th>Net</th></tr>`+ks.map(k=>{const p=FAC.rate[k]||0,c=FAC.rateIn[k]||0,n=p-c;return `<tr><td>${itemTag(k)}</td><td>${p.toFixed(1)}</td><td>${c.toFixed(1)}</td><td class="${n<-.05?'neg':n>.05?'pos':''}">${n>0?'+':''}${n.toFixed(1)}</td></tr>`;}).join('')+'</table>':'<p>Nothing is being made yet.</p>')+`<h4>Power</h4><p>${Math.round(FAC.power?FAC.power.use:0)} MW used of ${Math.round(FAC.power?FAC.power.cap:0)} MW available${FAC.power&&FAC.power.tripped?' · <b class="neg">a fuse has blown: reset it at a generator</b>':''}</p><canvas class="pgraph" width="600" height="150"></canvas>`;},
  menu(){return `<h4>Settings</h4><div class="set"><span>Look sensitivity</span><input type="range" min="0.3" max="2.5" step="0.1" value="${S.settings.sens}" oninput="this.dispatchEvent(new CustomEvent('ff',{bubbles:true}))" data-s="sens"></div>
   <div class="set"><span>Sound</span><button class="btn" data-a="sound">${S.settings.sound?'On':'Off'}</button></div>
+  <div class="set"><span>Auto-wire power<small class="mut" style="display:block">Connect new machines to the nearest pole for you</small></span><button class="btn" data-a="autoWire">${S.settings.autoWire?'On':'Off'}</button></div>
   <div class="set"><span>Graphics</span><button class="btn" data-a="qual">${{auto:'Auto',low:'Low (faster)',high:'High (sharper)'}[S.settings.quality]}</button></div>
   <h4>Game</h4><div class="btns"><button class="btn" data-a="save">Save now</button><button class="btn red" data-a="reset">Start a new game</button></div>
   <p class="mut">${GAME_NAME} · version ${VERSION}. Saves automatically on this device.</p>
@@ -1125,16 +1243,27 @@ UI.bldView=function(b){const D=BUILDINGS[b.k];const [st,cls]=bStatus(b);let h=st
  if(D.machine){const r=RECIPE[b.recipe];if(r)h+=`<div class="prog"><i style="width:${(b.prog/r.t*100).toFixed(0)}%"></i></div>`;
   h+=`<h4>Recipe</h4><div class="recs">`+RECIPES.filter(x=>x.m===D.machine).map(x=>{const ok=unlocked(x);return `<button class="rec ${b.recipe===x.id?'on':''} ${ok?'':'lock'}" ${ok?`data-a="recipe" data-v="${x.id}"`:''}><b>${esc(recipeName(x))}</b><span>${Object.entries(x.in).map(([k,v])=>`${swatch(k)}${(v*60/x.t).toFixed(v*60/x.t%1?1:0)}`).join(' + ')} → ${Object.entries(x.out).map(([k,v])=>`${swatch(k)}${(v*60/x.t).toFixed(v*60/x.t%1?1:0)}/min`).join('')}</span>${ok?'':'<small>Locked</small>'}</button>`;}).join('')+'</div>';
   if(r){h+=`<h4>Input</h4><div class="bufs">`+Object.keys(r.in).map(k=>`<div class="buf">${itemTag(k,b.inb[k]||0)}${(S.inv[k]||0)>0?`<button class="btn sm" data-a="put" data-v="${k}">Add ${fmt(Math.min(S.inv[k],inCap(r.in[k])-(b.inb[k]||0)))}</button>`:''}</div>`).join('')+`</div><h4>Output</h4><div class="bufs">`+Object.keys(r.out).map(k=>`<div class="buf">${itemTag(k,b.out[k]||0)}${(b.out[k]||0)>0?`<button class="btn sm gold" data-a="take" data-v="${k}">Take</button>`:''}</div>`).join('')+'</div>';}
-  h+=`<p class="mut">Uses ${D.power} MW when running.</p>`;}
- else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd)h+=`<p>${PURITY[nd.purity].n} ${NODE_TYPES[nd.type].n} node · <b>${D.rate*PURITY[nd.purity].k}/min</b></p>`;h+=`<div class="bufs">`+Object.keys(b.out).map(k=>`<div class="buf">${itemTag(k,b.out[k])}${b.out[k]>0?`<button class="btn sm gold" data-a="take" data-v="${k}">Take</button>`:''}</div>`).join('')+`</div><p class="mut">Uses ${D.power} MW. Belt its output into a smelter.</p>`;}
+  h+=UI.clockView(b);}
+ else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd)h+=`<p>${PURITY[nd.purity].n} ${NODE_TYPES[nd.type].n} node · <b>${D.rate*PURITY[nd.purity].k}/min</b></p>`;h+=`<div class="bufs">`+Object.keys(b.out).map(k=>`<div class="buf">${itemTag(k,b.out[k])}${b.out[k]>0?`<button class="btn sm gold" data-a="take" data-v="${k}">Take</button>`:''}</div>`).join('')+`</div><p class="mut">Uses ${D.power} MW. Belt its output into a smelter.</p>`+UI.clockView(b);}
  else if(b.k==='storage'){const it=Object.entries(b.store).filter(([,v])=>v>0);const tot=it.reduce((a,[,v])=>a+v,0);h+=`<p>${fmt(tot)} / ${fmt(D.cap)} items</p><div class="inv">${it.map(([k,v])=>`<button class="slot" data-a="takeS" data-v="${k}">${swatch(k)}<b>${fmt(v)}</b><span>${esc(ITEMS[k].n)}</span></button>`).join('')||'<p class="mut">Empty</p>'}</div><div class="btns"><button class="btn gold" data-a="takeAll">Take all</button><button class="btn" data-a="putAll">Store everything</button></div>`;}
- else if(D.gen){h+=`<p>Up to ${D.gen} MW · burns ${D.fuels.map(f=>ITEMS[f].n.toLowerCase()).join(', ')}</p><div class="bufs">`+D.fuels.map(k=>`<div class="buf">${itemTag(k,b.fuel[k]||0)}<small class="mut">${Math.round(FUEL[k]/D.gen)} s each</small>${(S.inv[k]||0)>0?`<button class="btn sm gold" data-a="fuel" data-v="${k}">Add all</button>`:''}</div>`).join('')+`</div><p class="mut">A generator only burns what your machines need.</p>`;}
+ else if(b.k==='pswitch'){h+=`<div class="btns"><button class="btn big ${b.on?'gold':'red'}" data-a="flip">${b.on?'ON · tap to switch off':'OFF · tap to switch on'}</button></div><p class="mut">Power only flows through the switch while it is on. ${wiresOf(b.id)}/${connsOf(b.k)} lines.</p>`+UI.gridView(b);}
+ else if(b.k==='battery'){const Dd=BUILDINGS.battery;h+=`<p>Charge <b>${Math.round((b.charge||0)/60)} / ${Math.round(Dd.store/60)} MW·min</b></p><div class="bar"><i style="width:${(b.charge||0)/Dd.store*100}%"></i></div><p class="mut">${(b.flow||0)>.1?'Charging '+Math.round(b.flow)+' MW':(b.flow||0)<-.1?'Discharging '+Math.round(-b.flow)+' MW':'Idle'}</p>`+UI.gridView(b);}
+ else if(b.k==='pole'||b.k==='pole2'){h+=`<p>${wiresOf(b.id)} of ${connsOf(b.k)} power lines used.</p>`+UI.gridView(b);}
+ else if(D.gen){h+=`<p>Up to ${D.gen} MW · burns ${D.fuels.map(f=>ITEMS[f].n.toLowerCase()).join(', ')}</p><div class="bufs">`+D.fuels.map(k=>`<div class="buf">${itemTag(k,b.fuel[k]||0)}<small class="mut">${Math.round(FUEL[k]/D.gen)} s each</small>${(S.inv[k]||0)>0?`<button class="btn sm gold" data-a="fuel" data-v="${k}">Add all</button>`:''}</div>`).join('')+`</div><p class="mut">A generator only burns what your machines need.</p>`+UI.gridView(b);}
  else if(b.k==='hub'){h+=`<p>Your base camp.</p><div class="btns"><button class="btn gold big" data-a="tab" data-v="hub">Milestones</button><button class="btn big" data-a="tab" data-v="inv">Hand crafting</button></div>`;}
  else if(b.k==='skyhook'){const P=curPhase();h+=P?`<h3>${esc(P.n)}</h3>`+Object.entries(P.need).map(([k,v])=>{const g=S.sky.got[k]||0;return `<div class="need">${itemTag(k)}<div class="bar"><i style="width:${Math.min(100,g/v*100)}%"></i></div><em>${fmt(g)} / ${fmt(v)}</em></div>`;}).join('')+`<div class="btns"><button class="btn gold big" data-a="deliver" data-v="sky">Deliver from inventory</button></div>`:'<h3>Mission complete</h3>';}
- else if(b.k==='splitter'||b.k==='merger'||b.k==='pole'||b.k==='foundation'||D.pass)h+=`<p>${esc(D.desc||'')}</p>`;
+ else if(b.k==='splitter'||b.k==='merger'||b.k==='foundation'||D.pass||D.surf)h+=`<p>${esc(D.desc||'')}</p>`;
  return h;};
-UI.A={pause:()=>MENU.pause(),tab:v=>{if(UI.panel&&UI.tab===v&&!UI.bld){UI.closePanel();return;}UI.open(v);},close:()=>UI.closePanel(),
- pick:v=>{BUILD.start(v);},tallPole:()=>{if(!unlocked(BUILDINGS.cpoleT)){UI.toast('Tall conveyor poles unlock at milestone 2','info');return;}BUILD.tallPole=!BUILD.tallPole;UI._mk='';},rot:()=>BUILD.rotate(1),cancel:()=>BUILD.cancel(),dismantle:()=>BUILD.mode==='dismantle'?BUILD.cancel():BUILD.dismantle(),
+UI.gridView=b=>{if(b.grid==null)return '<p class="mut">Not connected to a power grid.</p>';const g=(FAC.gridStat||[])[b.grid]||{};
+ return `<h4>Power grid</h4>${g.tripped?'<div class="status bad">Fuse blown: everything on this grid has stopped</div><div class="btns"><button class="btn gold big" data-a="fuse">Reset fuse</button></div>':''}<div class="pgrid"><div><b>${Math.round(g.use||0)}</b><small>consumption MW</small></div><div><b>${Math.round(g.cap||0)}</b><small>production capacity MW</small></div><div><b>${Math.round(g.want||0)}</b><small>demand MW</small></div>${g.storeMax?`<div><b>${Math.round((g.store||0)/60)}</b><small>stored MW·min</small></div>`:''}</div><canvas class="pgraph" width="600" height="150"></canvas>`;};
+UI.clockView=b=>{const D=BUILDINGS[b.k],c=b.clock||1,mx=maxClock();return `<h4>Clock speed</h4><div class="clock"><button class="btn sm" data-a="clock" data-v="-.25">−25</button><button class="btn sm" data-a="clock" data-v="-.05">−5</button><b>${Math.round(c*100)}%</b><button class="btn sm" data-a="clock" data-v=".05">+5</button><button class="btn sm" data-a="clock" data-v=".25">+25</button></div>
+ <p class="mut">${(D.power*Math.pow(c,1.6)).toFixed(1)} MW when running. ${mx>1?'Overclocking up to '+Math.round(mx*100)+'% with your '+(S.inv.power_shard||0)+' power shard(s).':'Underclock to save power. Carry power shards (made from power slugs found in the wild) to overclock up to 250%.'}</p>
+ <div class="btns"><button class="btn" data-a="copyB">Copy settings</button>${BUILD.clip&&BUILD.clip.k===b.k?'<button class="btn" data-a="pasteB">Paste settings</button>':''}<button class="btn gold" data-a="another">Build another</button></div>`;};
+UI.A={wireTool:()=>BUILD.wire(),fuse:()=>{if(UI.bld)resetFuse(UI.bld);UI.refresh();},flip:()=>{const b=UI.bld;b.on=!b.on;FAC.powerDirty=true;AUDIO.flip();UI.refresh();saveSoon();},autoWire:()=>{S.settings.autoWire=!S.settings.autoWire;UI.refresh();saveSoon();},pause:()=>MENU.pause(),clock:v=>{const b=UI.bld;b.clock=Math.round(clamp((b.clock||1)+(+v),.05,maxClock())*100)/100;AUDIO.click();UI.refresh();saveSoon();},
+ copyB:()=>{const b=UI.bld;BUILD.clip={k:b.k,recipe:b.recipe,clock:b.clock||1};UI.toast('Settings copied','good');UI.refresh();},
+ pasteB:()=>{const b=UI.bld,c=BUILD.clip;if(!c||c.k!==b.k)return;if(c.recipe&&c.recipe!==b.recipe)UI.A.recipe(c.recipe);b.clock=Math.min(c.clock,maxClock());UI.toast('Settings pasted','good');UI.refresh();saveSoon();},
+ another:()=>{const b=UI.bld;const D=BUILDINGS[b.k];const k=b.k;const pre={k,recipe:b.recipe,clock:b.clock||1};UI.closePanel();BUILD.start(k);BUILD.preset=pre;BUILD.rot=b.rot;UI.hint('Placing another '+D.n+(b.recipe?' set to '+recipeName(RECIPE[b.recipe]):''));},tab:v=>{if(UI.panel&&UI.tab===v&&!UI.bld){UI.closePanel();return;}UI.open(v);},close:()=>UI.closePanel(),
+ pick:v=>{BUILD.start(v);},nudge:v=>{if(v==='0'){BUILD.dy=0;UI._mk='';return;}BUILD.nudge(+v);},zoop:()=>BUILD.cycleZoop(),tallPole:()=>{if(!unlocked(BUILDINGS.cpoleT)){UI.toast('Tall conveyor poles unlock at milestone 2','info');return;}BUILD.tallPole=!BUILD.tallPole;UI._mk='';},rot:()=>BUILD.rotate(1),cancel:()=>BUILD.cancel(),dismantle:()=>BUILD.mode==='dismantle'?BUILD.cancel():BUILD.dismantle(),
  craft:v=>{const [id,n]=v.split(':');const r=RECIPE[id];const max=Math.min(...Object.entries(r.in).map(([k,c])=>Math.floor((S.inv[k]||0)/c)));const m=craft(r,n==='10'?Math.max(1,Math.min(10,max)):1);if(m)UI.pop('+'+Object.entries(r.out).map(([k,c])=>c*m+' '+ITEMS[k].n).join(' '));UI.refresh();saveSoon();},
  deliver:v=>{const n=deliverFromInv(v);if(n){UI.toast('Delivered '+n+' parts','good');AUDIO.craft();}UI.refresh();saveSoon();},
  recipe:v=>{const b=UI.bld;if(!b)return;if(b.recipe!==v){for(const [k,c] of Object.entries(b.inb))if(c>0)addInv(k,c);for(const [k,c] of Object.entries(b.out))if(c>0)addInv(k,c);b.inb={};b.out={};b.prog=0;b.recipe=v;}AUDIO.click();UI.refresh();saveSoon();},
@@ -1193,13 +1322,14 @@ UI.views.help=()=>`<h4>Getting started</h4><ol class="help"><li><b>Mine</b> the 
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.2.0',VERSION_MARK='FFVER@0.2.0@';
+const VERSION='0.3.0',VERSION_MARK='FFVER@0.3.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),20000);setInterval(()=>this.check(),7*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION)UI.toast('Update '+m[1]+' ready: reopen the game to get it','good');}catch(e){}}};
 const GAME={started:false};
 const setLoad=(f,m)=>{const b=document.getElementById('lbar');if(b)b.style.width=(f*100)+'%';const l=document.getElementById('lmsg');if(l&&m)l.textContent=m;};
 GAME.primary=function(down){AUDIO.init();if(!down){INPUT.act=false;return;}if(UI.panel)return;
- if(BUILD.mode==='place')return placeBuilding();if(BUILD.mode==='belt')return beltAction();if(BUILD.mode==='dismantle')return dismantle();
+ if(BUILD.mode)updateBuildMode();
+ if(BUILD.mode==='place')return placeBuilding();if(BUILD.mode==='belt')return beltAction();if(BUILD.mode==='dismantle')return dismantle();if(BUILD.mode==='wire')return wireAction();
  const H=handTarget();if(H&&H.kind==='building'){UI.open('bld',H.b);return;}INPUT.act=true;};
 GAME.secondary=()=>{if(BUILD.mode)BUILD.cancel();};
 GAME.tapAt=function(sx,sy){if(UI.panel||BUILD.mode)return;const r=screenRay(sx/innerWidth,sy/innerHeight);const h=rayBuildings(r.o,r.d,30);if(h)UI.open('bld',h.b);};
@@ -1208,6 +1338,7 @@ function onKey(c,e){AUDIO.init();if(c==='Tab'){e.preventDefault();UI.A.tab('inv'
  if(GAME.mode!=='play'||GAME.paused)return;
  if(UI.panel&&c!=='KeyB'&&c!=='KeyM')return;
  if(c==='KeyB'||c==='KeyQ')UI.A.tab('build');else if(c==='KeyM')UI.A.tab('map');else if(c==='KeyR'){if(BUILD.mode==='place')BUILD.rotate(1);}else if(c==='KeyX')UI.A.dismantle();
+ else if(c==='KeyT'&&BUILD.mode==='place')BUILD.nudge(1);else if(c==='KeyG'&&BUILD.mode==='place')BUILD.nudge(-1);else if(c==='KeyF'&&BUILD.mode==='place')BUILD.cycleZoop();
  else if(c==='KeyE'){const H=handTarget();if(H&&H.kind==='building')UI.open('bld',H.b);}else if(c==='KeyH')UI.A.tab('hub');
  else if(/^Digit[1-5]$/.test(c)&&BUILD.mode==='belt'){const k='belt'+c.slice(5);if(unlocked(BELTS[k])){BUILD.beltTier=k;UI._mk='';}}}
 function applyQuality(){const q=S.settings.quality;R.maxDPR=q==='low'?1:q==='high'?2:1.5;R.scale=q==='low'?.8:1;R.far=q==='low'?520:800;R.shadows=q!=='low';resize();}
@@ -1226,7 +1357,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();if(window.__AUTOPLAY)MENU.play();
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,UI,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
