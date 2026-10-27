@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Frontier Foundry</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#14161b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<title>Novaforge</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#14161b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <style>:root{--ink:#eef1f4;--muted:#9aa3ad;--panel:rgba(20,23,28,.82);--line:rgba(255,255,255,.1);--orange:#f08a32;--teal:#3fc4ae;--red:#e0574a;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--safe-r:env(safe-area-inset-right,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:#14161b;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -131,10 +131,8 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 <canvas id="gl"></canvas>
 <div id="ui"></div>
 <div id="loading"><div class="lgbg"></div>
- <div class="lgc"><svg class="logo" viewBox="0 0 120 120"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb46a"/><stop offset="1" stop-color="#e0602a"/></linearGradient></defs>
-  <g class="gear"><path fill="url(#lg1)" d="M60 14l8 10 12-3 3 12 12 4-3 12 9 9-9 9 3 12-12 4-3 12-12-3-8 10-8-10-12 3-3-12-12-4 3-12-9-9 9-9-3-12 12-4 3-12 12 3z"/><circle cx="60" cy="60" r="20" fill="#14161b"/></g>
-  <circle cx="60" cy="60" r="11" fill="#3fc4ae"/><path d="M30 92h60" stroke="#ece6da" stroke-width="6" stroke-linecap="round"/></svg>
-  <div class="lt">FRONTIER<span>FOUNDRY</span></div>
+ <div class="lgc"><svg class="logo" viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc27a"/><stop offset=".55" stop-color="#f08a32"/><stop offset="1" stop-color="#c8461a"/></linearGradient><radialGradient id="ec2" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff"/><stop offset=".25" stop-color="#bff8ee"/><stop offset=".6" stop-color="#3fc4ae" stop-opacity=".55"/><stop offset="1" stop-color="#3fc4ae" stop-opacity="0"/></radialGradient></defs><path fill="url(#eg2)" d="M60 10l8.5 10.5 13-3.2 3.2 13 12.8 4.2-3.2 12.8 9.7 9.7-9.7 9.7 3.2 12.8-12.8 4.2-3.2 13-13-3.2L60 110l-8.5-10.5-13 3.2-3.2-13-12.8-4.2 3.2-12.8L16 60l9.7-9.7-3.2-12.8 12.8-4.2 3.2-13 13 3.2z"/><circle cx="60" cy="60" r="27" fill="#0d0f1a"/><circle cx="60" cy="60" r="27" fill="none" stroke="#2a2040" stroke-width="2"/><circle cx="60" cy="60" r="24" fill="url(#ec2)"/><path fill="#fff" d="M60 36 Q62.5 57.5 84 60 Q62.5 62.5 60 84 Q57.5 62.5 36 60 Q57.5 57.5 60 36z"/><path fill="#eafffb" opacity=".85" d="M60 48 Q61 59 72 60 Q61 61 60 72 Q59 61 48 60 Q59 59 60 48z" transform="rotate(45 60 60)"/><ellipse cx="60" cy="60" rx="46" ry="11" fill="none" stroke="#58e0c8" stroke-width="2.4" transform="rotate(-28 60 60)" opacity=".9"/></svg>
+  <div class="lt">NOVA<span>FORGE</span></div>
   <div class="lbelt"><div class="lrail"></div><div class="litems"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
   <div class="lb"><i id="lbar"></i></div><div id="lmsg">Landing…</div><div id="ltip"></div></div></div>
 <script>(()=>{'use strict';
@@ -378,7 +376,7 @@ function renderFrame(){const gl=GL.gl;GL.stats.draws=0;GL.stats.tris=0;resize();
 
 // ---- 03-data.js ----
 // ===== Game data: items, recipes, buildings, milestones =====
-const GAME_NAME='Frontier Foundry';
+const GAME_NAME='Novaforge';
 // shape: how the item looks riding a belt
 const ITEMS={
  iron_ore:{n:'Iron ore',c:'#8c5a48',s:'ore'},copper_ore:{n:'Copper ore',c:'#c8794c',s:'ore'},limestone:{n:'Limestone',c:'#ddd5c0',s:'ore'},coal:{n:'Coal',c:'#2c2b30',s:'ore'},aurite_ore:{n:'Aurite ore',c:'#e4b84c',s:'ore'},
@@ -1552,12 +1550,12 @@ UI.podView=function(){const p=UI.pod;if(!p)return '';if(S.pods[p.id])return '<p>
 // ===== Title screen, pause menu, loading tips =====
 const TIPS=['Belts carry 60 items a minute at Mk.1. Build over a belt with a higher tier to upgrade it.','Aim at open ground while laying a belt to drop a conveyor pole and keep going.','Pure nodes give twice as much ore as normal ones. Check the map.','Machines show their status on a little screen: green is running, yellow is waiting, red is no power.','Generators only burn what your machines need.','Belt parts straight into the HUB to finish milestones while you explore.','Your factory keeps working for up to an hour while the game is closed.'];
 let _tipI=0;function nextTip(){const t=document.getElementById('ltip');if(t){t.textContent='Tip: '+TIPS[_tipI++%TIPS.length];}}
-const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb46a"/><stop offset="1" stop-color="#e0602a"/></linearGradient></defs><path fill="url(#lg2)" d="M60 14l8 10 12-3 3 12 12 4-3 12 9 9-9 9 3 12-12 4-3 12-12-3-8 10-8-10-12 3-3-12-12-4 3-12-9-9 9-9-3-12 12-4 3-12 12 3z"/><circle cx="60" cy="60" r="20" fill="#14161b"/><circle cx="60" cy="60" r="11" fill="#3fc4ae"/></svg>';
+const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc27a"/><stop offset=".55" stop-color="#f08a32"/><stop offset="1" stop-color="#c8461a"/></linearGradient><radialGradient id="ec2" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff"/><stop offset=".25" stop-color="#bff8ee"/><stop offset=".6" stop-color="#3fc4ae" stop-opacity=".55"/><stop offset="1" stop-color="#3fc4ae" stop-opacity="0"/></radialGradient></defs><path fill="url(#eg2)" d="M60 10l8.5 10.5 13-3.2 3.2 13 12.8 4.2-3.2 12.8 9.7 9.7-9.7 9.7 3.2 12.8-12.8 4.2-3.2 13-13-3.2L60 110l-8.5-10.5-13 3.2-3.2-13-12.8-4.2 3.2-12.8L16 60l9.7-9.7-3.2-12.8 12.8-4.2 3.2-13 13 3.2z"/><circle cx="60" cy="60" r="27" fill="#0d0f1a"/><circle cx="60" cy="60" r="27" fill="none" stroke="#2a2040" stroke-width="2"/><circle cx="60" cy="60" r="24" fill="url(#ec2)"/><path fill="#fff" d="M60 36 Q62.5 57.5 84 60 Q62.5 62.5 60 84 Q57.5 62.5 36 60 Q57.5 57.5 60 36z"/><path fill="#eafffb" opacity=".85" d="M60 48 Q61 59 72 60 Q61 61 60 72 Q59 61 48 60 Q59 59 60 48z" transform="rotate(45 60 60)"/><ellipse cx="60" cy="60" rx="46" ry="11" fill="none" stroke="#58e0c8" stroke-width="2.4" transform="rotate(-28 60 60)" opacity=".9"/></svg>';
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 MENU.title=function(){GAME.mode='title';document.body.classList.add('intitle');UI.closePanel();BUILD.cancel();let el=document.getElementById('title');if(!el){el=document.createElement('div');el.id='title';document.body.appendChild(el);}
  const has=!!localStorage.getItem(SAVE_KEY)&&(S.tier>0||FAC.b.size>1||Object.keys(S.inv).length);const M=curMilestone();
- el.innerHTML=`<div class="tcol"><div class="tlogo">${LOGO_SVG}<b>FRONTIER<span>FOUNDRY</span></b></div>
+ el.innerHTML=`<div class="tcol"><div class="tlogo">${LOGO_SVG}<b>NOVA<span>FORGE</span></b></div>
   ${has?`<button class="tbtn main" data-m="play"><span>Continue<small>${M?'Milestone '+(S.tier+1)+' · '+esc(M.n):'Skyhook'} · ${FAC.b.size-1} buildings · ${fmtTime(S.playTime)}</small></span><span>▶</span></button>`:`<button class="tbtn main" data-m="play"><span>Start your factory<small>Land on a new world</small></span><span>▶</span></button>`}
   ${has?`<button class="tbtn" data-m="new"><span>New game<small>Start over on a fresh planet</small></span></button>`:''}
   <button class="tbtn" data-m="settings"><span>Settings</span></button><button class="tbtn" data-m="help"><span>How to play</span></button>
@@ -1823,7 +1821,7 @@ START.hud=function(){let el=document.getElementById('vitals');if(!el){el=documen
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.5.1',VERSION_MARK='FFVER@0.5.1@';
+const VERSION='0.5.2',VERSION_MARK='FFVER@0.5.2@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),20000);setInterval(()=>this.check(),7*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION)UI.toast('Update '+m[1]+' ready: reopen the game to get it','good');}catch(e){}}};
 const GAME={started:false};
