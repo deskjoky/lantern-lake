@@ -1309,12 +1309,12 @@ function blockedAt(x,z,y){for(const b of FAC.b.values()){const D=BUILDINGS[b.k];
  for(const f of WORLD.flora)if(f.alive&&f.kind!=='bush'&&Math.abs(f.x-x)<2&&Math.abs(f.z-z)<2&&Math.hypot(f.x-x,f.z-z)<(f.kind==='rock'?1.1:.5)*f.s)return true;
  return false;}
 function updatePlayer(dt){if(VEH.driving){R.yaw=PL.yaw;R.pitch=PL.pitch;return;}let mx=INPUT.jx,my=INPUT.jy;const k=INPUT.keys;if(k.KeyW||k.ArrowUp)my=1;if(k.KeyS||k.ArrowDown)my=-1;if(k.KeyA||k.ArrowLeft)mx=-1;if(k.KeyD||k.ArrowRight)mx=1;
- if(UI.panel){mx=my=0;}const run=k.ShiftLeft||Math.hypot(INPUT.jx,INPUT.jy)>.98;const sp=(run?9:5.2)*GEAR.speedMul()*Math.min(1,Math.hypot(mx,my));
+ if(UI.panel){mx=my=0;}const run=(k.ShiftLeft||Math.hypot(INPUT.jx,INPUT.jy)>.88)&&!PL.crouch;const sp=(run?9:5.2)*(PL.crouch?.5:1)*GEAR.speedMul()*Math.min(1,Math.hypot(mx,my));
  // ---- movement with momentum: sprint, crouch-slide, and slide-jumps that carry your speed ----
  let wx=0,wz=0;const ml=Math.hypot(mx,my);if(ml>.05){const f=1/Math.max(1,ml);wx=(Math.sin(PL.yaw)*my-Math.cos(PL.yaw)*mx)*sp*f;wz=(Math.cos(PL.yaw)*my+Math.sin(PL.yaw)*mx)*sp*f;}
  PL.mv=PL.mv||[0,0];const cs=Math.hypot(PL.mv[0],PL.mv[1]);const cDown=INPUT.crouch&&!UI.panel;INPUT.crouch=false;if(cDown&&!PL.ground)PL.slideBuf=.3;PL.slideBuf=Math.max(0,(PL.slideBuf||0)-dt);
  const startSlide=(boost)=>{const ws=Math.hypot(wx,wz);let dx,dz;if(cs>1){dx=PL.mv[0]/cs;dz=PL.mv[1]/cs;}else if(ws>.1){dx=wx/ws;dz=wz/ws;}else{dx=Math.sin(PL.yaw);dz=Math.cos(PL.yaw);}const v=Math.min(19,Math.max(cs,ws,9)*boost);PL.mv=[dx*v,dz*v];PL.slide=.85;PL.hop=false;AUDIO.slide&&AUDIO.slide();};
- if(PL.ground&&!PL.slide){if(cDown&&(run||cs>7)&&Math.max(cs,Math.hypot(wx,wz))>6)startSlide(PL.landT>0?1.08:1.3);else if(PL.slideBuf>0&&cs>6){PL.slideBuf=0;startSlide(1.06);}}
+ if(PL.ground&&!PL.slide){if(cDown&&(run||cs>7)&&Math.max(cs,Math.hypot(wx,wz))>6){PL.crouch=false;startSlide(PL.landT>0?1.08:1.3);}else if(PL.slideBuf>0&&cs>6){PL.slideBuf=0;startSlide(1.06);}else if(cDown){PL.crouch=!PL.crouch;}}
  if(PL.slide>0){PL.slide-=dt;const d=Math.pow(.5,dt);PL.mv[0]*=d;PL.mv[1]*=d;const ws=Math.hypot(wx,wz);if(ws>.1){const v=Math.hypot(PL.mv[0],PL.mv[1]);PL.mv[0]=lerp(PL.mv[0],wx/ws*v,Math.min(1,dt*1.5));PL.mv[1]=lerp(PL.mv[1],wz/ws*v,Math.min(1,dt*1.5));}
   if(Math.random()<.6)FX.burst(PL.x,PL.y+.1,PL.z,COL('#c8b8a8'),1,1.5);if(PL.slide<=0||Math.hypot(PL.mv[0],PL.mv[1])<4)PL.slide=0;}
  else if(!PL.ground&&PL.hop){PL.mv[0]=lerp(PL.mv[0],PL.mv[0]+wx*.05,1);PL.mv[1]=lerp(PL.mv[1],PL.mv[1]+wz*.05,1);const v=Math.hypot(PL.mv[0],PL.mv[1]);if(v>19){PL.mv[0]*=19/v;PL.mv[1]*=19/v;}}
@@ -1328,8 +1328,8 @@ function updatePlayer(dt){if(VEH.driving){R.yaw=PL.yaw;R.pitch=PL.pitch;return;}
  if(PL.y<=top){if(top-PL.y<1.2||PL.vy<0){if(!wasGround&&PL.hop)PL.landT=.25;PL.y=top;PL.vy=0;PL.ground=true;}}
  else if(wasGround&&PL.vy<=0&&PL.y-top<.6){PL.y=top;PL.vy=0;PL.ground=true;}// stick to the ground walking downhill instead of hopping
  else PL.ground=PL.y-top<.05;
- if((k.Space||INPUT.jump)&&PL.ground&&!PL.dead){PL.vy=8.2*GEAR.jumpMul();PL.ground=false;if(PL.slide>0||PL.landT>0){const v=Math.hypot(PL.mv[0],PL.mv[1]);const nv=Math.min(19,v*1.05+.4);if(v>.1){PL.mv[0]*=nv/v;PL.mv[1]*=nv/v;}PL.slide=0;PL.hop=true;PL.vy=7.6*GEAR.jumpMul();}}INPUT.jump=false;if(!GEAR.air(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead))jetStep(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead);
- PL.speed=PL.ground?Math.hypot(PL.mv[0],PL.mv[1]):0;R.yaw=PL.yaw;R.pitch=PL.pitch;PL.eyeK=lerp(PL.eyeK??1,PL.slide>0?0:1,Math.min(1,dt*12));PL.eye=1.0+.65*PL.eyeK;
+ if((k.Space||INPUT.jump)&&PL.ground&&!PL.dead){PL.crouch=false;PL.vy=8.2*GEAR.jumpMul();PL.ground=false;if(PL.slide>0||PL.landT>0){const v=Math.hypot(PL.mv[0],PL.mv[1]);const nv=Math.min(19,v*1.05+.4);if(v>.1){PL.mv[0]*=nv/v;PL.mv[1]*=nv/v;}PL.slide=0;PL.hop=true;PL.vy=7.6*GEAR.jumpMul();}}INPUT.jump=false;if(!GEAR.air(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead))jetStep(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead);
+ PL.speed=PL.ground?Math.hypot(PL.mv[0],PL.mv[1]):0;R.yaw=PL.yaw;R.pitch=PL.pitch;PL.eyeK=lerp(PL.eyeK??1,PL.slide>0?0:PL.crouch?.25:1,Math.min(1,dt*12));PL.eye=1.0+.65*PL.eyeK;
  // head bob: the phase advances with distance walked, so speeding up never jumps the camera
  PL.bobK=lerp(PL.bobK||0,PL.ground&&!PL.slide&&PL.speed>.5?Math.min(1,PL.speed/5.2):0,Math.min(1,dt*8));PL.bobPh=(PL.bobPh||0)+dt*Math.min(PL.speed,10)*1.55;const bob=Math.sin(PL.bobPh)*.035*PL.bobK;
  // smooth the eye height over steps and slopes
@@ -1647,7 +1647,7 @@ UI.init=function(){const u=$('#ui');u.innerHTML=`
  <div id="ms"></div>
  <div id="tr"><div id="pow" class="pill"></div><button class="rb" data-a="tab" data-v="build" title="Build (B)">${ICO.hammer}</button><button class="rb" data-a="tab" data-v="inv" title="Inventory (Tab)">${ICO.bag}</button><button class="rb" data-a="scan" title="Scanner (V)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2" fill="none" opacity=".6"/><path d="M12 12L18 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="15" r="1.6" fill="currentColor"/></svg></button><button class="rb" data-a="tab" data-v="map" title="Map (M)">${ICO.map}</button><button class="rb" data-a="pause" title="Pause (Esc)">${ICO.menu}</button></div>
  <div id="joy" class="hide"><i></i></div><div id="joyHint">MOVE</div>
- <div id="pad"><div id="modeBtns"></div><button id="act" class="big"><span></span><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></button><button id="jump" class="small">${ICO.up}</button><button id="slidebtn" class="small" title="Slide (C)"><svg viewBox="0 0 24 24"><path d="M4 18h16M7 14l4-6 4 3 4-4" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+ <div id="pad"><div id="modeBtns"></div><button id="act" class="big"><span></span><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></button><button id="jump" class="small">${ICO.up}</button><button id="slidebtn" class="small" title="Crouch (C) · slide while sprinting"><svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.4" fill="currentColor"/><path d="M12 9v5l-4 2v4M12 14l4 2v4" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
  <div id="sheet" class="hide"><div class="sh"><div class="tabs"></div><button class="x" data-a="close">✕</button></div><div class="body"></div></div>`;
  if(!touchMode){document.body.classList.add('pc');}
  u.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.stopPropagation();AUDIO.init();const a=UI.A[t.dataset.a];if(a){a(t.dataset.v,t);}});
@@ -1807,6 +1807,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.1.7',t:'Satisfactory controls',items:['Controller now uses the Satisfactory layout: LB build menu, LT dismantle, RT place/dismantle/shoot, X (hold) mine and use, Y inventory, A jump, B crouch, RB hold to switch tools, D-pad up scanner, View map, Menu pause.','While building: D-pad left/right rotate, D-pad up quick wheel, B to leave build mode.','The slide button is now a Crouch button: crouch while sprinting to slide. Slide-hopping works the same.','Walk with a light push of the stick; push it all the way to sprint (touch and controller).']},
  {v:'0.1.6',t:'Slide hopping',items:['Crouch-slide: while sprinting, press crouch to slide with a burst of speed (touch: the new slide button above jump · controller: B · keyboard: C).','Jump during a slide to keep your speed, then crouch again as you land to slide again. Chain it to travel almost twice as fast as sprinting.','Your view widens slightly at high speed. The quick wheel key on keyboard moved to Q.']},
  {v:'0.1.5',t:'Controller polish',items:['Controller mode hides the on-screen buttons and joystick.','Sound fix: iPhones only allow sound to start after a screen tap, so if sound is off a small note asks you to tap once. Sound now also plays when your phone is on silent mode (newer iOS).']},
  {v:'0.1.3',t:'Controller check',items:['Settings now has a live Controller check that shows whether the game can see your controller and which buttons you press.']},
@@ -3351,25 +3352,28 @@ PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():
  if(PAD.focus){PAD.focus.classList.remove('padf');PAD.focus=null;}
  if(GAME.mode!=='play'||GAME.landing){if(down(0)||down(9)){const s=document.getElementById('skipcine');if(GAME.landing&&s)s.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));}PAD.prev=B;return;}
  // ----- playing -----
- if(INPUT.joyId===null){INPUT.jx=lx;INPUT.jy=-ly;}if(down(10))PAD.run=!PAD.run;if(!lx&&!ly)PAD.run=false;INPUT.keys.ShiftLeft=PAD.run;
+ // ----- playing: Satisfactory's controller layout -----
+ if(INPUT.joyId===null){INPUT.jx=lx;INPUT.jy=-ly;}if(down(10))PAD.run=!PAD.run;if(!lx&&!ly)PAD.run=false;INPUT.keys.ShiftLeft=PAD.run;       // L3: sprint toggle (pushing the stick all the way also sprints)
  const sens=2.6*(S.settings.sens||1);PL.yaw-=rx*Math.abs(rx)*dt*sens;PL.pitch=clamp(PL.pitch-ry*Math.abs(ry)*dt*sens*.75,-1.45,1.45);
- if(down(0)){INPUT.jump=true;}INPUT.jumpHeld=B[0];
- if(down(7))GAME.primary(true);if(up(7))GAME.primary(false);                     // RT: mine, place, use
- if(down(2)){const H=handTarget();if(H&&H.kind!=='node'&&H.kind!=='flora')GAME.primary(true);else{GAME.primary(true);}}if(up(2))GAME.primary(false); // X: interact
- if(down(6)){if(BUILD.mode==='dismantle')BUILD.cancel();else BUILD.dismantle();}  // LT: dismantle
- if(down(1)){if(UI.panel||GAME.paused||BUILD.mode||VEH.driving||document.querySelector('#wheel.on,#scanw.on,#modal.on'))padBack();else INPUT.crouch=true;} // B: back, or crouch-slide
- if(down(3))UI.A.tab('build');                                                    // Y: build menu
- if(down(4))BUILD.mode?BUILD.rotate(-1):GEAR.cycleHand();if(down(5))BUILD.mode?BUILD.rotate(1):UI.A.wheel(); // LB / RB
- if(down(12)&&BUILD.mode==='place')BUILD.nudge(1);if(down(13)&&BUILD.mode==='place')BUILD.nudge(-1);       // d-pad up/down: raise/lower
- if(down(12)&&!BUILD.mode)UI.A.hud('ms');if(down(13)&&!BUILD.mode)UI.A.hud('todo');
- if(down(14))BUILD.mode==='place'?BUILD.cycleZoop():SCAN.open();if(down(15))BUILD.mode?UI.A.wireTool():UI.A.wheel(); // d-pad left/right
- if(down(8))UI.A.tab('map');if(down(9))MENU.pause();if(down(11))UI.A.tab('inv');  // View: map · Menu: pause · R3: inventory
- if(VEH.driving&&down(2))VEH.exit();
- if(Date.now()-PAD.hint>0&&!PAD.shown){PAD.shown=1;UI.toast('Controller: RT use · A jump · X interact · Y build · LT dismantle · RB quick wheel · B back','info');}
+ if(down(0))INPUT.jump=true;INPUT.jumpHeld=B[0];                                                                                        // A: jump (hold for jetpack)
+ const menuish=BUILD.mode||VEH.driving;
+ if(down(1)){if(menuish)padBack();else INPUT.crouch=true;}                                                                               // B: crouch (slide when sprinting) · leave build mode
+ if(down(7))GAME.primary(true);if(up(7))GAME.primary(false);                                                                            // RT: primary fire: place, dismantle, shoot
+ if(down(2)){if(VEH.driving)VEH.exit();else GAME.primary(true);}if(up(2)&&!B[7])GAME.primary(false);                                     // X (hold): mine, harvest, use, interact
+ if(down(3))UI.A.tab('inv');                                                                                                            // Y: inventory
+ if(down(4))UI.A.tab('build');                                                                                                          // LB: build menu
+ if(down(6)){if(BUILD.mode==='dismantle')BUILD.cancel();else BUILD.dismantle();}                                                       // LT: dismantle mode
+ if(B[5]){PAD.rbT=(PAD.rbT||0)+dt;if(PAD.rbT>.45&&!PAD.rbH){PAD.rbH=1;GEAR.cycleHand();}}else{if(P[5]&&!PAD.rbH&&BUILD.mode==='place')BUILD.cycleZoop();PAD.rbT=0;PAD.rbH=0;} // RB: hold = switch tools · tap = build a row
+ if(BUILD.mode){if(down(14))BUILD.rotate(-1);if(down(15))BUILD.rotate(1);                                                               // D-pad ◀ ▶: rotate
+  if(down(12))UI.A.wheel();if(down(13)){if(BUILD.mode==='place')BUILD.nudge(B[11]?1:-1);}}                                               // ▲ quick switch wheel · ▼ lower (R3+▼ raise)
+ else{if(down(12))SCAN.open();if(down(13))UI.A.wheel();if(down(14))UI.A.hud('todo');if(down(15))UI.A.wireTool();}                         // ▲ scanner · ▼ quick wheel · ◀ to-do · ▶ power line
+ if(down(8))UI.A.tab('map');if(down(9))MENU.pause();                                                                                    // View: map · Menu: pause
+ if(down(11)&&!BUILD.mode)UI.A.hud('ms');                                                                                               // R3: milestone
+ if(!PAD.shown){PAD.shown=1;UI.toast('Controller: LB build menu · LT dismantle · RT place · X mine/use · Y inventory · B crouch','info');}
  PAD.prev=B;};
 addEventListener('gamepadconnected',()=>{AUDIO.init&&AUDIO.init();});
 // a controls page in Settings
-{const _m=UI.views.menu;UI.views.menu=function(){const im=S.settings.input||'touch';return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controls</h5><div class="seg"><button class="${im==='touch'?'on':''}" data-a="inputSet" data-v="touch">Touchscreen</button><button class="${im==='controller'?'on':''}" data-a="inputSet" data-v="controller">Controller</button></div><p class="mut">${im==='controller'?(PAD.on?'Controller connected. The touchscreen still works too.':'Pair your controller (Backbone, Xbox, PlayStation) and press any button.'):'Switch to Controller to play with a Backbone, Xbox or PlayStation controller.'}<br>Left stick move · Right stick look · L3 sprint · B crouch-slide (jump mid-slide to keep your speed)<br>RT mine / place / use · X interact · A jump (hold in air: jetpack)<br>Y build menu · LT dismantle · RB quick wheel · LB switch tool<br>While building: LB/RB rotate · D-pad ▲▼ raise/lower · ◀ row · ▶ power line<br>D-pad ◀ scanner · View map · Menu pause · R3 inventory<br>In menus: D-pad or stick to move · A select · B back · LB/RB tabs</p></div><div class="sc"><h5>Audio</h5>`);};}
+{const _m=UI.views.menu;UI.views.menu=function(){const im=S.settings.input||'touch';return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controls</h5><div class="seg"><button class="${im==='touch'?'on':''}" data-a="inputSet" data-v="touch">Touchscreen</button><button class="${im==='controller'?'on':''}" data-a="inputSet" data-v="controller">Controller</button></div><p class="mut">${im==='controller'?(PAD.on?'Controller connected. The touchscreen still works too.':'Pair your controller (Backbone, Xbox, PlayStation) and press any button.'):'Switch to Controller to play with a Backbone, Xbox or PlayStation controller.'}<br>Same layout as Satisfactory:<br>Left stick move (push all the way to sprint) · L3 sprint · Right stick look<br>A jump (hold: jetpack) · B crouch, slide while sprinting<br>X (hold) mine / harvest / use · RT place / dismantle / shoot<br><b>LB build menu</b> · LT dismantle · Y inventory · RB hold: switch tool<br>Building: D-pad ◀▶ rotate · ▲ quick wheel · ▼ lower · RB tap: row · B leave<br>D-pad ▲ scanner · ▼ quick wheel · ◀ to-do · ▶ power line<br>View map · Menu pause · R3 milestone<br>In menus: D-pad or stick to move · A select · B back · LB/RB tabs</p></div><div class="sc"><h5>Audio</h5>`);};}
 
 UI.A.inputSet=v=>{S.settings.input=v;AUDIO.click();UI.refresh();saveSoon();};
 // ---- controller diagnostics, shown live in Settings ----
@@ -3390,7 +3394,7 @@ setInterval(()=>{let c=document.getElementById('sndchip');if(!c){c=document.crea
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.1.6',VERSION_MARK='FFVER@0.1.6@';
+const VERSION='0.1.7',VERSION_MARK='FFVER@0.1.7@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
