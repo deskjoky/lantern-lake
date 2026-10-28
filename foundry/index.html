@@ -268,6 +268,7 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 .whs img{width:52px;height:38px;object-fit:contain}.whs i{font-style:normal;font-size:26px}.whs span{font-size:9.5px;font-weight:800;line-height:1.05;text-align:center;max-width:76px}.whs:active,.whs:hover{border-color:var(--orange);background:#2d2a26}.whs.lock{opacity:.4}
 .whmid{position:absolute;left:-28px;top:-28px;width:56px;height:56px;border-radius:50%;background:#2a2d34;color:#fff;font-size:18px;border:2px solid #444955}.whhint{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#c9ccd2;font-size:12px}
 .whadd{margin:2px 0 6px}
+.pwrsw{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}.pwrsw .btn{flex:1;min-width:200px}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1111,7 +1112,7 @@ function makeThumbs(){const gl=GL.gl,W=220,H=150;const fb=gl.createFramebuffer()
 const FAC={b:new Map(),belts:new Map(),grids:[],powerDirty:true,stats:{prod:{},cons:{}},statT:0,rate:{},rateIn:{}};
 const portWorld=(b,i)=>{const p=BUILDINGS[b.k].ports[i];const c=Math.cos(b.rot),s=Math.sin(b.rot);return {p:[b.x+c*p[0]+s*p[1],b.y+(p[4]??(BUILDINGS[b.k].py||PORT_Y)),b.z-s*p[0]+c*p[1]],d:[Math.sin(b.rot+p[2]),0,Math.cos(b.rot+p[2])],io:p[3]};};
 const inCap=n=>Math.max(6,n*3),outCap=n=>Math.max(10,n*4);
-function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot:o.rot||0,recipe:o.recipe||null,inb:o.inb||{},out:o.out||{},prog:o.prog||0,store:o.store||{},fuel:o.fuel||{},energy:o.energy||0,node:o.node??null,conn:[],wires:[],buf:o.buf||[],clock:o.clock||1,tripped:!!o.tripped,on:o.on!==false,charge:o.charge||0,rr:0,run:0,anim:0,amp:o.amp||0,rules:o.rules||null,limit:o.limit??null,mode:o.mode||null,dest:o.dest??null,rn:o.rn||null};
+function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot:o.rot||0,recipe:o.recipe||null,inb:o.inb||{},out:o.out||{},prog:o.prog||0,store:o.store||{},fuel:o.fuel||{},energy:o.energy||0,node:o.node??null,conn:[],wires:[],buf:o.buf||[],clock:o.clock||1,tripped:!!o.tripped,on:o.on!==false,charge:o.charge||0,rr:0,run:0,anim:0,amp:o.amp||0,rules:o.rules||null,limit:o.limit??null,mode:o.mode||null,off:o.off||false,dest:o.dest??null,rn:o.rn||null};
  const D=BUILDINGS[b.k];b.conn=(D.ports||[]).map(()=>null);
  const mesh=MODELS.b[b.k];b.obj={mesh,model:T(b.x,b.y,b.z,b.rot),bid:b.id};R.objects.push(b.obj);
  const A=MODELS.anim[b.k];if(A&&!(typeof PARTS!=='undefined'&&PARTS[b.k]))b.animDef=A;
@@ -1162,10 +1163,10 @@ function stat(kind,k,n){const m=FAC.stats[kind];m[k]=(m[k]||0)+n;}
 const connsOf=k=>BUILDINGS[k].conns||(k==='pole'?4:2);
 const wiresOf=id=>S.wires.filter(w=>w[0]===id||w[1]===id).length;
 function rebuildGrids(){const ids=[...FAC.b.keys()],par=new Map(ids.map(i=>[i,i]));const f=x=>{while(par.get(x)!==x){par.set(x,par.get(par.get(x)));x=par.get(x);}return x;};
- for(const [a,c] of S.wires){const A=FAC.b.get(a),C=FAC.b.get(c);if(!A||!C)continue;if((A.k==='pswitch'&&!A.on)||(C.k==='pswitch'&&!C.on))continue;par.set(f(a),f(c));}
+ for(const [a,c] of S.wires){const A=FAC.b.get(a),C=FAC.b.get(c);if(!A||!C)continue;if((A.k==='pswitch'&&!A.on)||(C.k==='pswitch'&&!C.on)||(A.off&&!BUILDINGS[A.k].gen)||(C.off&&!BUILDINGS[C.k].gen))continue;par.set(f(a),f(c));}
  const g=new Map();for(const id of ids){const r=f(id);if(!g.has(r))g.set(r,[]);g.get(r).push(FAC.b.get(id));}
  FAC.grids=[...g.values()].filter(l=>l.some(b=>BUILDINGS[b.k].gen||BUILDINGS[b.k].power||b.k==='battery'));for(const b of FAC.b.values())b.grid=null;FAC.grids.forEach((l,i)=>{for(const b of l)b.grid=i;});FAC.powerDirty=false;}
-function genReady(b){if(b.energy>0)return true;return Object.values(b.fuel).some(v=>v>=1);}
+function genReady(b){if(b.off)return false;if(b.energy>0)return true;return Object.values(b.fuel).some(v=>v>=1);}
 // Satisfactory-style: if machines ask for more than your generators (and batteries) can give, the fuse blows and the whole grid stops
 function updatePower(dt){if(FAC.powerDirty)rebuildGrids();FAC.power={use:0,cap:0,want:0,tripped:false};FAC.gridStat=[];
  for(const b of FAC.b.values())b.pf=0;
@@ -1554,7 +1555,7 @@ function benchRecipes(){return RECIPES.filter(r=>r.bench&&unlocked(r));}
 function craft(r,times=1){let made=0;for(let t=0;t<times;t++){if(!Object.entries(r.in).every(([k,v])=>(S.inv[k]||0)>=v))break;for(const [k,v] of Object.entries(r.in))addInv(k,-v);for(const [k,v] of Object.entries(r.out))addInv(k,v);made++;}if(made){AUDIO.craft();}return made;}
 // ---- save / load ----
 function serialize(){S.player={x:PL.x,y:PL.y,z:PL.z,yaw:PL.yaw,pitch:PL.pitch};S.time=Date.now();
- S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog,clock:b.clock,amp:b.amp||undefined,rules:b.rules||undefined,limit:b.limit??undefined,mode:b.mode||undefined,dest:b.dest??undefined,rn:b.rn||undefined,paint:b.paint||undefined,text:b.text||undefined,bg:b.bg||undefined,tripped:b.tripped||undefined,on:b.on,charge:b.charge||undefined}));
+ S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog,clock:b.clock,amp:b.amp||undefined,rules:b.rules||undefined,limit:b.limit??undefined,mode:b.mode||undefined,dest:b.dest??undefined,rn:b.rn||undefined,paint:b.paint||undefined,off:b.off||undefined,text:b.text||undefined,bg:b.bg||undefined,tripped:b.tripped||undefined,on:b.on,charge:b.charge||undefined}));
  S.pipes=[...FAC.pipes.values()].map(pp=>({id:pp.id,tier:pp.tier,from:pp.from,to:pp.to,fluid:pp.fluid}));
  S.belts=[...FAC.belts.values()].map(bl=>({id:bl.id,tier:bl.tier,from:bl.from,to:bl.to,items:bl.items.map(i=>[i.t,Math.round(i.d*100)/100])}));return JSON.stringify(S);}
 function saveGame(){if(GAME.wiping)return;try{localStorage.setItem(SAVE_KEY,serialize());}catch(e){}}
@@ -1772,6 +1773,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'1.0.1',t:'Power switches',items:['Every generator has a button to turn it off, plus one to turn off every generator on its grid at once.','Tap a power pole to turn it off: power stops passing through it.']},
  {v:'1.0.0',t:'Polish pass',items:['Machine status screens now sit on a little stand beside each machine, like a boat sonar, so nothing blocks them.','Rotate button while laying conveyor belts and pipes: it turns the next pole or lift you drop.','See-through arrows on building holograms and blueprints show which openings take items in (teal) and send them out (orange).','Belts now join right at the conveyor pole with no gap, and items flow straight from one belt onto the next.']},
  {v:'0.9.9',t:'Longer power lines',items:['Power lines now reach 45 m (up from 30 m), and auto-wire reaches further too.']},
  {v:'0.9.8',t:'Fuse fix',items:['Fixed the fuse blowing over and over (with a constant banging sound) when a machine was not connected to any running generator. Now it simply waits for power.','The same message no longer stacks up on screen.']},
@@ -3013,7 +3015,7 @@ function specialNodeMesh(type){const g=new GB(),rnd=mulberry(type.length*91+3);
 const nodeOK=(k,nd)=>k==='oilx'?nd.type==='crude_oil':k==='geo'?nd.type==='geyser':k==='wellx'?nd.type==='well':!(nd.type==='crude_oil'||NODE_TYPES[nd.type].special);
 {const _rn=rayNodes;rayNodes=function(o,d,maxT){const h=_rn(o,d,maxT);if(h&&(NODE_TYPES[h.nd.type].special))return null;return h;};}
 // generators: geothermal needs no fuel; nuclear leaves waste behind
-{const _g=genReady;genReady=b=>BUILDINGS[b.k].geo?b.node!=null:_g(b);}
+{const _g=genReady;genReady=b=>BUILDINGS[b.k].geo?(b.node!=null&&!b.off):_g(b);}
 {const _ub=updateBuilding;updateBuilding=function(b,dt){if(b.k==='nukeplant'){if(b.energy>0||Object.values(b.fuel).some(v=>v>0)){b.wasteT=(b.wasteT||0)+dt*(b.run||0);if(b.wasteT>=6){b.wasteT=0;b.out.nuclear_waste=(b.out.nuclear_waste||0)+1;}}for(const pi of outPorts(b))if((b.out.nuclear_waste||0)>=1&&pushOut(b,pi,'nuclear_waste')){b.out.nuclear_waste--;break;}return;}
  if(b.k==='sink')return;_ub(b,dt);};}
 {const _ue=updateExtractor;updateExtractor=function(b,dt){if(b.k==='wellx'){const nd=WORLD.nodes[b.node];const k=nd&&nd.fluid||'water';b.run=0;if(b.pf>0&&(b.out[k]||0)<100){b.run=1;const add=BUILDINGS.wellx.rate/60*dt*b.pf*(b.clock||1)*(nd?PURITY[nd.purity].k:1);b.out[k]=(b.out[k]||0)+add;b.acc=(b.acc||0)+add;if(b.acc>=1){stat('prod',k,Math.floor(b.acc));b.acc-=Math.floor(b.acc);}}return;}_ue(b,dt);};}
@@ -3257,10 +3259,20 @@ function portArrows(k,x,y,z,rot){const D=BUILDINGS[k];if(!D||!D.ports||D.pass)re
   {const ax=wx+Math.sin(yaw)*bob,ay=y+(p[4]??(D.py||PORT_Y))+.6,az=wz+Math.cos(yaw)*bob,tint=out?[1,.55,.15,.7]:fluid?[.4,.7,1,.7]:[.25,1,.8,.7];R.ghosts.push({mesh:ARROW_M,model:T(ax,ay,az,yaw),tint});R.ghosts.push({mesh:ARROW_M,model:T(ax,ay,az,yaw,0,Math.PI/2),tint});}}}
 {const _ubm=updateBuildMode;updateBuildMode=function(){_ubm();if(BUILD.mode==='place'&&BUILD.target){const L=BUILD.target.list||[BUILD.target];for(const q of L)portArrows(BUILD.k,q.x,q.y,q.z,q.rot);}};}
 {const _bg=BP.ghosts;BP.ghosts=function(){_bg();for(const bp of BP.list())if(Math.hypot(bp.x-PL.x,bp.z-PL.z)<40)portArrows(bp.k,bp.x,bp.y,bp.z,bp.rot);};}
+// ===== Power switches on generators and poles =====
+const isPoleBld=k=>k==='pole'||k==='pole2'||k==='cpole_power';
+{const _bv=UI.bldView;UI.bldView=function(b){let h=_bv(b);const D=BUILDINGS[b.k];
+ if(D.gen){const g=b.grid!=null?FAC.grids[b.grid]||[]:[];const gens=g.filter(x=>BUILDINGS[x.k].gen);const anyOn=gens.some(x=>!x.off);
+  h=`<div class="pwrsw"><button class="btn big ${b.off?'red':'gold'}" data-a="genOff">${b.off?'⏻ This generator is OFF · turn on':'⏻ Turn off this generator'}</button><button class="btn big ${anyOn?'':'red'}" data-a="gridOff">${anyOn?'⏻ Turn off the whole grid ('+gens.length+(gens.length===1?' generator)':' generators)'):'⏻ Grid is OFF · turn all on'}</button></div>`+h;}
+ if(isPoleBld(b.k))h=`<div class="pwrsw"><button class="btn big ${b.off?'red':'gold'}" data-a="poleOff">${b.off?'⏻ Pole is OFF · turn on':'⏻ Turn off this pole'}</button></div><p class="mut">${b.off?'Power is not passing through this pole.':'Turning it off cuts power to everything connected only through this pole.'}</p>`+h;
+ return h;};}
+UI.A.genOff=()=>{const b=UI.bld;b.off=!b.off;FAC.powerDirty=true;AUDIO.flip();UI.refresh();saveSoon();};
+UI.A.gridOff=()=>{const b=UI.bld;const g=b.grid!=null?FAC.grids[b.grid]||[]:[b];const gens=g.filter(x=>BUILDINGS[x.k].gen);const anyOn=gens.some(x=>!x.off);for(const x of gens)x.off=anyOn;FAC.powerDirty=true;AUDIO.flip();UI.toast(anyOn?'Grid powered down':'Grid powered up','info');UI.refresh();saveSoon();};
+UI.A.poleOff=()=>{const b=UI.bld;b.off=!b.off;FAC.powerDirty=true;AUDIO.flip();UI.refresh();saveSoon();};
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='1.0.0',VERSION_MARK='FFVER@1.0.0@';
+const VERSION='1.0.1',VERSION_MARK='FFVER@1.0.1@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
