@@ -1206,7 +1206,7 @@ function wantsPower(b){const D=BUILDINGS[b.k];if(!D.power)return false;if(b.k===
 function pushOut(b,pi,item){const bid=b.conn[pi];if(bid==null)return false;const bl=FAC.belts.get(bid);if(!bl||!beltCanTake(bl))return false;beltPush(bl,item);return true;}
 function outPorts(b){const P=BUILDINGS[b.k].ports||[];const o=[];P.forEach((p,i)=>{if(p[3]==='out')o.push(i);});return o;}
 function updateBuilding(b,dt){const D=BUILDINGS[b.k];b.run=0;
- if(D.machine){if(b.pf>0&&machineReady(b)){const r=RECIPE[b.recipe];b.prog+=dt*b.pf*(b.clock||1);b.run=1;if(b.prog>=r.t){b.prog-=r.t;for(const [k,n] of Object.entries(r.in)){b.inb[k]-=n;stat('cons',k,n);}for(const [k,n0] of Object.entries(r.out)){const n=n0*(b.amp?(S.ampX||2):1);b.out[k]=(b.out[k]||0)+n;stat('prod',k,n);}}}
+ if(D.machine){if(b.pf>0&&machineReady(b)){const r=RECIPE[b.recipe];b.prog+=dt*b.pf*(b.clock||1);b.run=1;if(b.prog>=r.t){b.prog-=r.t;for(const [k,n] of Object.entries(r.in)){b.inb[k]-=n;stat('cons',k,n);}for(const [k,n0] of Object.entries(r.out)){const n=n0*(b.amp?(S.ampX||2):1)*(b.sloop?2:1);b.out[k]=(b.out[k]||0)+n;stat('prod',k,n);}}}
   for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>=1&&!isFluid(k)&&pushOut(b,pi,k)){b.out[k]--;break;}}
  else if(BUILDINGS[b.k].makes)updateExtractor(b,dt);
  else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd&&b.pf>0){const rate=D.rate*PURITY[nd.purity].k;const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot<50){b.prog+=dt*b.pf*(b.clock||1);b.run=1;const iv=60/rate;while(b.prog>=iv){b.prog-=iv;b.out[nd.type]=(b.out[nd.type]||0)+1;stat('prod',nd.type,1);}}}
@@ -1230,7 +1230,8 @@ function genReady(b){if(b.off)return false;if(b.energy>0)return true;return Obje
 function updatePower(dt){if(FAC.powerDirty)rebuildGrids();FAC.power={use:0,cap:0,want:0,tripped:false};FAC.gridStat=[];
  for(const b of FAC.b.values())b.pf=0;
  FAC.grids.forEach((list,gi)=>{let want=0,cap=0,store=0,storeMax=0;const tripped=list.some(b=>b.tripped);
-  for(const b of list){const D=BUILDINGS[b.k];if(D.power&&wantsPower(b))want+=D.power*Math.pow(b.clock||1,1.6)*(b.amp?2:1);if(D.gen&&genReady(b))cap+=D.gen;if(b.k==='battery'){store+=b.charge||0;storeMax+=D.store;}}
+  for(const b of list){const D=BUILDINGS[b.k];if(D.power&&wantsPower(b))want+=D.power*Math.pow(b.clock||1,1.6)*(b.amp?2:1)*(b.sloop?4:1);if(D.gen&&genReady(b))cap+=D.gen;if(b.k==='battery'){store+=b.charge||0;storeMax+=D.store;}}
+  {const ag=list.filter(b=>b.k==='augmenter'&&!b.off).length;if(ag)cap=ag*500+(cap-ag*500)*(1+.1*ag);}
   const batt=list.filter(b=>b.k==='battery');const battOut=batt.reduce((a,b)=>a+((b.charge||0)>0?BUILDINGS.battery.rate:0),0);
   let ok=!tripped;FAC.overTs=FAC.overTs||{};if(ok&&cap+battOut<=0){/* no running generator: nothing to blow, machines just wait for power */}else if(ok&&want>cap+battOut+.001){FAC.overTs[gi]=(FAC.overTs[gi]||0)+dt;if(FAC.overTs[gi]>.6&&shedLoad(list)){FAC.overTs[gi]=0;ok=true;}else if(FAC.overTs[gi]>.6){for(const b of list)if(BUILDINGS[b.k].gen||b.k==='battery'||b.k==='pole'||b.k==='pole2'||b.k==='pswitch')b.tripped=true;ok=false;FAC.overTs[gi]=0;UI.toast('⚡ Fuse blown! Your machines need '+Math.round(want)+' MW but you only make '+Math.round(cap)+' MW. Add generators, then reset the fuse at a generator.','bad');AUDIO.fuse();}}else if(want<=cap+battOut)FAC.overTs[gi]=0;
   const load=ok&&cap>0?Math.min(1,want/cap):0;
@@ -1564,7 +1565,7 @@ function dismantle(){const t=BUILD.target;if(!t){UI.toast('Aim at something to r
  else if(t.wire){const A=FAC.b.get(t.wire[0]),B=FAC.b.get(t.wire[1]);if(A&&B)refund(wireCost(wireLen(A,B)));S.wires=S.wires.filter(w=>w!==t.wire);FAC.powerDirty=true;}
  else if(t.belt){const bl=t.belt;refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));for(const it of bl.items)addInv(it.t,1);removeBelt(bl);}
  else{const b=t.b,D=BUILDINGS[b.k];for(const bid of b.conn)if(bid!=null){const bl=FAC.belts.get(bid);if(bl){refund(BELTS[bl.tier].cost,Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per)));for(const it of bl.items)addInv(it.t,1);}}
-  refund(D.cost);if(b.amp)addInv('res_core',1);for(const m of [b.inb,b.out,b.store,b.fuel])for(const [k,v] of Object.entries(m))if(v>0)addInv(k,v);for(const it of b.buf)addInv(it,1);
+  refund(D.cost);if(b.amp)addInv('res_core',1);if(b.sloop)addInv('somersloop',1);for(const m of [b.inb,b.out,b.store,b.fuel])for(const [k,v] of Object.entries(m))if(v>0)addInv(k,v);for(const it of b.buf)addInv(it,1);
   // things standing on a foundation come down with it would be confusing: block instead
   if(FBASE_K.has(b.k)&&b.k!=='catwalk'){for(const o of FAC.b.values())if(o!==b&&Math.abs(o.x-b.x)<2&&Math.abs(o.z-b.z)<2&&Math.abs(o.y-(b.y+(BUILDINGS[b.k].top||1)))<.05){refund(D.cost,-1);UI.toast('Remove what is standing on it first','warn');return;}}
   removeBuilding(b);}
@@ -1858,6 +1859,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.3.0',t:'Power, aluminum and friends',items:['Solar Panel Arrays (up to 24 MW in sunlight, less under clouds, nothing at night) and Wind Turbines (up to 40 MW, stronger in storms). Neither needs fuel.','New resources: Bauxite (Red Mesas, Dune Sea), Sulfur (Ashlands), SAM (Fungal Hollows, Crystal Spires) and Nitrogen Gas from resource wells on the Frost Highlands. Older maps get a few far-off nodes of each too.','Aluminum chain: Silica, Alumina Solution, Aluminum Scrap, Aluminum Ingots, Alclad Sheets and Aluminum Casings. Heat sinks, cooling systems, radio control units and fused frames now use them, plus nitrogen.','Explosives and acid: Black Powder, a faster Nobelisk recipe, Sulfuric Acid and a new Battery recipe.','New late-game machines: the Converter (turns one ore into another with Reanimated SAM, and makes Ficsite) and the Quantum Encoder (Superposition Oscillators and AI Expansion Servers, needed for the last Skyhook phase).','Somersloops: 44 hidden in caves and on the highest ground (fewer on older maps). Slot one into a machine to double its output at four times the power, or build an Alien Power Augmenter: +500 MW and +10% to the rest of its grid.','Personnel Elevator from 8 to 64 m: step in and press ▲ / ▼ (or E). Portals: build two or more, link them, and walk through.','Vehicles: the Explorer, a fast buggy that climbs steep slopes, and the Factory Cart, a little runabout that needs no fuel.','Trains: timetables with a condition at each stop (wait 6 s, wait 30 s, until full, until empty), and you can climb aboard a locomotive and drive it yourself.','Map stamps: tap the map and drop one of 12 stamps. Conveyor Wall Mounts snap to walls; Conveyor Ceiling Mounts hang under floors and roofs.','Lizard Doggos roam the land. Feed one a Glowberry and it follows you around, digging up useful things every few minutes. Tap it to rename it or tell it to stay.']},
  {v:'0.2.0',t:'The Big Planet Update',items:['A brand-new planet for new games: about 1.6 km across (six times bigger) with nine biomes: Verdant Basin, Frost Highlands, Crystal Spires, Red Mesas, Ashlands, Dune Sea, Glowmire Marsh, Titan Forest and Fungal Hollows. Each has its own ground, plants, fog, sky and resources.','Lots of verticality: plateaus, mesas, sinkholes and volcanoes. Steep cliffs can\'t be walked up, so find a ramp, use your jetpack or build your way up.','24 caves: tunnels through ridges and deep caverns lit by glowing crystals, each with a rich resource node inside. It gets dark in there, so your headlamp switches on.','Your existing saves keep the map they were made on. Start a new game to explore the new planet.','New graphics everywhere: textured ground for every biome (grass, moss, pebbles, sand ripples, sparkling snow, layered cliff rock, glowing lava and crystal veins), metal and painted surfaces on buildings, tiled foundations, shine and reflections, wet ground in the rain, moving clouds, better fog and colour, and plants and grass that sway in the wind.','Third-person camera with an animated pioneer who walks, sprints, crouches, slides, jumps and flies the jetpack. Switch with P, the new 👤 button, by holding View on a controller, or in Settings.','Hypertubes: build a Hypertube Entrance, then lay tube like a pipe (supports drop on open ground). Jump into the glowing ring and fly. Crouch to bail out.','Emotes (J, or the quick wheel) and Photo Mode (K or F2, or the quick wheel) with zoom, time of day and a Take Photo button.','Power switches now have a priority from 1 to 8. When a grid is overloaded the highest number turns off instead of the fuse blowing. Aim at any pole, switch, generator or battery to see that grid\'s power at a glance.','New Lights Control Panel: wire it to a grid to turn its lights on and off and pick their colour and brightness. Lamps can now be wired to the grid.','Codex tab: biomes, resources, plants, creatures and artifacts you\'ve discovered.','New gear: the Xeno-Zapper (longer reach) and Xeno-Basher (hits hard up close). Portable Miner: drop it on an ore node and come back later; it keeps filling while you\'re away.','New resources: Raw Quartz from crystals and Mycelia from mushrooms.','Trains: block signals (from the train station panel) so trains wait for each other, fluid cars and the new Fluid Freight Platform. Trucks on autopilot now steer around obstacles.','Blueprints: rename, delete, share as a code and import codes. New Blueprint Designer platform: build on it and save everything on it in one tap.','Area dismantle: in dismantle mode tap Area dismantle (or Shift+X), mark two corners, confirm.','Building: area zoop for foundations (2×2 up to 8×8), hologram lock with nudging (N, the 🔒 button, or L3 on a controller), and yellow guide lines that snap to nearby buildings.','New shapes: 2 m and 4 m foundations, glass and frame foundations, steep and double ramps, a quarter pipe, 8 m walls, gate walls and sloped walls.','Late game: Quartz Crystal, Crystal Oscillator, AI Limiter, High-Speed Connector, Supercomputer, Heat Sink, Cooling System, Radio Control Unit, Turbo Motor and Fused Modular Frame. The Skyhook now has four phases.','Saves: rename, export to a file, import, and an automatic daily backup for each slot. A small Saved badge shows when the game saves.','Settings: draw distance, belt item detail, grass and shadows. New Planner tab: pick a part and a rate to see every machine, raw resource and the power you need.']},
  {v:'0.1.7',t:'Satisfactory controls',items:['Controller now uses the Satisfactory layout: LB build menu, LT dismantle, RT place/dismantle/shoot, X (hold) mine and use, Y inventory, A jump, B crouch, RB hold to switch tools, D-pad up scanner, View map, Menu pause.','While building: D-pad left/right rotate, D-pad up quick wheel, B to leave build mode.','The slide button is now a Crouch button: crouch while sprinting to slide. Slide-hopping works the same.','Walk with a light push of the stick; push it all the way to sprint (touch and controller).']},
  {v:'0.1.6',t:'Slide hopping',items:['Crouch-slide: while sprinting, press crouch to slide with a burst of speed (touch: the new slide button above jump · controller: B · keyboard: C).','Jump during a slide to keep your speed, then crouch again as you land to slide again. Chain it to travel almost twice as fast as sprinting.','Your view widens slightly at high speed. The quick wheel key on keyboard moved to Q.']},
@@ -2284,7 +2286,7 @@ UI.views.help=()=>{const cards=[['hub','Your HUB','Your base. Place it first. In
  return `<div class="helpg">${cards.map(([ic,t,d])=>`<div class="hc"><div class="hp">${ic.startsWith('item:')?iIcon(ic.slice(5)):bIcon(ic)}</div><b>${t}</b><p>${d}</p></div>`).join('')}</div>`;};
 // ---------- MACHINE PANEL ----------
 const _oldBld=UI.bldView;
-UI.bldView=function(b){const D=BUILDINGS[b.k];const [st,cls]=bStatus(b);const pw=D.power?(D.power*Math.pow(b.clock||1,1.6)*(b.amp?2:1)).toFixed(1)+' MW':D.gen?'up to '+D.gen+' MW':'';
+UI.bldView=function(b){const D=BUILDINGS[b.k];const [st,cls]=bStatus(b);const pw=D.power?(D.power*Math.pow(b.clock||1,1.6)*(b.amp?2:1)*(b.sloop?4:1)).toFixed(1)+' MW':D.gen?'up to '+D.gen+' MW':'';
  let h=`<div class="mh"><div class="mhp">${bIcon(b.k)}</div><div><small class="kick">${esc(({production:'PRODUCTION',logistics:'LOGISTICS',power:'POWER',structure:'STRUCTURE',special:'SPECIAL'})[D.cat]||'')}</small><h3>${esc(D.n)}</h3>${st?`<div class="status ${cls}">${esc(st)}</div>`:''}</div>${pw?`<div class="mpw">⚡ ${pw}</div>`:''}</div>`;
  if(D.machine){const r=RECIPE[b.recipe];const show=!r||UI.sel.chg===b.id;
   if(r&&!show){const pct=(b.prog/r.t*100).toFixed(0);h+=`<div class="mrec"><span>Recipe: <b>${esc(recipeName(r))}</b></span><button class="btn sm" data-a="chgRec" data-v="${b.id}">Change</button></div>
@@ -2925,13 +2927,13 @@ function updateDrones(dt){for(const b of FAC.b.values()){if(b.k!=='droneport')co
 // ---------- VEHICLES (drive, record, autopilot) ----------
 function vehSpawn(k,t){const v={id:'v'+(S.nextId++),k,x:t.x,y:t.y,z:t.z,yaw:t.rot,spd:0,fuel:{},cargo:{},route:[],auto:false,ri:0,wait:0};S.vehicles=S.vehicles||[];S.vehicles.push(v);FX.puff(t.x,t.y,t.z);return v;}
 const VEH={driving:null,rec:false};
-function vehUpdate(dt){const L=S.vehicles||[];for(const v of L){const D=BUILDINGS[v.k];const fuelOK=()=>{const k=Object.keys(v.fuel).find(x=>v.fuel[x]>0);if(!k)return false;v.burn=(v.burn||0)+dt*(v.k==='truck'?1.2:.6);if(v.burn>=FUEL[k]/60){v.burn=0;v.fuel[k]--;if(!v.fuel[k])delete v.fuel[k];}return true;};
+function vehUpdate(dt){const L=S.vehicles||[];for(const v of L){const D=BUILDINGS[v.k];const fuelOK=()=>{if(D.nofuel)return true;const k=Object.keys(v.fuel).find(x=>v.fuel[x]>0);if(!k)return false;v.burn=(v.burn||0)+dt*(v.k==='truck'?1.2:.6);if(v.burn>=FUEL[k]/60){v.burn=0;v.fuel[k]--;if(!v.fuel[k])delete v.fuel[k];}return true;};
   let thr=0,steer=0;if(VEH.driving===v){thr=INPUT.jy||(INPUT.keys.KeyW?1:INPUT.keys.KeyS?-1:0);steer=-(INPUT.jx||(INPUT.keys.KeyA?-1:INPUT.keys.KeyD?1:0));if(VEH.rec){const last=v.route[v.route.length-1];if(!last||Math.hypot(last[0]-v.x,last[1]-v.z)>3)v.route.push([v.x,v.z]);}}
   else if(v.auto&&v.route.length>2){if(v.wait>0){v.wait-=dt;}else{const tg=v.route[v.ri%v.route.length];const dx=tg[0]-v.x,dz=tg[1]-v.z;if(Math.hypot(dx,dz)<3.5){v.ri=(v.ri+1)%v.route.length;
      for(const b of FAC.b.values())if(b.k==='truckst'&&Math.hypot(b.x-v.x,b.z-v.z)<7&&v.lastSt!==b.id){v.lastSt=b.id;v.wait=4;vehDock(v,b);break;}}
     let da=truckAvoid(v,Math.atan2(dx,dz),dt)-v.yaw;da=((da+Math.PI)%TAU+TAU)%TAU-Math.PI;steer=clamp(da*2,-1,1);thr=Math.abs(da)>1.2?.3:.85;}}
-  const max=v.k==='truck'?16:12;const go=thr!==0&&fuelOK();v.spd=lerp(v.spd,go?thr*max:0,Math.min(1,dt*(go?1.2:2.5)));v.yaw+=steer*dt*1.4*clamp(v.spd/6,-1,1);
-  const nx=v.x+Math.sin(v.yaw)*v.spd*dt,nz=v.z+Math.cos(v.yaw)*v.spd*dt;if(!blockedAt(nx,nz,v.y)&&Math.abs(nx)<WORLD.half-10&&Math.abs(nz)<WORLD.half-10){v.x=nx;v.z=nz;}else v.spd*=-.2;v.y=lerp(v.y,solidAt(v.x,v.z,v.y+1.5),Math.min(1,dt*10));
+  const max=D.speed||(v.k==='truck'?16:12);const go=thr!==0&&fuelOK();v.spd=lerp(v.spd,go?thr*max:0,Math.min(1,dt*(go?1.2:2.5)));v.yaw+=steer*dt*1.4*clamp(v.spd/6,-1,1);
+  const nx=v.x+Math.sin(v.yaw)*v.spd*dt,nz=v.z+Math.cos(v.yaw)*v.spd*dt;if(!(D.climb?blockedAtClimb:blockedAt)(nx,nz,v.y)&&Math.abs(nx)<WORLD.half-10&&Math.abs(nz)<WORLD.half-10){v.x=nx;v.z=nz;}else v.spd*=-.2;v.y=lerp(v.y,solidAt(v.x,v.z,v.y+1.5),Math.min(1,dt*10));
   if(Math.abs(v.spd)>1&&Math.random()<dt*4)PFX.emit('dust',[v.x-Math.sin(v.yaw)*2,v.y+.2,v.z-Math.cos(v.yaw)*2],.8);}
  if(VEH.driving){const v=VEH.driving;PL.x=v.x;PL.z=v.z;PL.y=v.y+1.2;PL.vy=0;const back=v.k==='truck'?11:8;const cy=PL.yaw;GAME.freeCam={cam:[v.x-Math.sin(cy)*back,v.y+4.5,v.z-Math.cos(cy)*back],yaw:cy,pitch:PL.pitch-.2};if(Math.abs(v.spd)>2)PL.yaw=lerp(PL.yaw,v.yaw,Math.min(1,dt*1.5));}}
 function vehDock(v,b){const cap=BUILDINGS[v.k].cargo,scap=BUILDINGS.truckst.cap;const cnt=o=>Object.values(o).reduce((a,c)=>a+c,0);
@@ -3583,7 +3585,7 @@ function CAVE3_f(c,x,z){const q=caveQ(x,z);return q?q.f:0;}
 // standing on the hill above a tunnel, walking inside it, and its ceiling
 function caveHere(x,z,y){if(!CAVE3.list.length)return null;const q=caveQ(x,z);if(!q||!q.cov||q.e>CAVE3.M+4.6)return null;const top=Math.max(CAVE3.pre(x,z)+.15,(q.e<0?archY(q):q.f+q.a)+1.2);q.top=top;q.inside=y<(q.e<0?archY(q):q.f+q.a)+.5;return q;}
 {const _s=solidAt;solidAt=function(x,z,y){const t=_s(x,z,y);const q=caveHere(x,z,y);if(q&&!q.inside&&y>q.top-1.2)return Math.max(t,q.top);return t;};}
-{const _b=blockedAt;blockedAt=function(x,z,y){const q=caveHere(x,z,y);if(q&&q.inside&&q.e>-.55)return true;if(wv3()){const g=ground(x,z);if(g>y+.15&&groundNormal(x,z)[1]<.62)return true;}return _b(x,z,y);};}
+{const _b=blockedAt;blockedAt=function(x,z,y){const q=caveHere(x,z,y);if(q&&q.inside&&q.e>-.55)return true;if(wv3()){const g=ground(x,z);if(g>y+.15&&groundNormal(x,z)[1]<(VEH._climb?.38:.62))return true;}return _b(x,z,y);};}
 function groundRay(x,z,y){const g=ground(x,z);const q=caveHere(x,z,y);if(q&&!q.inside)return q.top;return g;}
 {const _up=updatePlayer;updatePlayer=function(dt){_up(dt);const q=caveHere(PL.x,PL.z,PL.y);PL.cave=q&&q.inside&&q.e<0?q:null;if(PL.cave){const cy=archY(PL.cave)-.15;if(PL.y+1.8>cy){PL.y=Math.max(PL.cave.f,cy-1.8);if(PL.vy>0)PL.vy=0;}if(R.cam[1]>cy-.1)R.cam[1]=cy-.1;}
  CAVE3.k=lerp(CAVE3.k||0,PL.cave?1:0,Math.min(1,dt*2.5));};}
@@ -4230,9 +4232,280 @@ document.addEventListener('change',e=>{if(e.target.id==='plk'){PLAN.k=e.target.v
 .sact{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 0 0}.sact button{border:0;border-radius:9px;padding:6px 10px;background:#2a303c;color:#fff;font:700 12px system-ui}.sact button.arm{background:#c8453a}.sact input{flex:1;min-width:110px;padding:6px 9px;border-radius:9px;border:1px solid rgba(255,255,255,.2);background:#0b0e13;color:#fff}
 .plan select,.plan input{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0b0e13;color:#fff;font:600 14px system-ui}.plan input{width:80px}.prow2{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.pls{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)}.pls img{width:26px;height:26px}.pls span{margin-left:auto;opacity:.8;font-size:12px;text-align:right}.plraw{display:flex;gap:8px;flex-wrap:wrap}`;document.head.appendChild(st);})();
 
+// ---- 35-power2.js ----
+// ===== Power, part three: solar panels, wind turbines, Somersloops and the Alien Power Augmenter =====
+Object.assign(BUILDINGS,{
+ solar:{n:'Solar Panel Array',w:6,d:6,h:3,cost:{iron_plate:20,copper_sheet:10,quickwire:30},gen:24,fuels:[],cat:'power',desc:'Up to 24 MW from sunlight. Nothing at night, less under clouds and rain. Pair it with Power Storage.',tier:4,free:1},
+ wind:{n:'Wind Turbine',w:4,d:4,h:24,cost:{steel_beam:12,rotor:6,cable:20},gen:40,fuels:[],cat:'power',desc:'Up to 40 MW from wind. Stronger high up, in the Frost Highlands, and in storms. Always turning, a little.',tier:5,free:1},
+ augmenter:{n:'Alien Power Augmenter',w:6,d:6,h:9,cost:{somersloop:10,heavy_frame:4,computer:4,cable:50},gen:500,fuels:[],cat:'power',desc:'Alien tech: adds 500 MW to its grid and boosts every other generator on that grid by 10%.',tier:7,free:1}});
+Object.assign(BUILD_MODEL,{
+ solar(g){g.add(RB(6,.3,6,.1),null,C_FRAME);for(const sx of [-1.6,1.6])g.add(PRIM.box(.2,1.8,.2,{y0:true}),T(sx,.3,0),'#6a707a');g.add(PRIM.box(4.2,.12,.3,{y0:true}),T(0,2,0),'#5a606a');
+  for(let i=0;i<3;i++)for(let j=0;j<4;j++)g.add(RB(1.85,.08,1.35,.02),T(-1.95+i*1.95,2.2+(j-1.5)*.42,-2.1+j*1.4,0,-.3),COL('#1a2a4a',-4));
+  for(let j=0;j<4;j++)g.add(PRIM.box(5.9,.03,.04),T(0,2.29+(j-1.5)*.42,-1.42+j*1.4,0,-.3),'#c8ccd2');g.add(RB(.8,.6,.6,.1),T(2.4,.3,2.4),C_PANEL);lamp(g,2.4,1.05,2.4,'#ffd84a');},
+ wind(g){g.add(RB(4,.5,4,.15),null,C_FRAME);g.add(PRIM.lathe([[1.1,.5],[.9,6],[.65,16],[.5,22.5]],12),null,C_LIGHT);for(const y of [6,12,18])g.add(PRIM.cyl(.95-y*.02,.95-y*.02,.25,12),T(0,y,0),C_PANEL);
+  g.add(RB(1.4,1.3,3,.3),T(0,22.4,-.4),C_LIGHT);g.add(RB(1.42,.2,3.02,.05),T(0,22.9,-.4),C_PANEL);lamp(g,0,23.9,-1.4,'#ff3a2a');g.add(PRIM.cyl(.35,.25,.6,10),T(0,23.05,1.1,0,Math.PI/2),C_FRAME);},
+ augmenter(g){g.add(RB(6,.6,6,.2),null,'#2a2438');for(let k=0;k<4;k++){const a=k/4*TAU+Math.PI/4;g.add(PRIM.lathe([[.5,0],[.35,3],[.12,7],[.02,8.4]],6,{flat:true}),T(Math.cos(a)*2.2,.6,Math.sin(a)*2.2,a,Math.cos(a)*.25,-Math.sin(a)*.25),'#4a3a6a');}
+  g.add(PRIM.sphere(1.4,16,12),T(0,4.6,0),COL('#c890ff',1.6));g.add(PRIM.cyl(1.8,2.2,1.2,16),T(0,.6,0),'#3a2e50');for(let k=0;k<8;k++)g.add(PRIM.box(.1,.05,1.6),T(Math.cos(k*.785)*1.7,1.8,Math.sin(k*.785)*1.7,-k*.785),COL('#ff7a3a',1.5));}});
+// the grid sees the weather: solar follows the sun and clouds, wind follows storms (and a little gusting)
+const RENEW={sun:0,wind:.3};
+function renewUpdate(dt){const v=ENV.wxv||{light:1,cloud:0,rain:0,dust:0};const sun=ENV.sun||[0,1,0];RENEW.sun=clamp(sun[1]*1.6,0,1)*(1-v.cloud*.55)*(1-v.rain*.25)*(1-v.dust*.5);
+ const gust=.5+.5*Math.sin(R.time*.11)*Math.sin(R.time*.037+1);RENEW.wind=clamp(.28+gust*.25+v.cloud*.15+v.rain*.25+v.dust*.35,.15,1);}
+{const _up=updatePower;updatePower=function(dt){renewUpdate(dt);for(const b of FAC.b.values()){if(b.k==='solar'||b.k==='wind'||b.k==='augmenter'){b.energy=1e9;}}
+ BUILDINGS.solar.gen=24*RENEW.sun;BUILDINGS.wind.gen=40*RENEW.wind;_up(dt);BUILDINGS.solar.gen=24;BUILDINGS.wind.gen=40;
+ for(const b of FAC.b.values())if(b.k==='solar'||b.k==='wind'||b.k==='augmenter')b.run=b.off?0:1;};}
+// wind turbine rotors turn; augmenter orb pulses
+let ROTORM=null;
+function rotorMesh(){const g=new GB();g.add(PRIM.sphere(.45,10,8),null,C_LIGHT);for(let k=0;k<3;k++){const a=k/3*TAU;g.add(PRIM.box(.35,7.5,.08),T(Math.sin(a)*3.9,Math.cos(a)*3.9,0,0,0,-a),C_LIGHT);g.add(PRIM.box(.36,.8,.09),T(Math.sin(a)*7.2,Math.cos(a)*7.2,0,0,0,-a),C_PANEL);}return g.build();}
+{const _to=TR.objects;TR.objects=function(){const out=_to();if(!ROTORM)ROTORM=rotorMesh();for(const b of FAC.b.values()){if(b.k!=='wind'||Math.hypot(b.x-R.cam[0],b.z-R.cam[2])>500)continue;b.rph=(b.rph||0)+(b.off?0:RENEW.wind*.03+.004);const c=Math.cos(b.rot),s=Math.sin(b.rot);out.push({mesh:ROTORM,model:mm(T(b.x+s*1.5,b.y+23.05,b.z+c*1.5,b.rot),T(0,0,0,0,0,b.rph))});}return out;};}
+{const _bv=UI.bldView;UI.bldView=function(b){let h=_bv(b);if(b.k==='solar'||b.k==='wind'){const now=b.k==='solar'?24*RENEW.sun:40*RENEW.wind;h=h.replace(/<h5>Fuel<\/h5>[\s\S]*?<\/div><p class="mut">A generator only burns what your machines need.<\/p>/,'');h+=`<p class="mut">Making <b>${now.toFixed(1)} MW</b> right now (${b.k==='solar'?'sunlight '+Math.round(RENEW.sun*100)+'%':'wind '+Math.round(RENEW.wind*100)+'%'}). No fuel needed.</p>`;}
+ if(b.k==='augmenter'){h=h.replace(/<h5>Fuel<\/h5>[\s\S]*?<\/div><p class="mut">A generator only burns what your machines need.<\/p>/,'');h+='<p class="mut">Adds 500 MW and boosts every other generator on this grid by 10%. Needs no fuel.</p>';}return h;};}
+// ---------- Somersloops: rare alien collectibles hidden in hard places ----------
+Object.assign(ITEMS,{somersloop:{n:'Somersloop',c:'#ff6a3a',s:'small'}});
+Object.assign(ITEM_MODEL,{somersloop(g){for(let k=0;k<6;k++){const a=k/6*TAU;g.add(PRIM.sphere(.07,8,6),T(Math.cos(a)*.12,.15+Math.sin(a*2)*.05,Math.sin(a)*.12),COL('#ff6a3a',1.2));}g.add(PRIM.sphere(.09,10,8),T(0,.18,0),COL('#ffd04a',1.6));}});
+let SLOOPM=null;
+function sloopMesh(){const g=new GB();g.add(PRIM.cyl(.9,1.1,.3,10),null,'#3a2a2a');for(let k=0;k<14;k++){const t=k/14,a=t*TAU*2;g.add(PRIM.sphere(.22-t*.08,10,8),T(Math.cos(a)*.55*(1-t*.4),.6+t*1.6,Math.sin(a)*.55*(1-t*.4)),COL(k%2?'#ff6a3a':'#ffb04a',1.3));}g.add(PRIM.sphere(.3,12,10),T(0,2.4,0),COL('#ffe08a',2));return g.build();}
+function placeSloops(){const W=WORLD;W.sloops=[];const rnd=mulberry(W.seed*911+29);const add=(x,z,y)=>W.sloops.push({id:W.sloops.length,x,z,y:y??ground(x,z)});
+ if(wv3()){for(const c of CAVE3.list){const p=c.ch?{x:c.ch.x-2.5,z:c.ch.z-2.5,f:c.ch.f}:c.pts.filter(q=>q.cov).slice(-2)[0];if(p)add(p.x,p.z,p.f);}
+  // high points: mesa tops, the frozen plateau, volcano rims, crystal peaks
+  const cand=[];for(let t=0;t<2500;t++){const x=(rnd()*2-1)*(W.half-160),z=(rnd()*2-1)*(W.half-160);if(Math.hypot(x,z)<220||caveZone(x,z))continue;if(groundNormal(x,z)[1]<.85)continue;cand.push([ground(x,z),x,z]);}cand.sort((a,b)=>b[0]-a[0]);
+  for(const [,x,z] of cand){if(W.sloops.length>=44)break;if(W.sloops.some(s=>Math.hypot(s.x-x,s.z-z)<90))continue;add(x,z);}}
+ else{for(const h of (W.hazards||[]))add(h.x-3,h.z-3);const cand=[];for(let t=0;t<1500;t++){const x=(rnd()*2-1)*(W.half-70),z=(rnd()*2-1)*(W.half-70);if(Math.hypot(x,z)<120)continue;cand.push([ground(x,z),x,z]);}cand.sort((a,b)=>b[0]-a[0]);for(const [,x,z] of cand){if(W.sloops.length>=12)break;if(W.sloops.some(s=>Math.hypot(s.x-x,s.z-z)<60))continue;add(x,z);}}
+ if(!SLOOPM)SLOOPM=sloopMesh();for(const s of W.sloops){s.obj={mesh:SLOOPM,model:T(s.x,s.y,s.z),hidden:!!(S.sloopsGot||{})[s.id]};R.objects.push(s.obj);}}
+function raySloops(o,d,maxT=7){let best=null;for(const s of (WORLD.sloops||[])){if((S.sloopsGot||{})[s.id])continue;const w=[s.x-o[0],s.y+1.4-o[1],s.z-o[2]];const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-s.x,o[1]+d[1]*t-s.y-1.4,o[2]+d[2]*t-s.z];if(Math.hypot(...q)<1.3&&(!best||t<best.t))best={t,s};}return best;}
+function takeSloop(s){S.sloopsGot=S.sloopsGot||{};S.sloopsGot[s.id]=1;s.obj.hidden=true;addInv('somersloop',1);AUDIO.fanfare();UI.banner('Somersloop','A strange alien loop. Slot it into a machine to double its output, or build an Alien Power Augmenter. '+Object.keys(S.sloopsGot).length+' of '+WORLD.sloops.length+' found.');saveSoon();}
+{const _ei=EXP.init;EXP.init=function(){_ei();placeSloops();};}
+{const _ht=handTarget;handTarget=function(){const H=_ht();const {o,d}=aimRay();const s=raySloops(o,d,7);if(s&&(!H||s.t<H.t+.5))return {kind:'sloop',t:s.t,s:s.s};return H;};}
+{const _uh=updateHand;updateHand=function(dt,holding){const t=handTarget();if(t&&t.kind==='sloop'){HAND.what=t;if(!holding){HAND.t=0;return;}HAND.t+=dt;if(HAND.t>=1.5){HAND.t=0;takeSloop(t.s);}return;}_uh(dt,holding);};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const H=HAND.what;if(H&&H.kind==='sloop'&&!BUILD.mode){const act=$('#act');act.classList.remove('hide');act.firstElementChild.textContent='Take';act.querySelector('circle').style.strokeDashoffset=String(289*(1-clamp(HAND.t/1.5,0,1)));const lk=$('#look');const t='Somersloop · alien artifact';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
+SCAN.types.push({k:'sloop',t:5,n:'Somersloops',ic:'item:somersloop',c:'#ff6a3a'});
+{const _g=SCAN.go;SCAN.go=function(s){if(s.k!=='sloop')return _g(s);const all=(WORLD.sloops||[]).filter(q=>!(S.sloopsGot||{})[q.id]).map(q=>[q.x,q.y+2,q.z]);all.sort((a,b)=>Math.hypot(a[0]-PL.x,a[2]-PL.z)-Math.hypot(b[0]-PL.x,b[2]-PL.z));SCAN.res={s,list:all.slice(0,3),end:R.time+15};S.lastScan='sloop';UI.toast('Scanner: '+Math.min(3,all.length)+' Somersloops','info');};}
+// production amplification: a Somersloop doubles a machine's output at four times the power
+{const _av=UI.ampView;UI.ampView=function(b){const n=S.inv.somersloop||0;return _av(b)+`<h4>Somersloop</h4><p class="mut">${b.sloop?'A Somersloop doubles this machine\'s output. It uses four times the power.':'Slot a Somersloop to double output at four times the power. You have '+n+'.'}</p><div class="btns"><button class="btn ${b.sloop?'':'gold'}" data-a="sloopSet" ${b.sloop||n?'':'disabled'}>${b.sloop?'Remove Somersloop':'Insert Somersloop'}</button></div>`;};}
+UI.A.sloopSet=()=>{const b=UI.bld;if(!b)return;if(b.sloop){b.sloop=0;addInv('somersloop',1);}else if((S.inv.somersloop||0)>0){addInv('somersloop',-1);b.sloop=1;AUDIO.fanfare();}FAC.powerDirty=true;UI.refresh();saveSoon();};
+EXTRA_B.push('sloop');
+CODEX.push({k:'art:sloop',cat:'Artifacts',n:'Somersloop',d:'A loop of alien matter found in caves and on the highest ground. Doubles a machine\'s output, or powers an Alien Power Augmenter.'});
+{const _t=takeSloop;takeSloop=function(s){_t(s);codexAdd('art:sloop');};}
+
+// ---- 36-res.js ----
+// ===== The rest of the resources: bauxite and aluminum, sulfur and explosives, nitrogen, SAM, the Converter and the Quantum Encoder =====
+Object.assign(ITEMS,{bauxite:{n:'Bauxite',c:'#c86a4a',s:'ore'},sulfur:{n:'Sulfur',c:'#f0e04a',s:'ore'},sam:{n:'SAM',c:'#9a4ae0',s:'ore'},
+ nitrogen:{n:'Nitrogen Gas',c:'#a8c8e8',s:'fluid',fluid:1},alumina:{n:'Alumina Solution',c:'#d8d8e0',s:'fluid',fluid:1},sulfuric_acid:{n:'Sulfuric Acid',c:'#e8f04a',s:'fluid',fluid:1},
+ silica:{n:'Silica',c:'#e8e0f0',s:'small'},aluminum_scrap:{n:'Aluminum Scrap',c:'#b8bcc4',s:'small'},aluminum_ingot:{n:'Aluminum Ingot',c:'#d0d4dc',s:'small'},alclad_sheet:{n:'Alclad Aluminum Sheet',c:'#c8ccd8',s:'medium'},aluminum_casing:{n:'Aluminum Casing',c:'#a8b0bc',s:'medium'},
+ black_powder:{n:'Black Powder',c:'#3a3438',s:'small'},rsam:{n:'Reanimated SAM',c:'#c06aff',s:'small'},ficsite_ingot:{n:'Ficsite Ingot',c:'#ffb84a',s:'small'},superposition_osc:{n:'Superposition Oscillator',c:'#58e0ff',s:'medium'},ai_server:{n:'AI Expansion Server',c:'#3a4a7a',s:'block'}});
+Object.assign(NODE_TYPES,{bauxite:{n:'Bauxite',c:'#c86a4a'},sulfur:{n:'Sulfur',c:'#f0e04a'},sam:{n:'SAM',c:'#9a4ae0'}});
+const RES2=[
+ {id:'silica',m:'constructor',in:{quartz:3},out:{silica:5},t:8,tier:7},
+ {id:'alumina',m:'blender',in:{bauxite:12,water:18},out:{alumina:12},t:6,tier:7},
+ {id:'aluminum_scrap',m:'blender',in:{alumina:4,coal:2},out:{aluminum_scrap:6},t:1,tier:7},
+ {id:'aluminum_ingot',m:'foundry',in:{aluminum_scrap:6,silica:5},out:{aluminum_ingot:4},t:4,tier:7},
+ {id:'alclad_sheet',m:'assembler',in:{aluminum_ingot:3,copper_ingot:1},out:{alclad_sheet:3},t:6,tier:7},
+ {id:'aluminum_casing',m:'constructor',in:{aluminum_ingot:3},out:{aluminum_casing:2},t:2,tier:7},
+ {id:'black_powder',m:'assembler',in:{coal:1,sulfur:1},out:{black_powder:2},t:4,tier:5},
+ {id:'nobelisk_bp',m:'assembler',in:{black_powder:2,steel_pipe:2},out:{nobelisk:2},t:6,tier:5,name:'Nobelisk'},
+ {id:'sulfuric_acid',m:'blender',in:{sulfur:5,water:5},out:{sulfuric_acid:5},t:6,tier:7},
+ {id:'battery_acid',m:'blender',in:{sulfuric_acid:5,aluminum_casing:2},out:{battery:2},t:6,tier:7,name:'Battery'},
+ {id:'rsam',m:'constructor',in:{sam:4},out:{rsam:1},t:2,tier:8},
+ {id:'conv_bauxite',m:'converter',in:{aurite_ore:15,rsam:1},out:{bauxite:12},t:6,tier:8,name:'Bauxite (Aurite)'},
+ {id:'conv_sulfur',m:'converter',in:{coal:10,rsam:1},out:{sulfur:12},t:6,tier:8,name:'Sulfur (Coal)'},
+ {id:'conv_quartz',m:'converter',in:{limestone:12,rsam:1},out:{quartz:10},t:6,tier:8,name:'Raw Quartz (Limestone)'},
+ {id:'conv_copper',m:'converter',in:{iron_ore:12,rsam:1},out:{copper_ore:12},t:6,tier:8,name:'Copper Ore (Iron)'},
+ {id:'ficsite_ingot',m:'converter',in:{rsam:2,aluminum_ingot:4},out:{ficsite_ingot:1},t:2,tier:8},
+ {id:'superposition_osc',m:'qencoder',in:{dark_matter:6,crystal_osc:1,alclad_sheet:9},out:{superposition_osc:1},t:12,tier:8},
+ {id:'ai_server',m:'qencoder',in:{supercomputer:1,superposition_osc:1,ficsite_ingot:4},out:{ai_server:1},t:15,tier:8}];
+for(const r of RES2){RECIPES.push(r);RECIPE[r.id]=r;}
+// the late-game parts now use real aluminum and nitrogen
+RECIPE.heatsink.in={alclad_sheet:5,copper_sheet:3};
+RECIPE.cooling.in={heatsink:2,rubber:2,nitrogen:25};
+RECIPE.radio_control.in={aluminum_casing:32,crystal_osc:1,computer:2};
+RECIPE.fused_frame.in={heavy_frame:1,aluminum_casing:50,nitrogen:25};
+{const P=SKYHOOK_PHASES[SKYHOOK_PHASES.length-1];P.need.ai_server=20;}
+Object.assign(BUILDINGS,{
+ converter:{n:'Converter',w:6,d:8,h:6,cost:{fused_frame:5,cooling:10,radio_control:10,steel_beam:50},power:60,ports:[[-1,-4,Math.PI,'in'],[1,-4,Math.PI,'in'],[0,4,0,'out']],cat:'production',machine:'converter',desc:'Uses Reanimated SAM to turn one resource into another, and to make Ficsite.',tier:8},
+ qencoder:{n:'Quantum Encoder',w:8,d:10,h:8,cost:{turbo_motor:20,supercomputer:20,cooling:20,fused_frame:20},power:120,ports:[[-2,-5,Math.PI,'in'],[0,-5,Math.PI,'in'],[2,-5,Math.PI,'in'],[0,5,0,'out']],cat:'production',machine:'qencoder',desc:'Bends physics to make Superposition Oscillators and AI Expansion Servers.',tier:8}});
+Object.assign(BUILD_MODEL,{
+ converter(g){g.add(RB(6,.6,8,.2),null,C_FRAME);g.add(RB(5,3,5.4,.4),T(0,.6,-.6),C_LIGHT);g.add(RB(5.04,.3,5.44,.1),T(0,2.4,-.6),C_PANEL);g.add(PRIM.cyl(1.4,1.6,1.6,16),T(0,3.6,-.6),'#2a2438');g.add(PRIM.sphere(1.1,16,12),T(0,5.2,-.6),COL('#c06aff',1.8));
+  for(let k=0;k<6;k++)g.add(PRIM.box(.08,.08,2.2),T(Math.cos(k)*1.5,4.4,-.6+Math.sin(k)*1.5,k,.5),COL('#c06aff',1.2));g.add(RB(2.4,1.4,1.2,.2),T(0,.6,3.2),C_FRAME);D_.hazard(g,0,.61,4.01,5.6,.25);lamp(g,2.4,3.4,2,'#c06aff');},
+ qencoder(g){g.add(RB(8,.6,10,.2),null,C_FRAME);g.add(RB(7,4,7,.5),T(0,.6,-.8),'#2a3448');for(const s of [-1,1])g.add(RB(1,6.6,7.2,.3),T(s*3.2,.6,-.8),C_LIGHT);g.add(RB(7.2,.3,7.2,.1),T(0,4.6,-.8),C_PANEL);
+  g.add(PRIM.sphere(1.6,18,14),T(0,6.4,-.8),COL('#58e0ff',2));g.add(PRIM.lathe([[1.9,-.1],[2.1,0],[1.9,.1]],24,{cap:false}),T(0,6.4,-.8,0,.6),COL('#ffffff',1.2));g.add(PRIM.lathe([[2.3,-.1],[2.5,0],[2.3,.1]],24,{cap:false}),T(0,6.4,-.8,0,-.6,.6),COL('#ffffff',1.2));lamp(g,3.4,4.9,3.6,'#58e0ff');}});
+Object.assign(ITEM_MODEL,{
+ bauxite(g){ROCK(g,-.1,-.05,.16,'#c86a4a',31);ROCK(g,.12,.06,.13,'#a8503a',32);ROCK(g,0,.14,.1,'#e8d8c8',33);},
+ sulfur(g){for(let k=0;k<5;k++)g.add(PRIM.lathe([[.001,0],[.05,.03],[.04,.18],[.001,.24]],5,{flat:true}),T(Math.cos(k*1.3)*.1,0,Math.sin(k*1.3)*.1,k,(k%2-.5)*.6,0),COL('#f0e04a',.4));},
+ sam(g){ROCK(g,0,0,.17,'#3a2a4a',35);for(let k=0;k<4;k++)g.add(PRIM.cone(.04,.2,5),T(Math.cos(k*1.57)*.08,.18,Math.sin(k*1.57)*.08,0,Math.cos(k*1.57)*.5,-Math.sin(k*1.57)*.5),COL('#c06aff',1.6));},
+ silica(g){for(let k=0;k<6;k++)g.add(PRIM.sphere(.07,6,4),T((k%3-1)*.1,.07+(k>2?.1:0),(k%2)*.08),'#f0ecf8');},
+ aluminum_scrap(g){for(let k=0;k<5;k++)g.add(PRIM.box(.16,.03,.08),T((k%3-1)*.08,.03+k*.03,(k%2-.5)*.1,k*.9,.2,0),'#c8ccd4');},
+ aluminum_ingot(g){BAR(g,'#d8dce4');},alclad_sheet(g){g.add(RB(.42,.05,.32,.02),null,'#d0d4e0');g.add(RB(.42,.04,.32,.02),T(0,.06,0),'#b8bccc');},
+ aluminum_casing(g){g.add(PRIM.cyl(.14,.14,.28,6,{flat:true}),null,'#b0b8c4');g.add(PRIM.cyl(.09,.09,.29,6),null,'#5a606a');},
+ black_powder(g){g.add(PRIM.cyl(.14,.16,.24,10),null,'#4a3a2a');g.add(PRIM.sphere(.13,8,5),T(0,.24,0,0,0,0,1,.4,1),'#1a1618');},
+ rsam(g){g.add(PRIM.ico(.16,1,{noise:.2,seed:3}),T(0,.16,0),COL('#c06aff',1.4));},ficsite_ingot(g){BAR(g,'#ffb84a',.5);},
+ superposition_osc(g){g.add(PRIM.sphere(.18,14,10),T(0,.2,0),COL('#58e0ff',1.6));g.add(PRIM.lathe([[.22,-.02],[.25,0],[.22,.02]],16,{cap:false}),T(0,.2,0,0,.7),'#ffffff');},
+ ai_server(g){g.add(RB(.5,.42,.36,.05),null,'#2a3448');for(let i=0;i<4;i++)g.add(RB(.44,.02,.02,.005),T(0,.08+i*.08,.18),COL(i%2?'#58e0ff':'#c06aff',1.6));}});
+// distinct node looks
+{const _nm=nodeMesh;nodeMesh=function(type){if(type!=='bauxite'&&type!=='sulfur'&&type!=='sam')return _nm(type);const g=new GB(),rnd=mulberry(type.length*57+11);
+ if(type==='bauxite'){g.add(PRIM.cyl(2.5,2.9,.45,10),T(0,-.2,0),'#6a3a2a');for(let k=0;k<8;k++){const a=k/8*TAU+rnd()*.4,r=k?1+rnd()*.9:0,s=k?.55+rnd()*.4:1.1;g.add(PRIM.ico(s,1,{noise:.25,seed:k+90}),T(Math.cos(a)*r,s*.45,Math.sin(a)*r,rnd()*6,0,0,1,.7,1),k%3?'#c86a4a':'#a8503a');}for(let k=0;k<7;k++){const a=rnd()*TAU,r=.4+rnd()*1.5;g.add(PRIM.box(.5,.05,.12),T(Math.cos(a)*r,.4+rnd()*.6,Math.sin(a)*r,a),'#f0e8dc');}}
+ else if(type==='sulfur'){g.add(PRIM.cyl(2.5,2.9,.45,10),T(0,-.2,0),'#5a5a2a');for(let c=0;c<9;c++){const a=c/9*TAU+rnd(),r=c?.6+rnd()*1.3:0,h=c?.8+rnd()*1.2:2.2;g.add(PRIM.lathe([[.001,0],[.2+h*.04,.08],[.15,h*.8],[.001,h]],5,{flat:true}),T(Math.cos(a)*r,.2,Math.sin(a)*r,rnd()*3,(rnd()-.5)*.5,(rnd()-.5)*.5),COL(c%2?'#f0e04a':'#e8c83a',.5));}for(let k=0;k<6;k++)g.add(PRIM.sphere(.2,6,4),T((rnd()-.5)*3,.1,(rnd()-.5)*3,0,0,0,1,.4,1),COL('#d8e04a',.3));}
+ else{g.add(PRIM.cyl(2.5,2.9,.45,10),T(0,-.2,0),'#2a2034');for(let k=0;k<6;k++){const a=k/6*TAU+rnd(),r=k?1+rnd()*.7:0,s=k?.6+rnd()*.3:1;g.add(PRIM.ico(s,1,{noise:.4,seed:k+120}),T(Math.cos(a)*r,s*.4,Math.sin(a)*r,rnd()*6,0,0,1,.7,1),'#3a2a4a');}for(let c=0;c<12;c++){const a=rnd()*TAU,r=rnd()*1.8;g.add(PRIM.cone(.1,.9+rnd()*1.4,5),T(Math.cos(a)*r,.3,Math.sin(a)*r,0,(rnd()-.5)*.9,(rnd()-.5)*.9),COL('#c06aff',1.8));}}
+ return g.build();};}
+// new nodes are added after everything else so existing saves keep their node numbers
+function placeNewRes(){const W=WORLD,rnd=mulberry(W.seed*1301+41);const start=W.nodes.length;
+ const free=(x,z)=>{if(Math.abs(x)>W.half-140||Math.abs(z)>W.half-140)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.3+8)return false;if(caveZone(x,z,8))return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<14)return false;return groundNormal(x,z)[1]>.9;};
+ const add=(type,purity,x,z,extra)=>{const nd=Object.assign({id:W.nodes.length,type,purity,x:Math.round(x),z:Math.round(z),y:ground(Math.round(x),Math.round(z))},extra||{});W.nodes.push(nd);return nd;};
+ const cluster=(type,purs,pick)=>{for(let t=0;t<600;t++){const p=pick();if(!p||!free(p[0],p[1]))continue;let n=0;for(const pu of purs){for(let k=0;k<60;k++){const a=rnd()*TAU,r=n?11+rnd()*8:0;const x=p[0]+Math.cos(a)*r,z=p[1]+Math.sin(a)*r;if(!free(x,z))continue;add(type,pu,x,z);n++;break;}}if(n)return true;}return false;};
+ if(wv3()){const inB=bi=>()=>{const B=BIO3[bi],a=rnd()*TAU,r=Math.sqrt(rnd())*400;const x=B.x+Math.cos(a)*r,z=B.z+Math.sin(a)*r;const t=biomeTop2(x,z);return t[0]===bi&&t[2]>.8?[x,z]:null;};
+  for(const [type,purs,bi] of [['bauxite',[2,1],3],['bauxite',[1,1,0],3],['bauxite',[2,1],5],['sulfur',[2,1],4],['sulfur',[1,1],4],['sulfur',[1,0],2],['sam',[2,1],8],['sam',[1,1],2],['sam',[1,0],6]])cluster(type,purs,inB(bi));
+  for(let i=0;i<4;i++){for(let t=0;t<300;t++){const p=inB(1)();if(p&&free(p[0],p[1])){add('well',i?1:2,p[0],p[1],{fluid:'nitrogen'});break;}}}}
+ else{const ring=()=>{const a=rnd()*TAU,r=190+rnd()*80;return [Math.cos(a)*r,Math.sin(a)*r];};for(const [type,purs] of [['bauxite',[1,1]],['sulfur',[1,1]],['sam',[1,0]]])cluster(type,purs,ring);for(let t=0;t<300;t++){const p=ring();if(free(p[0],p[1])){add('well',1,p[0],p[1],{fluid:'nitrogen'});break;}}}
+ for(let i=start;i<W.nodes.length;i++){const nd=W.nodes[i];if(!WORLD.nodeMesh[nd.type])WORLD.nodeMesh[nd.type]=nd.type==='well'?specialNodeMesh('well'):nodeMesh(nd.type);nd.obj={mesh:WORLD.nodeMesh[nd.type],model:T(nd.x,nd.y,nd.z,nd.id*1.7)};R.objects.push(nd.obj);}}
+{const _ps=placeSpecialNodes;placeSpecialNodes=function(){_ps();placeNewRes();};}
+SCAN.types.push({k:'bauxite',t:7},{k:'sulfur',t:5},{k:'sam',t:8});
+CODEX.push({k:'res:bauxite',cat:'Resources',n:'Bauxite',d:'Red clay ore from the Red Mesas and the Dune Sea. Refined into alumina, then aluminum.'},{k:'res:sulfur',cat:'Resources',n:'Sulfur',d:'Yellow crystals near the volcanoes. Black powder and sulfuric acid.'},{k:'res:sam',cat:'Resources',n:'SAM',d:'Strange Alien Matter. Reanimate it to run the Converter.'},{k:'res:nitrogen',cat:'Resources',n:'Nitrogen gas',d:'Pumped from resource wells on the Frost Highlands. Needed for cooling systems and fused frames.'});
+
+// ---- 37-move.js ----
+// ===== Getting around: personnel elevators, portals, the Explorer and Factory Cart, driving trains, and train timetables =====
+Object.assign(BUILDINGS,{
+ elevator:{n:'Personnel Elevator',w:3,d:3,h:4,cost:{steel_beam:8,motor:2,cable:16},cat:'logistics',desc:'Rides you up cliffs and tall factories. Set its height in its menu (4 to 64 m). Step into the cabin and pick a floor.',tier:4},
+ portal:{n:'Portal',w:6,d:6,h:7,cost:{ficsite_ingot:10,rsam:20,computer:8,heavy_frame:4},power:50,walls:[[-2.6,0,.35,.45,4.2],[2.6,0,.35,.45,4.2]],tops:[],cat:'logistics',desc:'Build two or more. Walk through one to come out of another. Name them and pick where each one leads.',tier:8},
+ explorer:{n:'Explorer',w:2.4,d:3.6,h:2,cost:{rotor:5,motor:2,modular_frame:5,steel_pipe:10},cat:'logistics',desc:'A fast buggy that climbs steep slopes (120 items of storage). Runs on any fuel.',tier:4,vehicle:1,cargo:120,speed:26,climb:1},
+ fcart:{n:'Factory Cart',w:1.6,d:2.4,h:1.4,cost:{iron_plate:20,iron_rod:10,rotor:2},cat:'logistics',desc:'A little cart for zipping around your factory. No fuel needed.',tier:2,vehicle:1,cargo:0,speed:15,nofuel:1}});
+const ELEV={};
+function elevMesh(h){const k='e'+h;if(ELEV[k])return ELEV[k];const g=new GB();g.add(RB(3,.3,3,.08),null,C_FRAME);for(const sx of [-1,1])for(const sz of [-1,1])g.add(PRIM.box(.16,h+.6,.16,{y0:true}),T(sx*1.4,0,sz*1.4),'#5a616c');
+ for(let y=4;y<=h;y+=4){for(const s of [-1,1]){g.add(PRIM.box(2.9,.1,.1,{y0:true}),T(0,y,s*1.4),C_PANEL);g.add(PRIM.box(.1,.1,2.9,{y0:true}),T(s*1.4,y,0),'#5a616c');}}
+ g.add(RB(3.4,.25,3.4,.08),T(0,h,0),C_FRAME);g.add(RB(1,.4,1,.1),T(0,h+.25,0),C_DARK);lamp(g,1.4,h+.75,1.4,'#ffd84a');D_.hazard(g,0,.31,1.51,2.6,.2);return ELEV[k]=g.build();}
+let ECAR=null;
+function elevCar(){if(ECAR)return ECAR;const g=new GB();g.add(RB(2.5,.2,2.5,.06),null,'#3a3f48');g.add(PRIM.box(2.5,.04,2.5,{y0:true}),T(0,.2,0),COL('#3a3f48',-5));for(const s of [-1,1])g.add(PRIM.box(2.5,1,.06,{y0:true}),T(0,.2,s*1.22),COL('#9ad8ff',-4));g.add(PRIM.box(.06,1,2.5,{y0:true}),T(-1.22,.2,0),COL('#9ad8ff',-4));g.add(RB(.3,.5,.2,.05),T(1.1,.9,-1),C_PANEL);g.add(PRIM.box(.1,.1,.04),T(1.1,1.2,-.88),COL('#3fe0c8',1.6));return ECAR=g.build();}
+{const _nb=newBuilding;newBuilding=function(o){const b=_nb(o);if(b.k==='elevator'){b.eh=o.eh||b.eh||12;b.ecar=o.ecar||0;b.obj.mesh=elevMesh(b.eh);}return b;};}
+{const _ap=applyPaint;applyPaint=function(b){if(b.k==='elevator'){if(b.obj)b.obj.mesh=elevMesh(b.eh||12);return;}_ap(b);};}
+EXTRA_B.push('eh','ecar','pname','plink');
+const elevY=b=>b.y+.3+(b.ecar||0)*((b.eh||12)-.3);
+function elevAt(x,z){for(const b of FAC.b.values()){if(b.k!=='elevator'||Math.abs(b.x-x)>1.3||Math.abs(b.z-z)>1.3)continue;return b;}return null;}
+{const _s=solidAt;solidAt=function(x,z,y){let t=_s(x,z,y);const b=elevAt(x,z);if(b){const cy=b.eride?b.eride.y:elevY(b);if(cy+.2<=y+.6&&cy+.2>t)t=cy+.2;const top=b.y+(b.eh||12)+.25;if(top<=y+.6&&top>t)t=top;}return t;};}
+function elevRide(b,up){if(b.eride)return;const from=elevY(b),to=b.y+.3+(up?1:0)*((b.eh||12)-.3);const on=Math.abs(PL.x-b.x)<1.3&&Math.abs(PL.z-b.z)<1.3&&Math.abs(PL.y-(from+.2))<1.2;b.eride={y:from,to,up,with:on};AUDIO.tone&&AUDIO.tone(up?180:140,.4,{type:'sine',vol:.06,slide:up?1.5:.7});}
+{const _up=updatePlayer;updatePlayer=function(dt){_up(dt);for(const b of FAC.b.values()){if(b.k!=='elevator'||!b.eride)continue;const R_=b.eride;const sp=6*dt;R_.y=R_.to>R_.y?Math.min(R_.to,R_.y+sp):Math.max(R_.to,R_.y-sp);if(R_.with){PL.x=lerp(PL.x,b.x,.2);PL.z=lerp(PL.z,b.z,.2);PL.y=R_.y+.2;PL.vy=0;PL.ground=true;PL.camY=PL.y+PL.eye;R.cam[1]=PL.camY;}
+  if(R_.y===R_.to){b.ecar=R_.up?1:0;b.eride=null;saveSoon();}}};}
+{const _to=TR.objects;TR.objects=function(){const out=_to();for(const b of FAC.b.values())if(b.k==='elevator'&&Math.hypot(b.x-R.cam[0],b.z-R.cam[2])<220)out.push({mesh:elevCar(),model:T(b.x,b.eride?b.eride.y:elevY(b),b.z,b.rot)});return out;};}
+// a small floor picker appears while you stand in (or next to) an elevator
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);let el=document.getElementById('elevui');const b=GAME.mode==='play'&&!UI.panel?elevAt(PL.x,PL.z)||[...FAC.b.values()].find(q=>q.k==='elevator'&&Math.hypot(q.x-PL.x,q.z-PL.z)<3.2):null;
+ if(!b){if(el)el.classList.remove('on');return;}if(!el){el=document.createElement('div');el.id='elevui';document.body.appendChild(el);el.addEventListener('pointerdown',e=>{e.stopPropagation();const q=e.target.closest('[data-e]');if(!q)return;const bb=FAC.b.get(+q.dataset.b);if(bb)elevRide(bb,q.dataset.e==='up');});}
+ const atTop=PL.y>b.y+(b.eh||12)/2;const k=b.id+':'+(b.ecar||0)+':'+atTop+':'+!!b.eride;if(el._k!==k){el._k=k;el.innerHTML=`<b>Elevator · ${b.eh||12} m</b><button data-e="up" data-b="${b.id}">▲ ${atTop&&!b.ecar?'Call':'Top'}</button><button data-e="down" data-b="${b.id}">▼ ${!atTop&&b.ecar?'Call':'Bottom'}</button>`;}el.classList.add('on');};}
+addEventListener('keydown',e=>{if(GAME.mode!=='play'||e.target.tagName==='INPUT')return;if(e.code==='KeyE'){const b=elevAt(PL.x,PL.z);if(b)elevRide(b,!b.ecar);}});
+{const _bv=UI.bldView;UI.bldView=function(b){let h=_bv(b);if(b.k==='elevator')h+=`<h5>Height</h5><div class="seg">${[8,12,16,24,32,48,64].map(v=>`<button class="${(b.eh||12)===v?'on':''}" data-a="elevH" data-v="${v}">${v} m</button>`).join('')}</div><div class="btns"><button class="btn gold" data-a="elevGo" data-v="1">▲ Ride to the top</button><button class="btn" data-a="elevGo" data-v="0">▼ Ride to the bottom</button></div><p class="mut">Step into the cabin and use the ▲ ▼ buttons (or E).</p>`;return h;};}
+UI.A.elevGo=v=>{const b=UI.bld;UI.closePanel();elevRide(b,v==='1');};
+UI.A.elevH=v=>{const b=UI.bld;b.eh=+v;b.ecar=0;b.obj.mesh=elevMesh(b.eh);AUDIO.click();UI.refresh();saveSoon();};
+// ---------- portals ----------
+Object.assign(BUILD_MODEL,{portal(g){g.add(RB(6,.5,6,.2),null,'#2a2438');g.add(PRIM.cyl(2.4,2.6,.3,24),T(0,.5,0),C_FRAME);g.add(torus(2.6,.28,32,8),T(0,3.6,0,0,Math.PI/2),C_LIGHT);g.add(torus(2.25,.08,32,6),T(0,3.6,0,0,Math.PI/2),COL('#ffb84a',2));
+ for(const s of [-1,1]){g.add(RB(.6,3.4,.8,.12),T(s*2.6,.5,0),C_PANEL);}g.add(PRIM.cyl(2.2,2.2,.04,24,{cap:true}),T(0,3.6,0,0,Math.PI/2),COL('#ffd08a',.8));lamp(g,2.6,4.3,0,'#ffb84a');lamp(g,-2.6,4.3,0,'#ffb84a');}});
+function portals(){return [...FAC.b.values()].filter(b=>b.k==='portal');}
+function portalGo(dst){const c=Math.cos(dst.rot),s=Math.sin(dst.rot);const x=dst.x+s*4.2,z=dst.z+c*4.2;const f=document.createElement('div');f.className='pfade';document.body.appendChild(f);AUDIO.tone&&AUDIO.tone(300,.8,{type:'sine',vol:.1,slide:3});
+ setTimeout(()=>{PL.x=x;PL.z=z;PL.y=solidAt(x,z,dst.y+2)+.1;PL.vy=0;PL.yaw=dst.rot;PL.camY=null;PL.portalT=R.time+2;},350);setTimeout(()=>f.remove(),900);}
+{const _bv=UI.bldView;UI.bldView=function(b){let h=_bv(b);if(b.k!=='portal')return h;const L=portals().filter(p=>p!==b);
+ h+=`<h5>Name</h5><input id="pname" maxlength="18" value="${esc(b.pname||'Portal '+b.id)}" onchange="this.dispatchEvent(new CustomEvent('pname',{bubbles:true}))"><h5>Travel</h5>${L.length?L.map(p=>`<div class="mrec"><span>${esc(p.pname||'Portal '+p.id)}<br><small class="mut">${Math.round(Math.hypot(p.x-b.x,p.z-b.z))} m away</small></span><span><button class="btn sm ${b.plink===p.id?'gold':''}" data-a="pLink" data-v="${p.id}">${b.plink===p.id?'Linked':'Link'}</button><button class="btn sm gold" data-a="pGo" data-v="${p.id}">Go</button></span></div>`).join(''):'<p class="mut">Build a second portal somewhere else to travel between them.</p>'}<p class="mut">Walk through the ring to travel to the linked portal.</p>`;return h;};}
+document.addEventListener('pname',e=>{if(UI.bld){UI.bld.pname=e.target.value.slice(0,18);saveSoon();}});
+UI.A.pLink=v=>{UI.bld.plink=+v;AUDIO.click();UI.refresh();saveSoon();};UI.A.pGo=v=>{const d=FAC.b.get(+v);if(d){UI.closePanel();portalGo(d);}};
+{const _up=updatePlayer;updatePlayer=function(dt){_up(dt);if((PL.portalT||0)>R.time||PL.tube)return;for(const b of FAC.b.values()){if(b.k!=='portal'||b.plink==null||Math.abs(b.x-PL.x)>4||Math.abs(b.z-PL.z)>4)continue;const [lx,lz]=bLocal(b,PL.x,PL.z);if(Math.abs(lz)<.5&&Math.abs(lx)<2&&PL.y<b.y+5){const d=FAC.b.get(b.plink);if(d){portalGo(d);PL.portalT=R.time+3;}}}};}
+// ---------- Explorer and Factory Cart ----------
+Object.assign(BUILD_MODEL,{
+ explorer(g){const wh=(x,z)=>{g.add(PRIM.cyl(.5,.5,.4,12),T(x,.5,z,0,0,Math.PI/2),'#1e2024');g.add(PRIM.cyl(.25,.25,.42,8),T(x,.5,z,0,0,Math.PI/2),C_PANEL);};for(const x of [-1.2,1.2])for(const z of [-1.2,1.3])wh(x-.2*Math.sign(x),z);
+  g.add(RB(1.6,.3,3.4,.1),T(0,.6,0),C_FRAME);for(const s of [-1,1]){g.add(PRIM.box(.08,.08,2.4),T(s*.7,1.8,-.2),C_PANEL);g.add(PRIM.box(.08,1.2,.08,{y0:true}),T(s*.7,.8,.9),C_PANEL);g.add(PRIM.box(.08,1.2,.08,{y0:true}),T(s*.7,.8,-1.3),C_PANEL);}
+  g.add(PRIM.box(1.5,.08,.08),T(0,1.95,.9),C_PANEL);g.add(RB(.6,.5,.6,.1),T(0,.9,-.2),'#3a3f48');g.add(RB(1.4,.4,.8,.1),T(0,.9,1.25),C_LIGHT);lamp(g,.5,1.25,1.7,'#fff2d8');lamp(g,-.5,1.25,1.7,'#fff2d8');g.add(PRIM.cyl(.14,.14,.5,8),T(.55,1,-1.5,0,Math.PI/2),C_FRAME);},
+ fcart(g){for(const x of [-.65,.65])for(const z of [-.8,.8])g.add(PRIM.cyl(.26,.26,.18,10),T(x,.26,z,0,0,Math.PI/2),'#1e2024');g.add(RB(1.4,.25,2.2,.08),T(0,.3,0),C_PANEL);g.add(RB(1.1,.5,.7,.12),T(0,.55,-.45),C_LIGHT);g.add(PRIM.cyl(.03,.03,.7,6),T(0,.55,.55,0,-.4),C_DARK);g.add(PRIM.cyl(.18,.18,.04,12),T(0,1.15,.8,0,-1.1),C_DARK);lamp(g,0,.55,1.1,'#fff2d8');}});
+{const _vm=vehMeshes;vehMeshes=function(){_vm();VEHM.explorer=MODELS.b.explorer;VEHM.fcart=MODELS.b.fcart;};}
+function blockedAtClimb(x,z,y){VEH._climb=1;const r=blockedAt(x,z,y);VEH._climb=0;return r;}
+// ---------- train timetables: a condition at each stop ----------
+const TT_COND=[['time','Wait 6 s'],['full','Until full'],['empty','Until empty'],['t30','Wait 30 s']];
+function trainFull(tr){const fc=tr.fcars||0,cap=1600*Math.max(0,(tr.cars||2)-fc);let n=0;for(const [k,v] of Object.entries(tr.cargo))if(!isFluid(k))n+=v;return cap<=0||n>=cap-1;}
+function trainEmpty(tr){return !Object.values(tr.cargo).some(v=>v>.01);}
+{const _tu=trainUpdate;trainUpdate=function(dt){for(const tr of (S.trains||[])){if(TR.paths.get(tr.id)||!tr.docked||!tr.stops||tr.stops.length<2)continue;const si=tr.si%tr.stops.length;const c=(tr.cond||[])[si]||'time';
+  if(tr.wait>dt)continue;const st=FAC.b.get(tr.stops[si]);if(!st)continue;tr.dwell=(tr.dwell||0)+Math.max(dt,tr.wait);
+  if(c==='full'&&!trainFull(tr)&&tr.dwell<300){tr.wait=1.5;trainDock(tr,st);}else if(c==='empty'&&!trainEmpty(tr)&&tr.dwell<300){tr.wait=1.5;trainDock(tr,st);}else if(c==='t30'&&tr.dwell<30){tr.wait=Math.min(2,30-tr.dwell);}else tr.dwell=0;}
+ // a train you are driving goes at your speed
+ const me=TRN.ride;let s0=null;if(me)s0=me.s;_tu(dt);if(me&&TR.paths.get(me.id)){const P=TR.paths.get(me.id);const k=INPUT.jy||(INPUT.keys.KeyW?1:INPUT.keys.KeyS?-1:0);TRN.spd=clamp((TRN.spd||0)+(k>0?8*k:k<0?16*k:0)*dt,0,34);if(me.sig==='red'&&me.s<=s0+.001)TRN.spd=Math.min(TRN.spd,0);me.s=Math.min(P.len,(s0??me.s)+TRN.spd*dt);me.spd=TRN.spd;}};}
+{const _bv=UI.bldView;UI.bldView=function(b){let h=_bv(b);if(b.k!=='trainst')return h;const trains=(S.trains||[]).filter(t=>t.home===b.id||t.stops.includes(b.id));if(!trains.length)return h;
+ h+=`<h5>Timetables</h5>`+trains.map(t=>`<div class="mrec"><span>Train #${t.id.slice(1)}</span><span>${t.stops.map((id,i)=>{const c=(t.cond||[])[i]||'time';return `<button class="btn sm" data-a="ttCond" data-v="${t.id}:${i}">#${id}: ${TT_COND.find(q=>q[0]===c)[1]}</button>`;}).join('')}</span></div>`).join('')+`<p class="mut">Tap a stop to change how long the train waits there.</p>`;return h;};}
+UI.A.ttCond=v=>{const [tid,i]=v.split(':');const t=S.trains.find(x=>x.id===tid);if(!t)return;t.cond=t.cond||[];const cur=t.cond[+i]||'time';const j=(TT_COND.findIndex(q=>q[0]===cur)+1)%TT_COND.length;t.cond[+i]=TT_COND[j][0];UI.refresh();saveSoon();};
+// ---------- drive a train yourself ----------
+const TRN={ride:null,spd:0};
+function rayLoco(o,d){let best=null;for(const tr of (S.trains||[])){const pose=trainPose(tr);if(!pose)continue;const q=pose(0);const c=[q.p[0],q.p[1]+2,q.p[2]];const t=v3.dot(v3.sub(c,o),d);if(t<0||t>9)continue;const e=Math.hypot(o[0]+d[0]*t-c[0],o[1]+d[1]*t-c[1],o[2]+d[2]*t-c[2]);if(e<2.2&&(!best||t<best.t))best={t,tr};}return best;}
+{const _ht=handTarget;handTarget=function(){const H=_ht();if(TRN.ride)return H;const {o,d}=aimRay();const q=rayLoco(o,d);if(q&&(!H||q.t<H.t+.3))return {kind:'loco',t:q.t,tr:q.tr};return H;};}
+{const _uh=updateHand;updateHand=function(dt,holding){const t=handTarget();if(t&&t.kind==='loco'){HAND.what=t;if(!holding){HAND.t=0;return;}HAND.t+=dt;if(HAND.t>=.5){HAND.t=0;INPUT.act=false;TRN.board(t.tr);}return;}_uh(dt,holding);};}
+TRN.board=function(tr){TRN.ride=tr;TRN.spd=0;if(!TR.paths.get(tr.id)&&tr.stops&&tr.stops.length>=2)tr.wait=Math.min(tr.wait||0,.1);UI.toast('Driving the train: W / stick up to speed up, S / stick down to brake · crouch to get off','info');};
+TRN.exit=function(){const tr=TRN.ride;TRN.ride=null;GAME.freeCam=null;const pose=trainPose(tr);if(pose){const q=pose(0);PL.x=q.p[0]+Math.cos(q.yaw)*3;PL.z=q.p[2]-Math.sin(q.yaw)*3;PL.y=solidAt(PL.x,PL.z,q.p[1]+3);}PL.camY=null;};
+{const _up=updatePlayer;updatePlayer=function(dt){if(TRN.ride&&GAME.mode==='play'){const tr=TRN.ride;if(!(S.trains||[]).includes(tr)){TRN.exit();return _up(dt);}if(INPUT.crouch){INPUT.crouch=false;TRN.exit();return;}const pose=trainPose(tr);if(!pose){TRN.exit();return;}
+  const q=pose(0);PL.x=q.p[0];PL.z=q.p[2];PL.y=q.p[1]+1.6;PL.vy=0;const cy=PL.yaw;GAME.freeCam={cam:[q.p[0]-Math.sin(cy)*16,q.p[1]+7,q.p[2]-Math.cos(cy)*16],yaw:cy,pitch:PL.pitch-.25};R.yaw=PL.yaw;R.pitch=PL.pitch;return;}_up(dt);};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);let el=document.getElementById('locoui');if(!TRN.ride){if(el)el.classList.remove('on');const H=HAND.what;if(H&&H.kind==='loco'&&!BUILD.mode){const act=$('#act');act.classList.remove('hide');act.firstElementChild.textContent='Board';const lk=$('#look');const t='Locomotive · hold to climb aboard and drive';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}return;}
+ if(!el){el=document.createElement('div');el.id='locoui';document.body.appendChild(el);el.addEventListener('pointerdown',e=>{e.stopPropagation();const b=e.target.closest('[data-t]');if(!b)return;const a=b.dataset.t;if(a==='x')TRN.exit();else if(a==='go'){TRN.spd=Math.min(34,TRN.spd+6);if(TRN.ride&&!TR.paths.get(TRN.ride.id))TRN.ride.wait=0;}else TRN.spd=Math.max(0,TRN.spd-8);});}
+ const tr=TRN.ride;const nx=tr.stops&&tr.stops.length?'#'+tr.stops[(tr.si+1)%tr.stops.length]:'—';const t=`<b>${Math.round((TR.paths.get(tr.id)?TRN.spd:0)*3.6)} km/h</b><small>Next stop ${nx}${tr.sig==='red'?' · signal red':''}</small><button data-t="go">▲</button><button data-t="brake">▼</button><button data-t="x">Get off</button>`;if(el._v!==t){el._v=t;el.innerHTML=t;}el.classList.add('on');};}
+(function(){const st=document.createElement('style');st.textContent=`#elevui,#locoui{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(120px + env(safe-area-inset-bottom));z-index:7;display:none;gap:8px;align-items:center;background:rgba(14,17,24,.86);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 10px;color:#fff;font:700 12px system-ui}
+#elevui.on,#locoui.on{display:flex}#elevui button,#locoui button{border:0;border-radius:10px;padding:9px 12px;background:#2a303c;color:#fff;font:800 13px system-ui}#elevui button[data-e=up],#locoui [data-t=go]{background:#f08a32}#locoui small{display:block;opacity:.7;font-weight:600}
+.pfade{position:fixed;inset:0;z-index:65;pointer-events:none;background:radial-gradient(circle,#fff6e0,#ffb84a 40%,#1a0e00);animation:pfade .9s ease-in-out forwards}@keyframes pfade{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+#pname{width:100%;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);color:#fff}`;document.head.appendChild(st);})();
+
+// ---- 38-extra.js ----
+// ===== Extras: map stamps, conveyor wall and ceiling mounts, and the Lizard Doggo =====
+// ---------- map stamps ----------
+const STAMPS=['⭐','🏭','⛏','🏠','⚠','❤','💀','❓','🚂','💧','🔥','🌋'];
+const stamps=()=>S.stamps||(S.stamps=[]);
+{const _vm=UI.views.map;UI.views.map=function(){let h=_vm();const M=UI.map;
+ if(M.pend){const near=stamps().findIndex(s=>Math.hypot(s.x-M.pend[0],s.z-M.pend[1])<12/(M.z||1)*4);
+  h=h.replace('<h5>Places</h5>',`<h5>Or drop a stamp</h5><div class="stamps">${STAMPS.map(ic=>`<button data-a="stampAdd" data-v="${ic}">${ic}</button>`).join('')}</div>${near>=0?`<div class="qrow"><button class="btn red" data-a="stampRm" data-v="${near}">Remove the ${stamps()[near].ic} stamp here</button></div>`:''}<h5>Places</h5>`);}
+ if(stamps().length)h=h.replace('<h5>Legend</h5>',`<h5>Stamps</h5><div class="stamps list">${stamps().map((s,i)=>`<button data-a="mapGo" data-v="${s.x},${s.z}">${s.ic}</button>`).join('')}</div><h5>Legend</h5>`);return h;};}
+UI.A.stampAdd=v=>{const p=UI.map.pend;if(!p)return;stamps().push({x:p[0],z:p[1],ic:v});UI.map.pend=null;AUDIO.click();UI.refresh();saveSoon();};
+UI.A.stampRm=v=>{stamps().splice(+v,1);UI.map.pend=null;UI.refresh();saveSoon();};
+{const _dm=UI.drawMap;UI.drawMap=function(){_dm();const c=$('#mapc');if(!c||!stamps().length)return;const x=c.getContext('2d'),N=c.width,M=UI.map,s=N/(WORLD.half*2)*M.z;x.font='22px system-ui';x.textAlign='center';x.textBaseline='middle';
+ for(const st of stamps()){const q=[(st.x-M.cx)*s+N/2,(st.z-M.cz)*s+N/2];if(q[0]<-20||q[0]>N+20||q[1]<-20||q[1]>N+20)continue;x.fillStyle='rgba(10,12,16,.75)';x.beginPath();x.arc(q[0],q[1],15,0,TAU);x.fill();x.fillText(st.ic,q[0],q[1]+1);}x.textBaseline='alphabetic';};}
+// ---------- conveyor wall and ceiling mounts ----------
+Object.assign(BUILDINGS,{
+ cwall:{n:'Conveyor Wall Mount',w:1,d:1,h:.4,py:0,cost:{iron_rod:1,iron_plate:1},ports:[[0,-.04,Math.PI,'in'],[0,.04,0,'out']],cat:'logistics',desc:'Holds a belt on the side of a wall. Aim at a wall to snap it there; raise or lower it with ▲ ▼.',tier:2,pass:1},
+ cceil:{n:'Conveyor Ceiling Mount',w:1,d:1,h:.3,py:0,cost:{iron_rod:1,iron_plate:1},ports:[[0,-.04,Math.PI,'in'],[0,.04,0,'out']],cat:'logistics',desc:'Hangs a belt under a floor or roof above you.',tier:2,pass:1}});
+Object.assign(BUILD_MODEL,{cwall(g){g.add(RB(.12,1,1,.03),T(-.62,-.6,0),C_FRAME);g.add(PRIM.box(.6,.08,.12),T(-.32,-.15,0),C_GRAY);g.add(RB(1.3,.12,1.1,.05),T(0,-.38,0),C_DARK);for(const s of [-1,1])g.add(RB(.12,.3,1.1,.05),T(s*.62,-.38,0),C_PANEL);},
+ cceil(g){g.add(RB(1,.1,1,.03),T(0,1.55,0),C_FRAME);g.add(PRIM.cyl(.06,.06,1.6,6),T(0,-.1,0),C_LIGHT);g.add(RB(1.3,.12,1.1,.05),T(0,-.38,0),C_DARK);for(const s of [-1,1])g.add(RB(.12,.3,1.1,.05),T(s*.62,-.38,0),C_PANEL);}});
+NUDGE.add('cwall');NUDGE.add('cceil');ZOOP.cwall='z';ZOOP.cceil='z';
+{const _pt=placeTarget;placeTarget=function(){const t=_pt();const k=BUILD.k;if(!t||BUILD.locked||(k!=='cwall'&&k!=='cceil'))return t;const {o,d}=aimRay();
+ if(k==='cwall'){const hb=rayBuildings(o,d,20);if(hb&&hb.face!=='top'){const b=hb.b;const p=hb.p;const [lx,lz]=bLocal(b,p[0],p[2]);const D=BUILDINGS[b.k];const useX=Math.abs(Math.abs(lz)-D.d/2)<Math.abs(Math.abs(lx)-D.w/2);
+   let nx,nz;if(useX){const sg=Math.sign(lz)||1;nx=Math.sin(b.rot)*sg;nz=Math.cos(b.rot)*sg;}else{const sg=Math.sign(lx)||1;nx=Math.cos(b.rot)*sg;nz=-Math.sin(b.rot)*sg;}
+   t.x=p[0]+nx*.62;t.z=p[2]+nz*.62;t.y=Math.round((p[1]-.5)*2)/2+(BUILD.dy||0);t.rot=Math.atan2(nx,nz)+Math.PI/2+(BUILD.rot>Math.PI/2&&BUILD.rot<Math.PI*1.5?Math.PI:0);t.list=null;t.base=null;t.wall=true;}}
+ else{let ceil=null;for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(!(D.surf==='deck'||FBASE_K.has(b.k)))continue;if(Math.abs(b.x-t.x)>D.w/2+2||Math.abs(b.z-t.z)>D.d/2+2)continue;const [lx,lz]=bLocal(b,t.x,t.z);if(Math.abs(lx)>D.w/2||Math.abs(lz)>D.d/2)continue;if(b.y>ground(t.x,t.z)+2.4&&(ceil==null||b.y<ceil))ceil=b.y;}
+  if(ceil!=null){t.y=ceil-1.65+(BUILD.dy||0);t.wall=true;}else t.y=ground(t.x,t.z)+3+(BUILD.dy||0);if(t.list)for(const q of t.list)q.y=t.y;t.base=null;}
+ return t;};}
+{const _pv=placeValid;placeValid=function(t){const r=_pv(t);if(r&&(BUILD.k==='cwall'||BUILD.k==='cceil')&&/steep|foundation/i.test(r))return null;return r;};}
+// ---------- the Lizard Doggo ----------
+let DOGM=null;
+function dogMesh(){const g=new GB();const W='#f2ece0',P='#f0a0b8',D='#3a2a2a';g.add(PRIM.sphere(.42,14,10),T(0,.5,0,0,0,0,1,.85,1.25),W);g.add(PRIM.sphere(.34,14,10),T(0,.78,.5),W);g.add(PRIM.sphere(.2,10,8),T(0,.7,.78,0,0,0,1.1,.75,1),W);
+ for(const s of [-1,1]){g.add(PRIM.cone(.16,.55,8),T(s*.3,.92,.42,0,0,s*1.3),P);g.add(PRIM.cone(.12,.4,8),T(s*.28,.72,.38,0,.3,s*1.6),P);g.add(PRIM.sphere(.07,8,6),T(s*.14,.86,.78),D);g.add(PRIM.sphere(.025,6,4),T(s*.13,.88,.84),'#ffffff');
+  for(const z of [.28,-.28])g.add(PRIM.cyl(.07,.09,.3,8),T(s*.26,0,z),W);}
+ g.add(PRIM.cone(.18,.75,10),T(0,.48,-.5,0,-1.9),W);for(let k=0;k<4;k++)g.add(PRIM.cone(.05,.12,5),T(0,.98-k*.02,.4-k*.16,0,-.3),P);g.add(PRIM.sphere(.05,6,4),T(0,.68,.97),P);return g.build();}
+let DOGBM=null;function dogBubble(){if(DOGBM)return DOGBM;const g=new GB();g.add(PRIM.sphere(.18,10,8),null,COL('#ffd04a',1.8));g.add(PRIM.box(.06,.14,.03),T(0,.04,.17),'#3a2a2a');g.add(PRIM.box(.06,.05,.03),T(0,-.09,.17),'#3a2a2a');return DOGBM=g.build();}
+const DOG={wild:[]};const pets=()=>S.pets||(S.pets=[]);
+const DIG=[['leaves',10,30],['wood',6,20],['berry',3,18],['iron_ore',8,12],['copper_ore',8,10],['limestone',8,10],['protein',2,8],['screw',30,6],['iron_plate',5,5],['coupon',1,4],['slug',1,3],['quartz',4,4],['res_core',1,.8],['hard_drive',1,.6]];
+function placeDoggos(){const W=WORLD,rnd=mulberry(W.seed*471+3);DOG.wild=[];const n=wv3()?16:6;for(let i=0;i<n;i++){for(let t=0;t<200;t++){let x,z;if(wv3()){const b=BIO3[[0,0,0,7,7,6,8,0][i%8]];const a=rnd()*TAU,r=60+rnd()*300;x=b.x+Math.cos(a)*r;z=b.z+Math.sin(a)*r;}else{const a=rnd()*TAU,r=60+rnd()*200;x=Math.cos(a)*r;z=Math.sin(a)*r;}
+  if(Math.abs(x)>W.half-60||Math.abs(z)>W.half-60||lakeAt(x,z)||caveZone(x,z)||groundNormal(x,z)[1]<.8)continue;DOG.wild.push({id:i,x,z,hx:x,hz:z,y:ground(x,z),yaw:rnd()*TAU,t:0,hop:0});break;}}
+ for(const p of pets()){const w=DOG.wild.find(d=>d.id===p.id);if(w)w.tamed=1;}}
+{const _ei=EXP.init;EXP.init=function(){_ei();placeDoggos();};}
+function dogUpdate(dt){if(GAME.mode!=='play'||GAME.paused)return;for(const d of DOG.wild){if(d.tamed)continue;d.t-=dt;if(d.t<0){d.t=2+Math.random()*4;d.wy=Math.random()<.4?null:Math.atan2(d.hx-d.x+(Math.random()-.5)*16,d.hz-d.z+(Math.random()-.5)*16);}
+  if(d.wy!=null){const da=wrapAngle(d.wy-d.yaw);d.yaw+=da*Math.min(1,dt*4);const nx=d.x+Math.sin(d.yaw)*1.5*dt,nz=d.z+Math.cos(d.yaw)*1.5*dt;if(!lakeAt(nx,nz)&&groundNormal(nx,nz)[1]>.7){d.x=nx;d.z=nz;d.hop+=dt*6;}}d.y=ground(d.x,d.z);}
+ pets().forEach((p,i)=>{if(p.x==null){p.x=PL.x+2;p.z=PL.z;}const stay=p.stay;const side=(i%2?1:-1)*(1+Math.floor(i/2));const tx=PL.x-Math.sin(PL.yaw)*2.6+Math.cos(PL.yaw)*side*1.2,tz=PL.z-Math.cos(PL.yaw)*2.6-Math.sin(PL.yaw)*side*1.2;const dd=Math.hypot(tx-p.x,tz-p.z);
+  if(!stay&&Math.hypot(PL.x-p.x,PL.z-p.z)>55&&!PL.tube){p.x=tx;p.z=tz;}else if(!stay&&dd>.6){const sp=Math.min(dd*2.5,PL.speed>7?11:6.5);const a=Math.atan2(tx-p.x,tz-p.z);p.yaw=a;const nx=p.x+Math.sin(a)*sp*dt,nz=p.z+Math.cos(a)*sp*dt;if(!blockedAt(nx,nz,(p.y||0)+.1)||dd>8){p.x=nx;p.z=nz;}p.hop=(p.hop||0)+dt*sp*1.6;}else p.yaw=lerp(p.yaw||0,Math.atan2(PL.x-p.x,PL.z-p.z),Math.min(1,dt*3));
+  p.y=solidAt(p.x,p.z,(p.y??PL.y)+1.2);p.dig=(p.dig||0)+dt;if(p.dig>240){p.dig=0;if(!p.has){let tot=0;for(const q of DIG)tot+=q[2];let r=Math.random()*tot;for(const q of DIG){r-=q[2];if(r<=0){if(ITEMS[q[0]]){p.has=[q[0],q[1]];FX.puff(p.x,p.y+.2,p.z,COL('#b89a7a'));AUDIO.tone&&AUDIO.tone(900,.12,{type:'sine',vol:.06,slide:1.4});}break;}}}}});}
+{const _eu=EXP.update;EXP.update=function(dt){_eu(dt);dogUpdate(dt);};}
+{const _cu=catchUp;catchUp=function(){_cu();for(const p of pets())p.dig=(p.dig||0)+Math.min(240,Math.max(0,(Date.now()-(S.time||Date.now()))/1000));};}
+{const _to=TR.objects;TR.objects=function(){const out=_to();if(!DOGM)DOGM=dogMesh();const add=(d,tame)=>{if(Math.hypot(d.x-R.cam[0],d.z-R.cam[2])>140)return;const b=Math.abs(Math.sin(d.hop||0))*.12;out.push({mesh:DOGM,model:T(d.x,(d.y||0)+b,d.z,d.yaw||0,0,Math.sin((d.hop||0)*.5)*.08,tame?1:.95)});if(d.has)out.push({mesh:dogBubble(),model:T(d.x,(d.y||0)+1.6+Math.sin(R.time*3)*.08,d.z,R.time)});};
+ for(const d of DOG.wild)if(!d.tamed)add(d,false);for(const p of pets())add(p,true);return out;};}
+function rayDog(o,d){let best=null;const test=(q,pet)=>{const c=[q.x,(q.y||0)+.6,q.z];const t=v3.dot(v3.sub(c,o),d);if(t<0||t>7)return;const e=Math.hypot(o[0]+d[0]*t-c[0],o[1]+d[1]*t-c[1],o[2]+d[2]*t-c[2]);if(e<.9&&(!best||t<best.t))best={t,d:q,pet};};for(const w of DOG.wild)if(!w.tamed)test(w,false);for(const p of pets())test(p,true);return best;}
+{const _ht=handTarget;handTarget=function(){const H=_ht();const {o,d}=aimRay();const q=rayDog(o,d);if(q&&(!H||q.t<H.t+.3))return {kind:'dog',t:q.t,d:q.d,pet:q.pet};return H;};}
+{const _uh=updateHand;updateHand=function(dt,holding){const t=handTarget();if(t&&t.kind==='dog'){HAND.what=t;if(!holding){HAND.t=0;return;}HAND.t+=dt;if(HAND.t<.7)return;HAND.t=-.5;
+  if(!t.pet){if((S.inv.berry||0)<1){UI.toast('Lizard Doggos love Glowberries. Bring one to make a friend.','info');return;}addInv('berry',-1);t.d.tamed=1;const p={id:t.d.id,x:t.d.x,z:t.d.z,y:t.d.y,yaw:t.d.yaw,name:['Biscuit','Pebble','Noodle','Sprocket','Mochi','Rivet','Pickle','Bolt'][pets().length%8],dig:200};pets().push(p);AUDIO.fanfare();UI.banner('New friend!',p.name+' the Lizard Doggo will follow you and dig up things it finds.');for(let k=0;k<6;k++)FX.burst(p.x,p.y+1,p.z,COL('#ff8ab0',1.6),2,2);codexAdd('fau:doggo');saveSoon();return;}
+  const p=t.d;if(p.has){const [k,n]=p.has;const m=Math.min(n,invRoom(k));if(m<1){UI.toast('Inventory full','warn');return;}addInv(k,m);p.has=null;UI.pop('+'+m+' '+ITEMS[k].n+' from '+p.name);AUDIO.pop&&AUDIO.pop();saveSoon();}
+  else{FX.burst(p.x,p.y+1,p.z,COL('#ff8ab0',1.6),5,1.5);UI.pop('♥ '+p.name);AUDIO.tone&&AUDIO.tone(1200,.1,{type:'sine',vol:.05,slide:1.5});}return;}_uh(dt,holding);};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const H=HAND.what;if(!H||H.kind!=='dog'||BUILD.mode)return;const act=$('#act');act.classList.remove('hide');act.firstElementChild.textContent=H.pet?(H.d.has?'Take':'Pet'):'Feed';
+ const lk=$('#look');const t=H.pet?H.d.name+(H.d.has?' found '+H.d.has[1]+' '+ITEMS[H.d.has[0]].n+'!':' · your Lizard Doggo · tap it for options'):'Lizard Doggo · hold with a Glowberry to befriend it';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}};}
+UI.A.dogMenu=v=>{const p=pets()[+v];if(!p)return;UI.modal(`<h3>${esc(p.name)}</h3><p class="mut">Your Lizard Doggo. It follows you around and every few minutes digs something up.</p><input id="dogname" maxlength="16" value="${esc(p.name)}" style="width:100%;padding:8px;border-radius:9px;border:1px solid rgba(255,255,255,.2);background:#0b0e13;color:#fff"><div class="btns"><button class="btn" data-a="dogStay" data-v="${v}">${p.stay?'Follow me':'Stay here'}</button><button class="btn gold" data-a="dogName" data-v="${v}">Save</button></div>`);};
+UI.A.dogStay=v=>{const p=pets()[+v];p.stay=!p.stay;UI.A.modalClose();UI.toast(p.name+(p.stay?' will wait here':' is following you'),'info');saveSoon();};
+UI.A.dogName=v=>{const p=pets()[+v];const n=($('#dogname')||{}).value;if(n&&n.trim())p.name=n.trim().slice(0,16);UI.A.modalClose();saveSoon();};
+addEventListener('keydown',e=>{if(e.code!=='KeyE'||GAME.mode!=='play'||e.target.tagName==='INPUT')return;const H=HAND.what;if(H&&H.kind==='dog'&&H.pet){const i=pets().indexOf(H.d);if(i>=0&&!H.d.has)UI.A.dogMenu(i);}});
+CODEX.push({k:'fau:doggo',cat:'Fauna',n:'Lizard Doggo',d:'A friendly little creature. Feed it a Glowberry and it will follow you and dig up useful things.'});
+(function(){const st=document.createElement('style');st.textContent='.stamps{display:flex;flex-wrap:wrap;gap:6px}.stamps button{width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);font-size:20px}';document.head.appendChild(st);})();
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.2.0',VERSION_MARK='FFVER@0.2.0@';
+const VERSION='0.3.0',VERSION_MARK='FFVER@0.3.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -4267,7 +4540,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
@@ -4275,5 +4548,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
 // ---- zz-late.js ----
 // ===== Hooks that need GAME (defined in 99-main) =====
 {const _gp=GAME.primary;GAME.primary=function(down){if(down&&BUILD.mode==='signal'){BUILD.signalAction();return;}if(down&&BUILD.mode==='massdel'){BUILD.massAction();return;}return _gp(down);};}
+// tapping your Lizard Doggo opens its menu
+{const _ta=GAME.tapAt;GAME.tapAt=function(sx,sy){if(!UI.panel&&!BUILD.mode&&!VEH.driving){const r=screenRay(sx/innerWidth,sy/innerHeight);const q=rayDog(r.o,r.d);if(q&&q.pet){const i=pets().indexOf(q.d);if(i>=0){UI.A.dogMenu(i);return;}}}return _ta(sx,sy);};}
 
 })();</script></body></html>
