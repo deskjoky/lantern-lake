@@ -1789,6 +1789,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.1.2',t:'Touchscreen or controller',items:['New Controls setting: Touchscreen (default) or Controller. The controller only takes over once you pick Controller, so a connected controller can no longer block screen taps.']},
  {v:'0.1.1',t:'Controller support',items:['Play with a controller: Backbone, Xbox, PlayStation and other standard gamepads.','Left stick move, right stick look, L3 sprint. RT mine/place/use, X interact, A jump (hold in the air for the jetpack). Y build menu, LT dismantle, RB quick wheel, LB switch tool.','While building: LB/RB rotate, D-pad up/down raise/lower, left for a row, right for power lines.','Menus: D-pad or stick moves a highlight, A selects, B goes back, LB/RB switch tabs. The full list is in Settings.','Fixed: picking the Constructor started the pipe tool instead of placing it.']},
  {v:'0.1.0',t:'Fresh numbering and build fixes',items:['Version numbers restarted at 0.1.0: the game is still early, so the numbers now say so. Everything you have built is kept.','Conveyor belts can no longer pass through buildings, other belts, trees or rocks. The preview turns red and tells you what is in the way. Use Wall and Floor Conveyor Holes to go through walls and floors.','The in and out arrows on building holograms are now much smaller.']},
  {v:'0.0.21',t:'Power switches',items:['Every generator has a button to turn it off, plus one to turn off every generator on its grid at once.','Tap a power pole to turn it off: power stops passing through it.']},
@@ -3310,9 +3311,10 @@ function padBack(){const m=document.getElementById('modal');if(m&&m.classList.co
  if(UI.panel){UI.closePanel();return;}if(GAME.paused){MENU.resume();return;}if(BUILD.mode){BUILD.cancel();return;}if(VEH.driving){VEH.exit();return;}}
 const dz=(v,d=.18)=>Math.abs(v)<d?0:(v-Math.sign(v)*d)/(1-d);
 PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():[];let gp=null;for(const g of gps)if(g&&g.connected){gp=g;break;}
- if(!gp){if(PAD.on){PAD.on=false;document.body.classList.remove('padmode');INPUT.jx=INPUT.jy=0;}return;}
+ if(gp&&S.settings.input!=='controller'){if(!PAD.told){PAD.told=1;UI.toast('Controller detected: turn on Controller mode in Settings to use it','info');}gp=null;}
+ if(!gp){if(PAD.on){PAD.on=false;document.body.classList.remove('padmode');if(INPUT.joyId===null)INPUT.jx=INPUT.jy=0;INPUT.keys.ShiftLeft=false;if(PAD.focus){PAD.focus.classList.remove('padf');PAD.focus=null;}}return;}
  const B=gp.buttons.map(b=>b.pressed||b.value>.5),P=PAD.prev,down=i=>B[i]&&!P[i],up=i=>!B[i]&&P[i];
- if(!PAD.on){PAD.on=true;document.body.classList.add('padmode');UI.toast('Controller connected','good');AUDIO.init();}
+ if(!PAD.on){PAD.on=true;document.body.classList.add('padmode');UI.toast('Controller mode on','good');AUDIO.init();PAD.prev=B.slice();}
  const ax=gp.axes;const lx=dz(ax[0]||0),ly=dz(ax[1]||0),rx=dz(ax[2]||0),ry=dz(ax[3]||0);
  const L=padLayer();
  if(L){// ----- menus -----
@@ -3346,11 +3348,13 @@ PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():
  PAD.prev=B;};
 addEventListener('gamepadconnected',()=>{AUDIO.init&&AUDIO.init();});
 // a controls page in Settings
-{const _m=UI.views.menu;UI.views.menu=function(){return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controller</h5><p class="mut">${PAD.on?'Connected.':'Plug in or pair a controller (Backbone, Xbox, PlayStation) and press any button.'}<br>Left stick move · Right stick look · L3 sprint<br>RT mine / place / use · X interact · A jump (hold in air: jetpack)<br>Y build menu · LT dismantle · RB quick wheel · LB switch tool<br>While building: LB/RB rotate · D-pad ▲▼ raise/lower · ◀ row · ▶ power line<br>D-pad ◀ scanner · View map · Menu pause · R3 inventory<br>In menus: D-pad or stick to move · A select · B back · LB/RB tabs</p></div><div class="sc"><h5>Audio</h5>`);};}
+{const _m=UI.views.menu;UI.views.menu=function(){const im=S.settings.input||'touch';return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controls</h5><div class="seg"><button class="${im==='touch'?'on':''}" data-a="inputSet" data-v="touch">Touchscreen</button><button class="${im==='controller'?'on':''}" data-a="inputSet" data-v="controller">Controller</button></div><p class="mut">${im==='controller'?(PAD.on?'Controller connected. The touchscreen still works too.':'Pair your controller (Backbone, Xbox, PlayStation) and press any button.'):'Switch to Controller to play with a Backbone, Xbox or PlayStation controller.'}<br>Left stick move · Right stick look · L3 sprint<br>RT mine / place / use · X interact · A jump (hold in air: jetpack)<br>Y build menu · LT dismantle · RB quick wheel · LB switch tool<br>While building: LB/RB rotate · D-pad ▲▼ raise/lower · ◀ row · ▶ power line<br>D-pad ◀ scanner · View map · Menu pause · R3 inventory<br>In menus: D-pad or stick to move · A select · B back · LB/RB tabs</p></div><div class="sc"><h5>Audio</h5>`);};}
+
+UI.A.inputSet=v=>{S.settings.input=v;AUDIO.click();UI.refresh();saveSoon();};
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.1.1',VERSION_MARK='FFVER@0.1.1@';
+const VERSION='0.1.2',VERSION_MARK='FFVER@0.1.2@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
