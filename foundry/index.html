@@ -273,6 +273,8 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 body.padmode #joyHint,body.padmode #joy{display:none!important}
 .pdiag{background:#101a20;border:1px solid #3a8ab0;border-radius:8px;padding:8px 10px;font-size:12.5px;color:#c9e8ff;margin-bottom:8px;line-height:1.5}
 #padchip{position:fixed;left:50%;bottom:calc(8px + var(--safe-b,0px));transform:translateX(-50%);z-index:30;background:rgba(16,26,32,.9);border:1px solid #3a8ab0;color:#c9e8ff;border-radius:10px;padding:6px 10px;font:600 11.5px system-ui;max-width:92vw;pointer-events:none}
+body.padmode #pad,body.padmode #joy,body.padmode #joyHint,body.padmode #tr .rb,body.padmode #gearhud{display:none!important}
+#sndchip{position:fixed;left:50%;top:calc(58px + var(--safe-t,0px));transform:translateX(-50%);z-index:31;background:rgba(40,30,20,.92);border:1px solid #f08a32;color:#ffd27a;border-radius:20px;padding:8px 14px;font:800 13px system-ui;display:none}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1589,7 +1591,8 @@ function catchUp(){const away=Math.min(3600,(Date.now()-(S.time||Date.now()))/10
  for(let t=0;t<away;t+=1)simStep(1);const made=Object.entries(FAC.stats.prod).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);FAC.stats.prod={};
  if(made.length)setTimeout(()=>UI.banner('While you were away ('+Math.round(away/60)+' min)',made.slice(0,4).map(([k,v])=>v+' '+ITEMS[k].n).join(' · ')),900);}
 // ---- sound: tiny synth, no files ----
-const AUDIO={ctx:null,init(){if(this.ctx||!S.settings.sound)return;try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}},
+const AUDIO={ctx:null,init(){if(!S.settings.sound)return;try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}if(this.ctx){if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});return;}try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});}catch(e){}},
+ unlock(){this.init();const c=this.ctx;if(!c)return;try{const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);}catch(e){}},
  tone(f,d,o={}){const c=this.ctx;if(!c||!S.settings.sound)return;const t=c.currentTime+(o.when||0),g=c.createGain(),os=c.createOscillator();os.type=o.type||'sine';os.frequency.setValueAtTime(f,t);if(o.slide)os.frequency.exponentialRampToValueAtTime(f*o.slide,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(o.vol||.12,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g).connect(c.destination);os.start(t);os.stop(t+d+.02);},
  noise(d,o={}){const c=this.ctx;if(!c||!S.settings.sound)return;const n=c.sampleRate*d,b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);const s=c.createBufferSource();s.buffer=b;const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=o.freq||1200;const g=c.createGain();g.gain.value=o.vol||.15;s.connect(f).connect(g).connect(c.destination);s.start(c.currentTime+(o.when||0));},
  click(){this.tone(880,.06,{type:'triangle',vol:.06});},place(){this.tone(220,.12,{type:'square',vol:.07,slide:.6});this.noise(.12,{freq:700,vol:.12});this.tone(660,.1,{type:'triangle',vol:.06,when:.06});},
@@ -1791,6 +1794,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.1.5',t:'Controller polish',items:['Controller mode hides the on-screen buttons and joystick.','Sound fix: iPhones only allow sound to start after a screen tap, so if sound is off a small note asks you to tap once. Sound now also plays when your phone is on silent mode (newer iOS).']},
  {v:'0.1.3',t:'Controller check',items:['Settings now has a live Controller check that shows whether the game can see your controller and which buttons you press.']},
  {v:'0.1.2',t:'Touchscreen or controller',items:['New Controls setting: Touchscreen (default) or Controller. The controller only takes over once you pick Controller, so a connected controller can no longer block screen taps.']},
  {v:'0.1.1',t:'Controller support',items:['Play with a controller: Backbone, Xbox, PlayStation and other standard gamepads.','Left stick move, right stick look, L3 sprint. RT mine/place/use, X interact, A jump (hold in the air for the jetpack). Y build menu, LT dismantle, RB quick wheel, LB switch tool.','While building: LB/RB rotate, D-pad up/down raise/lower, left for a row, right for power lines.','Menus: D-pad or stick moves a highlight, A selects, B goes back, LB/RB switch tabs. The full list is in Settings.','Fixed: picking the Constructor started the pipe tool instead of placing it.']},
@@ -3365,10 +3369,14 @@ setInterval(()=>{const el=document.getElementById('paddiag');if(el)el.innerHTML=
 
 // a small status chip on the HUD while controller mode is on but no controller is seen
 setInterval(()=>{let c=document.getElementById('padchip');if(!c){c=document.createElement('div');c.id='padchip';document.body.appendChild(c);}const want=S&&S.settings&&S.settings.input==='controller'&&!PAD.on&&GAME.mode;c.style.display=want?'':'none';if(want)c.innerHTML='🎮 '+PAD.diagText().replace(/<br>/g,' · ');},500);
+// ---- sound: iPhones only allow audio to start from a screen touch, so any touch unlocks it, and controller mode asks for one tap ----
+for(const ev of ['touchend','pointerup','click','keydown'])addEventListener(ev,()=>AUDIO.unlock(),{capture:true,passive:true});
+setInterval(()=>{let c=document.getElementById('sndchip');if(!c){c=document.createElement('div');c.id='sndchip';c.textContent='🔇 Tap the screen once to turn on sound';document.body.appendChild(c);c.addEventListener('pointerup',()=>{AUDIO.unlock();});}
+ const off=S&&S.settings&&S.settings.sound&&(!AUDIO.ctx||AUDIO.ctx.state!=='running')&&GAME.mode==='play';c.style.display=off?'':'none';},600);
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.1.4',VERSION_MARK='FFVER@0.1.4@';
+const VERSION='0.1.5',VERSION_MARK='FFVER@0.1.5@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
