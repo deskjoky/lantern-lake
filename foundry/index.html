@@ -261,6 +261,8 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 .rb.rec{background:#a33!important;color:#fff}
 .shopg{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}.shi{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:8px;background:#22252b;border:1px solid #3a3e47;color:#fff;font-size:12px;text-align:center}
 .shi .tp{width:64px;height:64px;border-radius:8px;background:radial-gradient(circle,#3c414b,#1e2025);display:grid;place-items:center;overflow:hidden}.shi .tp img{width:120%;height:120%;object-fit:contain}.shi small{color:#ffd27a;font-weight:800}.shi.off{opacity:.5}.alt.done{opacity:.6;border-color:#1f4a40}
+.paints{display:flex;flex-wrap:wrap;gap:6px}.pt{width:44px;height:44px;border-radius:8px;border:2px solid #3a3e47;overflow:hidden;display:flex;padding:0}.pt i{flex:1}.pt i:last-child{flex:.45}.pt.on{border-color:#fff;box-shadow:0 0 0 2px rgba(240,138,50,.5)}
+#signtxt{width:100%;box-sizing:border-box;padding:10px;border-radius:6px;border:1px solid #444955;background:#101216;color:#fff;font:800 15px system-ui;text-transform:uppercase}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -375,7 +377,7 @@ class GB{
    this.c.push(c[0],c[1],c[2],c[3]);this.w.push(typeof wind==='function'?wind(x,y,z,P):wind);}
   for(const ix of g.i)this.i.push(ix+base);return this;}
  merge(o){const base=this.vcount;this.p.push(...o.p);this.n.push(...o.n);this.c.push(...o.c);this.w.push(...o.w);for(const ix of o.i)this.i.push(ix+base);return this;}
- build(){if(!this.p.length)return null;return makeMesh({pos:new Float32Array(this.p),nrm:new Float32Array(this.n),col:new Float32Array(this.c),idx:this.i});}
+ build(){if(!this.p.length)return null;const m=makeMesh({pos:new Float32Array(this.p),nrm:new Float32Array(this.n),col:new Float32Array(this.c),idx:this.i});if(GB.keep)m._raw={p:this.p.slice(),n:this.n.slice(),c:this.c.slice(),i:this.i.slice()};return m;}
 }
 // --- primitives (local geometry) ---
 const PRIM={
@@ -433,13 +435,14 @@ const R={cam:[0,10,0],yaw:0,pitch:0,fov:72*Math.PI/180,near:.1,far:900,vp:M4.cre
  sun:v3.norm([.45,.8,.3]),sunCol:[1.55,1.38,1.15],sky:[.42,.58,.85],gnd:[.30,.24,.30],fog:[.66,.76,.90,.0024],time:0,
  terrain:[],objects:[],inst:[],ghosts:[],dpr:1,scale:1};
 const SH_LIGHT=`
-uniform vec3 uCam,uSun,uSunCol,uSky,uGnd;uniform vec4 uFog;uniform mat4 uSVP;uniform sampler2DShadow uSh;uniform float uShOn;uniform float uLamp;
+uniform vec3 uCam,uSun,uSunCol,uSky,uGnd;uniform vec4 uFog;uniform mat4 uSVP;uniform sampler2DShadow uSh;uniform float uShOn;uniform float uLamp;uniform vec4 uPL[8];uniform float uPLn;
 float shadowAt(vec3 w,vec3 n){if(uShOn<.5)return 1.;vec4 s=uSVP*vec4(w+n*.12,1.);vec3 q=s.xyz/s.w*.5+.5;if(q.x<0.||q.x>1.||q.y<0.||q.y>1.||q.z>1.)return 1.;
  float e=1./2048.,b=q.z-.0012,r=0.;r+=texture(uSh,vec3(q.xy+vec2(-e,-e),b));r+=texture(uSh,vec3(q.xy+vec2(e,-e),b));r+=texture(uSh,vec3(q.xy+vec2(-e,e),b));r+=texture(uSh,vec3(q.xy+vec2(e,e),b));
  float edge=max(abs(q.x-.5),abs(q.y-.5));return mix(r*.25,1.,smoothstep(.42,.5,edge));}
 vec3 shade(vec3 alb,vec3 n,vec3 w,float emis){float d=max(dot(n,uSun),0.)*shadowAt(w,n);vec3 hemi=mix(uGnd,uSky,n.y*.5+.5);
  vec3 v=normalize(uCam-w);float rim=pow(1.-max(dot(n,v),0.),3.)*.18;
  vec3 c=alb*(hemi*.62+uSunCol*d*.95)+alb*rim*uSky+alb*emis*2.2;
+ for(int i=0;i<8;i++){if(float(i)>=uPLn)break;vec3 Lv=uPL[i].xyz-w;float dl=length(Lv);c+=alb*vec3(1.,.86,.62)*uPL[i].w*(max(dot(n,Lv/max(dl,.001)),0.)*.85+.15)*2.2/(1.+dl*dl*.06)*smoothstep(20.,3.,dl);}
  float fd=length(w-uCam);if(uLamp>0.){c+=alb*uLamp*vec3(1.,.9,.72)*(max(dot(n,v),0.)*.8+.2)*1.3/(1.+fd*fd*.02)*smoothstep(32.,4.,fd);}
  float f=1.-exp(-pow(fd*uFog.w,1.4));c=mix(c,uFog.rgb,clamp(f,0.,1.));
  c=c/(c+vec3(.82))*1.32;return pow(clamp(c,0.,1.),vec3(1./2.2));}`;
@@ -967,9 +970,9 @@ const ANIM_MODEL={
  assembler(){const g=new GB();g.add(PRIM.box(.2,.2,2.4),null,C_DARK);g.add(PRIM.box(2.4,.2,.2),null,C_DARK);return {mesh:g.build(),at:[0,4.4,-.6],axis:'y',speed:2.5,needs:'run'};},
  constructor(){const g=new GB();g.add(PRIM.box(.5,.5,.5),null,C_TEAL);g.add(PRIM.box(.15,.6,.15),T(0,-.5,0),C_DARK);return {mesh:g.build(),at:[0,3.5,-.6],axis:'slide',speed:1.6,amp:1.4,needs:'run'};},
 };
-function initModels(){for(const [k,f] of Object.entries(BUILD_MODEL)){const g=new GB();f(g);if(typeof BUILD_EXTRA!=='undefined'&&BUILD_EXTRA[k])BUILD_EXTRA[k](g);screenBezel(g,k);if(!BUILDINGS[k].pass)for(const p of BUILDINGS[k].ports||[]){if(p[3][0]==='f')pipeFlange(g,p,BUILDINGS[k].py||PORT_Y);else portFrame(g,p,BUILDINGS[k].py||PORT_Y);}MODELS.b[k]=g.build();}
+function initModels(){GB.keep=true;for(const [k,f] of Object.entries(BUILD_MODEL)){const g=new GB();f(g);if(typeof BUILD_EXTRA!=='undefined'&&BUILD_EXTRA[k])BUILD_EXTRA[k](g);screenBezel(g,k);if(!BUILDINGS[k].pass)for(const p of BUILDINGS[k].ports||[]){if(p[3][0]==='f')pipeFlange(g,p,BUILDINGS[k].py||PORT_Y);else portFrame(g,p,BUILDINGS[k].py||PORT_Y);}MODELS.b[k]=g.build();}
  MODELS.b.miner2=(()=>{const g=new GB();BUILD_MODEL.miner(g);BUILD_EXTRA.miner(g);screenBezel(g,'miner2');g.add(PRIM.box(2.3,.5,2.3,{y0:true}),T(0,2.9,-.6),'#c84a3a');for(const p of BUILDINGS.miner2.ports)portFrame(g,p);return g.build();})();
- for(const [k,f] of Object.entries(ANIM_MODEL))MODELS.anim[k]=f();MODELS.anim.miner2=MODELS.anim.miner;
+ GB.keep=false;for(const [k,f] of Object.entries(ANIM_MODEL))MODELS.anim[k]=f();MODELS.anim.miner2=MODELS.anim.miner;
  initItemModels();}
 // ---- items riding belts: every item has its own model with its own colours, so you can tell them apart at a glance ----
 const ROCK=(g,x,z,s,c,seed,sq=.7)=>g.add(PRIM.ico(s,1,{noise:.45,seed}),T(x,s*sq*.8,z,seed,0,0,1,sq,1),c);
@@ -1538,7 +1541,7 @@ function benchRecipes(){return RECIPES.filter(r=>r.bench&&unlocked(r));}
 function craft(r,times=1){let made=0;for(let t=0;t<times;t++){if(!Object.entries(r.in).every(([k,v])=>(S.inv[k]||0)>=v))break;for(const [k,v] of Object.entries(r.in))addInv(k,-v);for(const [k,v] of Object.entries(r.out))addInv(k,v);made++;}if(made){AUDIO.craft();}return made;}
 // ---- save / load ----
 function serialize(){S.player={x:PL.x,y:PL.y,z:PL.z,yaw:PL.yaw,pitch:PL.pitch};S.time=Date.now();
- S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog,clock:b.clock,amp:b.amp||undefined,rules:b.rules||undefined,limit:b.limit??undefined,mode:b.mode||undefined,dest:b.dest??undefined,rn:b.rn||undefined,tripped:b.tripped||undefined,on:b.on,charge:b.charge||undefined}));
+ S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog,clock:b.clock,amp:b.amp||undefined,rules:b.rules||undefined,limit:b.limit??undefined,mode:b.mode||undefined,dest:b.dest??undefined,rn:b.rn||undefined,paint:b.paint||undefined,text:b.text||undefined,bg:b.bg||undefined,tripped:b.tripped||undefined,on:b.on,charge:b.charge||undefined}));
  S.pipes=[...FAC.pipes.values()].map(pp=>({id:pp.id,tier:pp.tier,from:pp.from,to:pp.to,fluid:pp.fluid}));
  S.belts=[...FAC.belts.values()].map(bl=>({id:bl.id,tier:bl.tier,from:bl.from,to:bl.to,items:bl.items.map(i=>[i.t,Math.round(i.d*100)/100])}));return JSON.stringify(S);}
 function saveGame(){if(GAME.wiping)return;try{localStorage.setItem(SAVE_KEY,serialize());}catch(e){}}
@@ -1756,6 +1759,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.9.6',t:'Build it your way',items:['New pieces: walls with windows and doors, half and 8 m foundations, flat and sloped roofs, beams, pillars, lamp posts, floodlight towers and signs you can write on.','Lamps and floodlights really light up the area at night.','Paint: open any machine and pick from 10 colour schemes (milestone 2).','Factory blueprints: Build → Blueprints → Blueprint Designer. Tap two corners to copy an area (buildings, belts, power lines, recipes and paint), then stamp copies anywhere. Short on parts? It is placed as fill-in holograms.','Golden Pioneer Statue in the AWESOME Shop.']},
  {v:'0.9.5',t:'Research, the Sink and the late game',items:['MAM (milestone 1): research pocket upgrades, health, medicine, slug refinement, a long-range scanner and stronger resonance cores. Hard drives can be analysed there too.','AWESOME Sink (milestone 3): belt spare parts in to earn points and FICSIT Coupons. AWESOME Shop: spend coupons on power shards, ammo, inventory slots, paint colours and more.','New machines: Packager (put fluids in canisters to move them by belt or vehicle), Blender (Turbofuel and Batteries), Particle Accelerator (Dark Matter for the final Skyhook phase).','New power: Geothermal Generators on geysers (200 MW, no fuel) and the Nuclear Power Plant (2,500 MW from uranium found in radiation zones).','Resource wells and their extractor for water or oil.','The scanner can find geysers, wells and uranium as you progress.']},
  {v:'0.9.4',t:'Vehicles, trains and drones',items:['Tractor and Truck (Build → Logistics): walk up and tap Drive. Tap ● Rec, drive a loop past Truck Stations, stop recording, then tap Auto: it drives the route on its own, loading or unloading at each station. Stations refuel it.','Railways: build Train Stations, then lay track from a station end (Build → Logistics → Railway). Build a train at a station and add stops; it loads and unloads at each.','Drone Ports: set another drone port as the destination and its drone flies 400 items per trip.','Rain no longer falls through roofs: your HUB and buildings stay dry inside.','Scanner pings now last 15 seconds and disappear once you reach them.']},
  {v:'0.9.3',t:'Real rain',items:['Rain now falls in the 3D world around you, with splashes on the ground, instead of being drawn on your screen.','Fixed buttons sometimes ignoring taps until you restarted the game. Buttons no longer refresh while your finger is on them, and the game now resets itself if touch input gets stuck.']},
@@ -3049,9 +3053,101 @@ EMIT.blender=[['steam',0,8,-4,1,1]];SND_OF.blender=['whir','water'];EMIT.package
 // geysers puff steam even with nothing built on them
 function geyserFX(dt){for(const nd of WORLD.nodes)if(nd.type==='geyser'&&Math.abs(nd.x-R.cam[0])<120&&Math.abs(nd.z-R.cam[2])<120){const used=[...FAC.b.values()].some(b=>b.node===nd.id);if(!used&&Math.random()<dt*(Math.sin(R.time*.4+nd.id)>.6?14:2))PFX.emit('steam',[nd.x+(Math.random()-.5),nd.y+.4,nd.z+(Math.random()-.5)],1.4);}}
 
+// ---- 22-build.js ----
+// ===== Building pieces, lights, signs, paint, and factory blueprints you can copy and stamp =====
+Object.assign(BUILDINGS,{
+ wall_window:{n:'Wall (Window)',w:4,d:.4,h:4,cost:{concrete:2,iron_plate:2},cat:'structure',desc:'A wall with a big window.',tier:3,surf:'block'},
+ wall_door:{n:'Wall (Door)',w:4,d:.4,h:4,cost:{concrete:2,iron_plate:2},cat:'structure',desc:'A wall with a doorway you can walk through.',tier:3,walls:[[-1.45,0,.55,.2,4],[1.45,0,.55,.2,4]],tops:[]},
+ foundation_half:{n:'Foundation (Half)',w:4,d:4,h:.5,cost:{concrete:3},cat:'structure',desc:'A half-height 4 x 4 m foundation.',tier:3,surf:'deck',top:.5},
+ foundation8:{n:'Foundation 8 m',w:8,d:8,h:1,cost:{concrete:16},cat:'structure',desc:'A big 8 x 8 m foundation.',tier:3,surf:'deck',top:1},
+ roof:{n:'Roof',w:4,d:4,h:.3,cost:{iron_plate:3,concrete:1},cat:'structure',desc:'A flat roof panel. Raise it with ▲ to cover your factory; you can walk on it.',tier:3,surf:'deck',top:.3},
+ roof_slope:{n:'Roof (Sloped)',w:4,d:4,h:1,rise:1,cost:{iron_plate:3,concrete:1},cat:'structure',desc:'A sloped roof panel.',tier:3,surf:'ramp'},
+ beam:{n:'Beam',w:4,d:.4,h:.4,cost:{steel_beam:1},cat:'structure',desc:'A 4 m steel beam. Raise it with ▲.',tier:5,surf:'deck',top:.4},
+ pillar:{n:'Pillar',w:.8,d:.8,h:4,cost:{concrete:2},cat:'structure',desc:'A 4 m support pillar.',tier:3},
+ lamp_post:{n:'Lamp Post',w:.8,d:.8,h:5,cost:{iron_rod:3,wire:4,quickwire:0},cat:'structure',desc:'Lights up the area at night.',tier:2,light:1},
+ floodlight:{n:'Floodlight Tower',w:2,d:2,h:10,cost:{steel_beam:4,cable:10},cat:'structure',desc:'A tall tower that floods a wide area with light.',tier:5,light:2.2},
+ sign:{n:'Sign',w:2.4,d:.3,h:2.4,cost:{iron_plate:2,wire:2},cat:'structure',desc:'Write your own label on it. Open the sign to edit the text.',tier:2},
+ statue:{n:'Golden Pioneer Statue',w:3,d:3,h:5,cost:{aurite_ingot:20},cat:'special',desc:'A golden statue from the AWESOME Shop.',tier:3,shopOnly:'statue'},
+});
+delete BUILDINGS.lamp_post.cost.quickwire;
+const NUDGE_EXTRA=['roof','roof_slope','beam','pillar','foundation_half','foundation8','lamp_post','sign','wall_window','wall_door'];for(const k of NUDGE_EXTRA)NUDGE.add(k);
+// unlocks that come from the AWESOME Shop
+{const _bl=buildList;buildList=function(c){return _bl(c).filter(x=>!(BUILDINGS[x.k]&&BUILDINGS[x.k].shopOnly&&!S[BUILDINGS[x.k].shopOnly]));};}
+Object.assign(BUILD_MODEL,{
+ wall_window(g){g.add(RB(4,1.2,.4,.06),null,'#d8d2c6');g.add(RB(4,.9,.4,.06),T(0,3.1,0),'#d8d2c6');for(const s of [-1,1])g.add(RB(.5,4,.4,.06),T(s*1.75,0,0),'#d8d2c6');
+  g.add(RB(3,1.9,.12,.04),T(0,1.2,0),COL('#9ad8ff',.35));g.add(PRIM.box(.08,1.9,.2,{y0:true}),T(0,1.2,0),C_FRAME);g.add(PRIM.box(3,.08,.2,{y0:true}),T(0,2.1,0),C_FRAME);g.add(RB(4.04,.3,.46,.06),T(0,0,0),C_PANEL);g.add(RB(4.04,.14,.46,.05),T(0,3.86,0),C_FRAME);},
+ wall_door(g){for(const s of [-1,1])g.add(RB(1.1,4,.4,.06),T(s*1.45,0,0),'#d8d2c6');g.add(RB(1.8,1.3,.4,.06),T(0,2.7,0),'#d8d2c6');for(const s of [-1,1])g.add(RB(.12,2.7,.48,.04),T(s*.92,0,0),C_DARK);g.add(RB(1.96,.14,.48,.04),T(0,2.62,0),C_DARK);
+  g.add(RB(4.04,.3,.46,.06),T(-1.45,0,0,0,0,0,.28,1,1),C_PANEL);D_.hazard(g,0,2.78,.21,1.7,.12);lamp(g,0,3.2,.25,'#ffd8a0');},
+ foundation_half(g){g.add(RB(4,.5,4,.1),null,'#cfcac0');for(const s of [-1,1]){g.add(PRIM.box(3.6,.02,.12,{y0:true}),T(0,.5,s*1.86),COL('#f0a040',.3));g.add(PRIM.box(.12,.02,3.6,{y0:true}),T(s*1.86,.5,0),COL('#f0a040',.3));}},
+ foundation8(g){g.add(RB(8,1,8,.14),null,'#cfcac0');for(let i=-3;i<=3;i+=2)g.add(PRIM.box(.04,.02,7.8,{y0:true}),T(i,1,0),'#b8b2a6');for(let i=-3;i<=3;i+=2)g.add(PRIM.box(7.8,.02,.04,{y0:true}),T(0,1,i),'#b8b2a6');for(const s of [-1,1]){g.add(PRIM.box(7.6,.02,.14,{y0:true}),T(0,1,s*3.86),COL('#f0a040',.3));g.add(PRIM.box(.14,.02,7.6,{y0:true}),T(s*3.86,1,0),COL('#f0a040',.3));}D_.hazard(g,0,.3,4.01,7.8,.12);},
+ roof(g){g.add(RB(4,.3,4,.08),null,'#8a929c');for(let i=-1.5;i<=1.5;i+=.5)g.add(PRIM.box(.06,.02,3.9,{y0:true}),T(i,.3,0),'#6a727c');},
+ roof_slope(g){const N=8;for(let i=0;i<N;i++)g.add(PRIM.box(4,(i+1)/N,4/N,{y0:true}),T(0,0,-2+(i+.5)*4/N),'#8a929c');for(let i=0;i<8;i++)g.add(PRIM.box(3.9,.04,.06),T(0,i/8+.15,-2+i/2+.2,0,-.245),'#6a727c');},
+ beam(g){g.add(PRIM.box(4,.08,.4,{y0:true}),null,'#5a616c');g.add(PRIM.box(4,.24,.08,{y0:true}),T(0,.08,0),'#6a727c');g.add(PRIM.box(4,.08,.4,{y0:true}),T(0,.32,0),'#5a616c');},
+ pillar(g){g.add(RB(.8,.3,.8,.06),null,C_GRAY);g.add(PRIM.cyl(.3,.3,3.4,10),T(0,.3,0),'#cfcac0');g.add(RB(.8,.3,.8,.06),T(0,3.7,0),C_GRAY);for(let y=.8;y<3.6;y+=.9)g.add(PRIM.cyl(.32,.32,.06,10),T(0,y,0),C_PANEL);},
+ lamp_post(g){g.add(RB(.7,.25,.7,.08),null,C_GRAY);g.add(PRIM.cyl(.08,.1,4.4,8),T(0,.25,0),C_FRAME);g.add(RB(.9,.2,.4,.06),T(.3,4.55,0),C_DARK);g.add(PRIM.box(.8,.04,.32,{y0:true}),T(.3,4.52,0),COL('#fff2d0',3));lamp(g,0,4.9,0,'#ffd8a0');},
+ floodlight(g){g.add(RB(2,.3,2,.1),null,C_FRAME);for(const [x,z] of [[-.7,-.7],[.7,-.7],[-.7,.7],[.7,.7]])D_.pipe(g,[x,.3,z],[x*.4,9.2,z*.4],.07,'#5a616c');for(let y=2;y<9;y+=2.2)g.add(RB(1.5-y*.1,.08,1.5-y*.1,.03),T(0,y,0),C_PANEL);g.add(RB(1.6,.8,.6,.12),T(0,9.2,.1),C_DARK);g.add(RB(1.4,.6,.04,.03),T(0,9.3,.42),COL('#fff2d0',3));D_.ladder(g,0,.3,.7,8.8,0);},
+ sign(g){for(const s of [-1,1])g.add(PRIM.cyl(.06,.06,1.2,8),T(s*.9,0,0),C_FRAME);g.add(RB(2.4,1.3,.18,.06),T(0,1.1,0),C_DARK);g.add(RB(2.44,.08,.2,.03),T(0,2.4,0),C_PANEL);},
+ statue(g){g.add(RB(3,1,3,.2),null,'#3a3f48');g.add(RB(2.6,.2,2.6,.06),T(0,1,0),'#c8a040');const G=COL('#ffcf4a',.35);g.add(RB(.9,1.2,.6,.25),T(0,2.4,0),G);for(const s of [-1,1]){g.add(PRIM.cyl(.18,.16,1.2,8),T(s*.25,1.2,0),G);g.add(PRIM.cyl(.13,.12,1.1,8),T(s*.6,2.5,0,0,0,s*.4),G);}g.add(PRIM.sphere(.38,12,10),T(0,3.95,0),G);g.add(PRIM.cyl(.1,.1,.6,6),T(.75,3.4,.1),G);g.add(PRIM.box(.5,.3,.05),T(.85,3.95,.1),COL('#ff6a3a',.4));},
+});
+SCREEN_MOUNT.sign=[0,1.75,.1,0,2.1,1.1];
+{const _ds=drawScreen;drawScreen=function(s,b){if(b.k!=='sign')return _ds(s,b);const x=s.cx,W=SCR.W,H=SCR.H;x.fillStyle=b.bg||'#14324a';x.fillRect(0,0,W,H);x.strokeStyle='#ffd27a';x.lineWidth=4;x.strokeRect(4,4,W-8,H-8);
+ const t=(b.text||'SIGN').toUpperCase();x.fillStyle='#ffffff';x.textAlign='center';x.textBaseline='middle';let sz=40;x.font=`900 ${sz}px system-ui`;while(x.measureText(t).width>W-24&&sz>12){sz-=2;x.font=`900 ${sz}px system-ui`;}x.fillText(t,W/2,H/2+2);x.textAlign='left';};}
+// ---------- lights at night ----------
+{const _fu=frameUniforms;frameUniforms=function(p){_fu(p);const u=p.u;if(!u.uPL)return;const gl=GL.gl;const night=clamp(1-(ENV.dayK??1)+(1-(ENV.wxv?ENV.wxv.light:1))*.5,0,1);
+  if(night<.05){gl.uniform1f(u.uPLn,0);return;}if(!R._plT||R.time-R._plT>.5){R._plT=R.time;const L=[];for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(!D.light)continue;const d=Math.hypot(b.x-R.cam[0],b.z-R.cam[2]);if(d<90)L.push([d,b,D]);}L.sort((a,c)=>a[0]-c[0]);
+   const arr=new Float32Array(32);let n=0;for(const [,b,D] of L.slice(0,8)){const c=Math.cos(b.rot),s=Math.sin(b.rot);const lx=b.k==='floodlight'?0:.3,lz=b.k==='floodlight'?1.5:0;arr.set([b.x+c*lx+s*lz,b.y+D.h-.6,b.z-s*lx+c*lz,D.light],n*4);n++;}R._pl=arr;R._pln=n;}
+  gl.uniform4fv(u.uPL,R._pl);gl.uniform1f(u.uPLn,R._pln*1);if(night<1){const a=R._pl.slice();for(let i=0;i<8;i++)a[i*4+3]*=night;gl.uniform4fv(u.uPL,a);}};}
+// ---------- paint ----------
+const PAINTS=[['Factory','#ece6da','#f08a32'],['Slate','#5a616c','#f2c232'],['Teal','#3fc4ae','#ece6da'],['Ocean','#3a7ad8','#ece6da'],['Crimson','#c8453a','#2c3038'],['Forest','#3a8a4a','#f2c232'],['Violet','#8a5ad0','#58e0c8'],['Gold','#e8b21e','#2c3038'],['Midnight','#2c3038','#58e0c8'],['Rose','#e88aa8','#5a616c']];
+const PAINT_CACHE={};
+function paintedMesh(k,pi){const base=MODELS.b[k];if(!pi||!base||!base._raw)return base;const key=k+':'+pi;if(PAINT_CACHE[key])return PAINT_CACHE[key];const raw=base._raw;const L=COL(C_LIGHT),Pn=COL(C_PANEL),A=COL(PAINTS[pi][1]),B=COL(PAINTS[pi][2]);const c=raw.c.slice();
+ const near=(o,q)=>Math.abs(c[o]-q[0])<.02&&Math.abs(c[o+1]-q[1])<.02&&Math.abs(c[o+2]-q[2])<.02;for(let o=0;o<c.length;o+=4){if(near(o,L)){c[o]=A[0];c[o+1]=A[1];c[o+2]=A[2];}else if(near(o,Pn)){c[o]=B[0];c[o+1]=B[1];c[o+2]=B[2];}}
+ return PAINT_CACHE[key]=makeMesh({pos:new Float32Array(raw.p),nrm:new Float32Array(raw.n),col:new Float32Array(c),idx:raw.i});}
+function applyPaint(b){if(!b.obj)return;b.obj.mesh=paintedMesh(b.k,b.paint||0);}
+const paintOK=()=>S.tier>=2||S.paintUnlocked;
+// ---------- factory blueprints: copy a whole area, stamp it elsewhere ----------
+BUILD.copyArea=function(){BUILD.cancel();BUILD.mode='bpsel';BUILD.selA=null;UI.closePanel();UI.hint('Tap one corner of the area to copy, then the opposite corner');};
+function bpselPoint(){const {o,d}=aimRay();const g=rayGround(o,d,60);return g?g.p:null;}
+BUILD.bpselAction=function(){const p=bpselPoint();if(!p)return;if(!BUILD.selA){BUILD.selA=p;AUDIO.click();UI.hint('Now tap the opposite corner');return;}
+ const a=BUILD.selA,x0=Math.min(a[0],p[0]),x1=Math.max(a[0],p[0]),z0=Math.min(a[2],p[2]),z1=Math.max(a[2],p[2]);const cx=Math.round((x0+x1)/2),cz=Math.round((z0+z1)/2);
+ const list=[...FAC.b.values()].filter(b=>b.k!=='hub'&&!BUILDINGS[b.k].vehicle&&!BUILDINGS[b.k].station&&b.x>=x0&&b.x<=x1&&b.z>=z0&&b.z<=z1);if(!list.length){UI.toast('No buildings in that area','warn');BUILD.selA=null;return;}
+ const idx=new Map(list.map((b,i)=>[b.id,i]));const by=Math.min(...list.map(b=>b.y));
+ const items=list.map(b=>({k:b.k,x:b.x-cx,y:b.y-by,z:b.z-cz,rot:b.rot,recipe:b.recipe,clock:b.clock,paint:b.paint,rules:b.rules,text:b.text,node:b.node!=null}));
+ const belts=[...FAC.belts.values()].filter(bl=>idx.has(bl.from[0])&&idx.has(bl.to[0])).map(bl=>({tier:bl.tier,f:[idx.get(bl.from[0]),bl.from[1]],t:[idx.get(bl.to[0]),bl.to[1]]}));
+ const wires=S.wires.filter(([u,v])=>idx.has(u)&&idx.has(v)).map(([u,v])=>[idx.get(u),idx.get(v)]);
+ const L=S.fbps||(S.fbps=[]);const name='Blueprint '+(L.length+1);L.push({id:'fb'+(S.nextId++),name,items,belts,wires,w:Math.round(x1-x0),d:Math.round(z1-z0)});AUDIO.fanfare();UI.toast(name+' saved: '+items.length+' buildings, '+belts.length+' belts. Find it in Build → Blueprints','good');BUILD.cancel();saveSoon();};
+function fbpCost(f){const c={};for(const it of f.items)for(const [k,v] of Object.entries(BUILDINGS[it.k].cost))c[k]=(c[k]||0)+v;for(const bl of f.belts)for(const [k,v] of Object.entries(BELTS[bl.tier].cost))c[k]=(c[k]||0)+v*3;return c;}
+BUILD.stamp=function(id){const f=(S.fbps||[]).find(x=>x.id===id);if(!f)return;BUILD.cancel();BUILD.mode='stamp';BUILD.fbp=f;BUILD.rot=0;UI.closePanel();UI.hint('Aim where it goes · Rotate · tap to place');};
+function stampXform(f,it,base){const c=Math.cos(BUILD.rot),s=Math.sin(BUILD.rot);return {x:base[0]+c*it.x+s*it.z,z:base[2]-s*it.x+c*it.z,rot:(it.rot+BUILD.rot)%TAU};}
+function stampTarget(){const {o,d}=aimRay();const g=rayGround(o,d,60);if(!g)return null;return [Math.round(g.p[0]*2)/2,g.p[1],Math.round(g.p[2]*2)/2];}
+function stampGhosts(){const f=BUILD.fbp,base=stampTarget();if(!f||!base)return;BUILD.stampAt=base;const by=Math.max(...f.items.map(it=>{const q=stampXform(f,it,base);return ground(q.x,q.z)-it.y;}));BUILD.stampY=by;
+ for(const it of f.items){const q=stampXform(f,it,base);const m=MODELS.b[it.k];if(m)R.ghosts.push({mesh:m,model:T(q.x,by+it.y,q.z,q.rot),tint:canAfford(fbpCost(f))?[.4,1,.7,.35]:[.4,.8,1,.35]});}}
+BUILD.stampAction=function(){const f=BUILD.fbp,base=BUILD.stampAt;if(!f||!base)return;const cost=fbpCost(f),aff=canAfford(cost),by=BUILD.stampY;const made=[];
+ for(const it of f.items){const q=stampXform(f,it,base);let node=null;if(it.node){let best=null;for(const nd of WORLD.nodes){const dd=Math.hypot(nd.x-q.x,nd.z-q.z);if(dd<5&&(!best||dd<best.d)&&nodeOK(it.k,nd)&&![...FAC.b.values()].some(b=>b.node===nd.id))best={nd,d:dd};}if(!best){made.push(null);continue;}node=best.nd;q.x=node.x;q.z=node.z;}
+  const y=node?node.y+.2:by+it.y;if(aff){const b=newBuilding({k:it.k,x:q.x,y,z:q.z,rot:q.rot,recipe:it.recipe,clock:it.clock,node:node?node.id:null,rules:it.rules});b.paint=it.paint;b.text=it.text;applyPaint(b);if(typeof clearFloraAround==='function')clearFloraAround(b);made.push(b);}
+  else{BP.list().push({id:'bp'+(S.nextId++),k:it.k,x:q.x,y,z:q.z,rot:q.rot,node:node?node.id:null,got:{},recipe:it.recipe});made.push(null);}}
+ if(aff){pay(cost);for(const bl of f.belts){const A=made[bl.f[0]],B=made[bl.t[0]];if(A&&B)newBelt({tier:bl.tier,from:[A.id,bl.f[1]],to:[B.id,bl.t[1]]});}for(const [u,v] of f.wires){const A=made[u],B=made[v];if(A&&B)S.wires.push([A.id,B.id]);}for(const b of made)if(b)autoWire(b);FAC.powerDirty=true;UI.toast(f.name+' built','good');}
+ else UI.toast('Not enough parts for all of it: placed as fill-in blueprints','info');AUDIO.place();FX.puff(base[0],base[1],base[2]);saveSoon();};
+// build menu: blueprint category with the copy tool and your saved blueprints
+BCATS.push(['blueprints','Blueprints','foundation8']);
+{const _bl=buildList;buildList=function(c){if(c!=='blueprints')return _bl(c);const L=[{k:'copyTool',n:'Blueprint Designer',desc:'Copy an area of your factory: tap two corners. Buildings, belts, power lines, recipes and paint are saved.',cost:{},tier:2,ok:S.tier>=2,icon:'item:hard_drive'}];
+ for(const f of (S.fbps||[]))L.push({k:f.id,n:f.name,desc:f.items.length+' buildings · '+f.belts.length+' belts · '+f.w+' × '+f.d+' m. If you are short of parts it is placed as fill-in blueprints.',cost:fbpCost(f),tier:0,ok:true,icon:f.items[0]?f.items[0].k:'foundation',fbp:1});return L;};}
+{const _bv=UI.views.build;UI.views.build=function(){let h=_bv();h=h.replace('data-a="pick" data-v="copyTool"','data-a="copyTool"');const sel=UI.sel.b;if(sel&&sel.startsWith('fb'))h=h.replace(`data-a="pick" data-v="${sel}"`,`data-a="stampBp" data-v="${sel}"`).replace(/(<button class="bigbtn"[^>]*>)[^<]*(<\/button>)/,'$1Place blueprint$2')+'';return h;};}
+UI.A.copyTool=()=>BUILD.copyArea();UI.A.stampBp=v=>BUILD.stamp(v);
+{const _bs=UI.A.bsel;UI.A.bsel=v=>{if(UI.sel.b===v){if(v==='copyTool'){BUILD.copyArea();return;}if(v.startsWith('fb')){BUILD.stamp(v);return;}}_bs(v);};}
+// ---------- panel extras: paint, sign text, blueprint deletion ----------
+{const _bv=UI.bldView;UI.bldView=function(b){let h=_bv(b);if(b.k==='sign')h+=`<h5>Sign text</h5><input id="signtxt" maxlength="24" value="${esc(b.text||'')}" placeholder="Iron plates"><div class="qrow"><button class="btn gold" data-a="signSet">Save text</button></div><div class="wcols">${['#14324a','#3a1a1a','#1a3a2a','#3a2a0a','#2a1a3a'].map(c=>`<button style="background:${c}" class="${b.bg===c?'on':''}" data-a="signBg" data-v="${c}"></button>`).join('')}</div>`;
+ if(MODELS.b[b.k]&&MODELS.b[b.k]._raw&&!BUILDINGS[b.k].surf&&b.k!=='hub')h+=`<h5>Paint</h5>${paintOK()?`<div class="paints">${PAINTS.map((p,i)=>`<button class="pt ${(b.paint||0)===i?'on':''}" data-a="paint" data-v="${i}" title="${p[0]}"><i style="background:${p[1]}"></i><i style="background:${p[2]}"></i></button>`).join('')}</div>`:'<p class="mut">Paint unlocks at milestone 2.</p>'}`;return h;};}
+UI.A.paint=v=>{const b=UI.bld;b.paint=+v;applyPaint(b);AUDIO.click();UI.refresh();saveSoon();};UI.A.signSet=()=>{const i=$('#signtxt');UI.bld.text=i?i.value:'';UI.refresh();saveSoon();};UI.A.signBg=v=>{UI.bld.bg=v;UI.refresh();saveSoon();};
+{const _nb=newBuilding;newBuilding=function(o){const b=_nb(o);if(o.paint)b.paint=o.paint;if(o.text)b.text=o.text;if(o.bg)b.bg=o.bg;if(b.paint)applyPaint(b);return b;};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const m=BUILD.mode;if(m!=='bpsel'&&m!=='stamp')return;const act=$('#act'),lk=$('#look');act.classList.remove('hide');act.firstElementChild.textContent=m==='bpsel'?(BUILD.selA?'Corner 2':'Corner 1'):'Place';
+ const t=m==='bpsel'?(BUILD.selA?'Tap the opposite corner':'Tap one corner of the area to copy'):BUILD.fbp.name+' · '+(canAfford(fbpCost(BUILD.fbp))?costText(fbpCost(BUILD.fbp)):'not enough parts: places fill-in blueprints');if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}
+ const key=m+'btns';if(UI._mk!==key&&!UI._pressing){UI._mk=key;$('#modeBtns').innerHTML=(m==='stamp'?`<button class="rb" data-a="rot" title="Rotate">${ICO.rot}</button>`:'')+`<button class="rb" data-a="cancel" title="Cancel">${ICO.x}</button>`;}};}
+{const _bf=BP.frame;BP.frame=function(){if(BUILD.mode==='stamp')stampGhosts();if(BUILD.mode==='bpsel'&&BUILD.selA){const p=bpselPoint();if(p){const a=BUILD.selA;const g=new GB();g.add(PRIM.box(1,1,1),null,'#ffffff');if(!BUILD._selM)BUILD._selM=g.build();R.ghosts.push({mesh:BUILD._selM,model:T((a[0]+p[0])/2,Math.max(a[1],p[1])-.5,(a[2]+p[2])/2,0,0,0,Math.abs(p[0]-a[0])||.2,6,Math.abs(p[2]-a[2])||.2),tint:[.4,.8,1,.18]});}}_bf();};}
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.9.5',VERSION_MARK='FFVER@0.9.5@';
+const VERSION='0.9.6',VERSION_MARK='FFVER@0.9.6@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -3059,7 +3155,7 @@ const setLoad=(f,m)=>{const b=document.getElementById('lbar');if(b)b.style.width
 GAME.primary=function(down){AUDIO.init();if(!down){INPUT.act=false;return;}if(UI.panel)return;
  if(BUILD.mode)updateBuildMode();
  if(BUILD.mode==='place')return placeBuilding();if(BUILD.mode==='belt')return beltAction();if(BUILD.mode==='dismantle')return dismantle();if(BUILD.mode==='wire')return wireAction();if(BUILD.mode==='pipe')return pipeAction();
- if(GAME.landing)return;if(VEH.driving)return;if(BUILD.mode==='rail'){BUILD.railAction();return;}const H=handTarget();if(H&&H.kind==='veh'){VEH.enter(H.v);return;}if(H&&H.kind==='crate'){GEAR.takeCrate(H.c);return;}{const hk=(S.equip||{}).hand;if((hk==='rifle'||hk==='nobelisk_det')&&!(H&&['spot','bp','building','pod'].includes(H.kind))){GEAR.fire();return;}}if(H&&H.kind==='spot'){START.useSpot(H);return;}if(H&&H.kind==='bp'){if(!BP.fill(H.bp)&&BP.list().includes(H.bp)){UI.bp=H.bp;UI.open('bp');UI.bp=H.bp;UI.refresh();}return;}if(H&&H.kind==='pod'){UI.pod=H.p;UI.open('pod');UI.pod=H.p;UI.refresh();return;}if(H&&H.kind==='creature'){zap(H.c);INPUT.act=true;TOOL.kick=1;return;}if(H&&H.kind==='building'){UI.open('bld',H.b);return;}INPUT.act=true;};
+ if(GAME.landing)return;if(VEH.driving)return;if(BUILD.mode==='rail'){BUILD.railAction();return;}if(BUILD.mode==='bpsel'){BUILD.bpselAction();return;}if(BUILD.mode==='stamp'){BUILD.stampAction();return;}const H=handTarget();if(H&&H.kind==='veh'){VEH.enter(H.v);return;}if(H&&H.kind==='crate'){GEAR.takeCrate(H.c);return;}{const hk=(S.equip||{}).hand;if((hk==='rifle'||hk==='nobelisk_det')&&!(H&&['spot','bp','building','pod'].includes(H.kind))){GEAR.fire();return;}}if(H&&H.kind==='spot'){START.useSpot(H);return;}if(H&&H.kind==='bp'){if(!BP.fill(H.bp)&&BP.list().includes(H.bp)){UI.bp=H.bp;UI.open('bp');UI.bp=H.bp;UI.refresh();}return;}if(H&&H.kind==='pod'){UI.pod=H.p;UI.open('pod');UI.pod=H.p;UI.refresh();return;}if(H&&H.kind==='creature'){zap(H.c);INPUT.act=true;TOOL.kick=1;return;}if(H&&H.kind==='building'){UI.open('bld',H.b);return;}INPUT.act=true;};
 GAME.secondary=()=>{if(BUILD.mode)BUILD.cancel();};
 GAME.tapAt=function(sx,sy){if(UI.panel||BUILD.mode||VEH.driving)return;const r=screenRay(sx/innerWidth,sy/innerHeight);{const vq=rayVeh(r.o,r.d);if(vq){UI.veh=vq.v;UI.open('veh');UI.veh=vq.v;UI.refresh();return;}}{const bq=BP.ray(r.o,r.d,30),hb0=rayBuildings(r.o,r.d,30);if(bq&&(!hb0||bq.t<hb0.t)){UI.bp=bq.bp;UI.open('bp');UI.bp=bq.bp;UI.refresh();return;}}const h=rayBuildings(r.o,r.d,30);if(h)UI.open('bld',h.b);};
 function onKey(c,e){AUDIO.init();if(c==='Tab'){e.preventDefault();UI.A.tab('inv');return;}
@@ -3086,7 +3182,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
