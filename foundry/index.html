@@ -275,6 +275,7 @@ body.padmode #joyHint,body.padmode #joy{display:none!important}
 #padchip{position:fixed;left:50%;bottom:calc(8px + var(--safe-b,0px));transform:translateX(-50%);z-index:30;background:rgba(16,26,32,.9);border:1px solid #3a8ab0;color:#c9e8ff;border-radius:10px;padding:6px 10px;font:600 11.5px system-ui;max-width:92vw;pointer-events:none}
 body.padmode #pad,body.padmode #joy,body.padmode #joyHint,body.padmode #tr .rb,body.padmode #gearhud{display:none!important}
 #sndchip{position:fixed;left:50%;top:calc(58px + var(--safe-t,0px));transform:translateX(-50%);z-index:31;background:rgba(40,30,20,.92);border:1px solid #f08a32;color:#ffd27a;border-radius:20px;padding:8px 14px;font:800 13px system-ui;display:none}
+#slidebtn{grid-column:1;grid-row:1;width:52px;height:52px;border-radius:50%;background:rgba(18,21,26,.7);display:grid;place-items:center;align-self:end;margin-bottom:4px}#slidebtn svg{width:24px;height:24px}body.pc #slidebtn{display:none}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1309,20 +1310,30 @@ function blockedAt(x,z,y){for(const b of FAC.b.values()){const D=BUILDINGS[b.k];
  return false;}
 function updatePlayer(dt){if(VEH.driving){R.yaw=PL.yaw;R.pitch=PL.pitch;return;}let mx=INPUT.jx,my=INPUT.jy;const k=INPUT.keys;if(k.KeyW||k.ArrowUp)my=1;if(k.KeyS||k.ArrowDown)my=-1;if(k.KeyA||k.ArrowLeft)mx=-1;if(k.KeyD||k.ArrowRight)mx=1;
  if(UI.panel){mx=my=0;}const run=k.ShiftLeft||Math.hypot(INPUT.jx,INPUT.jy)>.98;const sp=(run?9:5.2)*GEAR.speedMul()*Math.min(1,Math.hypot(mx,my));
- const ang=Math.atan2(mx,my)+PL.yaw;let nx=PL.x,nz=PL.z;if(Math.hypot(mx,my)>.05){nx+=Math.sin(PL.yaw)*my*sp*dt/Math.max(1,Math.hypot(mx,my))+Math.cos(PL.yaw)*-mx*sp*dt/Math.max(1,Math.hypot(mx,my));nz+=Math.cos(PL.yaw)*my*sp*dt/Math.max(1,Math.hypot(mx,my))-Math.sin(PL.yaw)*-mx*sp*dt/Math.max(1,Math.hypot(mx,my));}
+ // ---- movement with momentum: sprint, crouch-slide, and slide-jumps that carry your speed ----
+ let wx=0,wz=0;const ml=Math.hypot(mx,my);if(ml>.05){const f=1/Math.max(1,ml);wx=(Math.sin(PL.yaw)*my-Math.cos(PL.yaw)*mx)*sp*f;wz=(Math.cos(PL.yaw)*my+Math.sin(PL.yaw)*mx)*sp*f;}
+ PL.mv=PL.mv||[0,0];const cs=Math.hypot(PL.mv[0],PL.mv[1]);const cDown=INPUT.crouch&&!UI.panel;INPUT.crouch=false;if(cDown&&!PL.ground)PL.slideBuf=.3;PL.slideBuf=Math.max(0,(PL.slideBuf||0)-dt);
+ const startSlide=(boost)=>{const ws=Math.hypot(wx,wz);let dx,dz;if(cs>1){dx=PL.mv[0]/cs;dz=PL.mv[1]/cs;}else if(ws>.1){dx=wx/ws;dz=wz/ws;}else{dx=Math.sin(PL.yaw);dz=Math.cos(PL.yaw);}const v=Math.min(19,Math.max(cs,ws,9)*boost);PL.mv=[dx*v,dz*v];PL.slide=.85;PL.hop=false;AUDIO.slide&&AUDIO.slide();};
+ if(PL.ground&&!PL.slide){if(cDown&&(run||cs>7)&&Math.max(cs,Math.hypot(wx,wz))>6)startSlide(PL.landT>0?1.08:1.3);else if(PL.slideBuf>0&&cs>6){PL.slideBuf=0;startSlide(1.06);}}
+ if(PL.slide>0){PL.slide-=dt;const d=Math.pow(.5,dt);PL.mv[0]*=d;PL.mv[1]*=d;const ws=Math.hypot(wx,wz);if(ws>.1){const v=Math.hypot(PL.mv[0],PL.mv[1]);PL.mv[0]=lerp(PL.mv[0],wx/ws*v,Math.min(1,dt*1.5));PL.mv[1]=lerp(PL.mv[1],wz/ws*v,Math.min(1,dt*1.5));}
+  if(Math.random()<.6)FX.burst(PL.x,PL.y+.1,PL.z,COL('#c8b8a8'),1,1.5);if(PL.slide<=0||Math.hypot(PL.mv[0],PL.mv[1])<4)PL.slide=0;}
+ else if(!PL.ground&&PL.hop){PL.mv[0]=lerp(PL.mv[0],PL.mv[0]+wx*.05,1);PL.mv[1]=lerp(PL.mv[1],PL.mv[1]+wz*.05,1);const v=Math.hypot(PL.mv[0],PL.mv[1]);if(v>19){PL.mv[0]*=19/v;PL.mv[1]*=19/v;}}
+ else{const k2=Math.min(1,dt*(PL.ground?(cs>sp+1?4:14):3));PL.mv[0]=lerp(PL.mv[0],wx,k2);PL.mv[1]=lerp(PL.mv[1],wz,k2);if(PL.ground)PL.hop=false;}
+ PL.landT=Math.max(0,(PL.landT||0)-dt);
+ let nx=PL.x+PL.mv[0]*dt,nz=PL.z+PL.mv[1]*dt;
  const lim=WORLD.half-8;nx=clamp(nx,-lim,lim);nz=clamp(nz,-lim,lim);
- if(!blockedAt(nx,PL.z,PL.y))PL.x=nx;if(!blockedAt(PL.x,nz,PL.y))PL.z=nz;
+ if(!blockedAt(nx,PL.z,PL.y))PL.x=nx;else{PL.mv[0]=0;PL.slide=0;}if(!blockedAt(PL.x,nz,PL.y))PL.z=nz;else{PL.mv[1]=0;PL.slide=0;}
  playerExtras(dt);if(zipStep(dt)){PL.speed=0;R.yaw=PL.yaw;R.pitch=PL.pitch;PL.camY=PL.y+PL.eye;R.cam=[PL.x,PL.camY,PL.z];return;}
  const wasGround=PL.ground;PL.vy-=24*dt;PL.y+=PL.vy*dt;const top=solidAt(PL.x,PL.z,PL.y);
- if(PL.y<=top){if(top-PL.y<1.2||PL.vy<0){PL.y=top;PL.vy=0;PL.ground=true;}}
+ if(PL.y<=top){if(top-PL.y<1.2||PL.vy<0){if(!wasGround&&PL.hop)PL.landT=.25;PL.y=top;PL.vy=0;PL.ground=true;}}
  else if(wasGround&&PL.vy<=0&&PL.y-top<.6){PL.y=top;PL.vy=0;PL.ground=true;}// stick to the ground walking downhill instead of hopping
  else PL.ground=PL.y-top<.05;
- if((k.Space||INPUT.jump)&&PL.ground&&!PL.dead){PL.vy=8.2*GEAR.jumpMul();PL.ground=false;}INPUT.jump=false;if(!GEAR.air(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead))jetStep(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead);
- PL.speed=sp;R.yaw=PL.yaw;R.pitch=PL.pitch;
+ if((k.Space||INPUT.jump)&&PL.ground&&!PL.dead){PL.vy=8.2*GEAR.jumpMul();PL.ground=false;if(PL.slide>0||PL.landT>0){const v=Math.hypot(PL.mv[0],PL.mv[1]);const nv=Math.min(19,v*1.05+.4);if(v>.1){PL.mv[0]*=nv/v;PL.mv[1]*=nv/v;}PL.slide=0;PL.hop=true;PL.vy=7.6*GEAR.jumpMul();}}INPUT.jump=false;if(!GEAR.air(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead))jetStep(dt,(INPUT.jumpHeld||k.Space)&&!PL.dead);
+ PL.speed=PL.ground?Math.hypot(PL.mv[0],PL.mv[1]):0;R.yaw=PL.yaw;R.pitch=PL.pitch;PL.eyeK=lerp(PL.eyeK??1,PL.slide>0?0:1,Math.min(1,dt*12));PL.eye=1.0+.65*PL.eyeK;
  // head bob: the phase advances with distance walked, so speeding up never jumps the camera
- PL.bobK=lerp(PL.bobK||0,PL.ground&&sp>0?Math.min(1,sp/5.2):0,Math.min(1,dt*8));PL.bobPh=(PL.bobPh||0)+dt*sp*1.55;const bob=Math.sin(PL.bobPh)*.035*PL.bobK;
+ PL.bobK=lerp(PL.bobK||0,PL.ground&&!PL.slide&&PL.speed>.5?Math.min(1,PL.speed/5.2):0,Math.min(1,dt*8));PL.bobPh=(PL.bobPh||0)+dt*Math.min(PL.speed,10)*1.55;const bob=Math.sin(PL.bobPh)*.035*PL.bobK;
  // smooth the eye height over steps and slopes
- const ey=PL.y+PL.eye;PL.camY=PL.camY==null||Math.abs(PL.camY-ey)>2.5?ey:lerp(PL.camY,ey,Math.min(1,dt*(PL.ground?18:40)));R.cam=[PL.x,PL.camY+bob,PL.z];}
+ const ey=PL.y+PL.eye;PL.camY=PL.camY==null||Math.abs(PL.camY-ey)>2.5?ey:lerp(PL.camY,ey,Math.min(1,dt*(PL.ground?18:40)));R.cam=[PL.x,PL.camY+bob,PL.z];R.fov=lerp(R.fov,(72+Math.max(0,Math.min(12,(Math.hypot(PL.mv[0],PL.mv[1])-9)*.9)))*Math.PI/180,Math.min(1,dt*4));}
 function initInput(){const cv=GL.canvas;
  addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;INPUT.keys[e.code]=true;onKey(e.code,e);});addEventListener('keyup',e=>{INPUT.keys[e.code]=false;if(e.code==='KeyE'||e.code==='Mouse0')INPUT.act=false;});
  addEventListener('blur',()=>{INPUT.keys={};INPUT.jx=INPUT.jy=0;INPUT.joyId=null;INPUT.act=false;UI.joy(false);});
@@ -1612,6 +1623,7 @@ const AUDIO={ctx:null,init(){if(!S.settings.sound)return;try{if(navigator.audioS
   // steel chisel biting into stone: a bright chink, a gritty crunch and a dull knock
   for(const [fr,v,d] of [[3150,.07,.06],[4700,.045,.045],[6200,.025,.03]]){const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=fr*f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.02);}
   this.noise(.07,{freq:2800*f,vol:.2});this.noise(.12,{freq:900,vol:.08,when:.01});this.tone(170*f,.06,{type:'triangle',vol:.09,slide:.6});},
+ slide(){this.noise(.55,{freq:900,vol:.16});this.noise(.3,{freq:2400,vol:.05});},
  fanfare(){[523,659,784,1047].forEach((f,i)=>this.tone(f,.32,{type:'triangle',vol:.1,when:i*.12}));}};
 // ---- particles ----
 FX.parts=[];
@@ -1635,13 +1647,14 @@ UI.init=function(){const u=$('#ui');u.innerHTML=`
  <div id="ms"></div>
  <div id="tr"><div id="pow" class="pill"></div><button class="rb" data-a="tab" data-v="build" title="Build (B)">${ICO.hammer}</button><button class="rb" data-a="tab" data-v="inv" title="Inventory (Tab)">${ICO.bag}</button><button class="rb" data-a="scan" title="Scanner (V)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2" fill="none" opacity=".6"/><path d="M12 12L18 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="15" r="1.6" fill="currentColor"/></svg></button><button class="rb" data-a="tab" data-v="map" title="Map (M)">${ICO.map}</button><button class="rb" data-a="pause" title="Pause (Esc)">${ICO.menu}</button></div>
  <div id="joy" class="hide"><i></i></div><div id="joyHint">MOVE</div>
- <div id="pad"><div id="modeBtns"></div><button id="act" class="big"><span></span><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></button><button id="jump" class="small">${ICO.up}</button></div>
+ <div id="pad"><div id="modeBtns"></div><button id="act" class="big"><span></span><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></button><button id="jump" class="small">${ICO.up}</button><button id="slidebtn" class="small" title="Slide (C)"><svg viewBox="0 0 24 24"><path d="M4 18h16M7 14l4-6 4 3 4-4" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
  <div id="sheet" class="hide"><div class="sh"><div class="tabs"></div><button class="x" data-a="close">✕</button></div><div class="body"></div></div>`;
  if(!touchMode){document.body.classList.add('pc');}
  u.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.stopPropagation();AUDIO.init();const a=UI.A[t.dataset.a];if(a){a(t.dataset.v,t);}});
  const act=$('#act');act.addEventListener('pointerdown',e=>{e.preventDefault();AUDIO.init();act.setPointerCapture(e.pointerId);act.classList.add('on');GAME.primary(true);});
  const aup=()=>{act.classList.remove('on');GAME.primary(false);};act.addEventListener('pointerup',aup);act.addEventListener('pointercancel',aup);act.addEventListener('lostpointercapture',aup);
  {const j=$('#jump');j.addEventListener('pointerdown',e=>{e.preventDefault();try{j.setPointerCapture(e.pointerId);}catch(_){}INPUT.jump=true;INPUT.jumpHeld=true;});const ju=()=>{INPUT.jumpHeld=false;};j.addEventListener('pointerup',ju);j.addEventListener('pointercancel',ju);j.addEventListener('lostpointercapture',ju);}
+ $('#slidebtn').addEventListener('pointerdown',e=>{e.preventDefault();INPUT.crouch=true;});
  for(const id of ['#ms','#tr','#pad','#sheet'])$(id).addEventListener('pointerdown',e=>e.stopPropagation());};
 const ICO={hammer:'<svg viewBox="0 0 24 24"><path d="M3 21l9-9M12 12l2-2M14 6l4-4 4 4-4 4-4-4zM10 8l6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
  bag:'<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6L5 8zM9 8V6a3 3 0 016 0v2" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linejoin="round"/></svg>',
@@ -1794,6 +1807,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.1.6',t:'Slide hopping',items:['Crouch-slide: while sprinting, press crouch to slide with a burst of speed (touch: the new slide button above jump · controller: B · keyboard: C).','Jump during a slide to keep your speed, then crouch again as you land to slide again. Chain it to travel almost twice as fast as sprinting.','Your view widens slightly at high speed. The quick wheel key on keyboard moved to Q.']},
  {v:'0.1.5',t:'Controller polish',items:['Controller mode hides the on-screen buttons and joystick.','Sound fix: iPhones only allow sound to start after a screen tap, so if sound is off a small note asks you to tap once. Sound now also plays when your phone is on silent mode (newer iOS).']},
  {v:'0.1.3',t:'Controller check',items:['Settings now has a live Controller check that shows whether the game can see your controller and which buttons you press.']},
  {v:'0.1.2',t:'Touchscreen or controller',items:['New Controls setting: Touchscreen (default) or Controller. The controller only takes over once you pick Controller, so a connected controller can no longer block screen taps.']},
@@ -3276,7 +3290,7 @@ UI.A.wheelAdd=v=>{const L=wheelList();if(L.includes(v)){S.wheel=L.filter(x=>x!==
 {const _bv=UI.views.build;UI.views.build=function(){let h=_bv();const k=UI.sel.b;if(k&&!k.startsWith('fb'))h=h.replace(/(<\/h3>)/,`$1<button class="btn sm whadd" data-a="wheelAdd" data-v="${k}">${wheelList().includes(k)?'− Quick wheel':'＋ Quick wheel'}</button>`);return h;};}
 // HUD button
 {const _i=UI.init;UI.init=function(){_i();const tr=$('#tr');const b=document.createElement('button');b.className='rb';b.dataset.a='wheel';b.title='Quick wheel (C)';b.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5" stroke="currentColor" stroke-width="2"/></svg>';tr.insertBefore(b,tr.children[1]);};}
-addEventListener('keydown',e=>{if(e.code==='KeyC'&&GAME.mode==='play'&&!UI.panel&&e.target.tagName!=='INPUT'){UI.A.wheel();}});
+addEventListener('keydown',e=>{if(false&&e.code==='KeyC'&&GAME.mode==='play'&&!UI.panel&&e.target.tagName!=='INPUT'){UI.A.wheel();}});
 // ===== Port arrows: see-through arrows on ghosts showing which openings take items in (teal) and which send them out (orange) =====
 let ARROW_M=null;
 function portArrows(k,x,y,z,rot){const D=BUILDINGS[k];if(!D||!D.ports||D.pass)return;if(!ARROW_M){const g=new GB();g.add(PRIM.box(.7,.25,1.5),T(0,0,-.55),'#ffffff');g.add(PRIM.box(.45,.25,1.5),T(-.48,0,.45,.8),'#ffffff');g.add(PRIM.box(.45,.25,1.5),T(.48,0,.45,-.8),'#ffffff');ARROW_M=g.build();}
@@ -3343,7 +3357,7 @@ PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():
  if(down(7))GAME.primary(true);if(up(7))GAME.primary(false);                     // RT: mine, place, use
  if(down(2)){const H=handTarget();if(H&&H.kind!=='node'&&H.kind!=='flora')GAME.primary(true);else{GAME.primary(true);}}if(up(2))GAME.primary(false); // X: interact
  if(down(6)){if(BUILD.mode==='dismantle')BUILD.cancel();else BUILD.dismantle();}  // LT: dismantle
- if(down(1))padBack();                                                            // B: cancel / back
+ if(down(1)){if(UI.panel||GAME.paused||BUILD.mode||VEH.driving||document.querySelector('#wheel.on,#scanw.on,#modal.on'))padBack();else INPUT.crouch=true;} // B: back, or crouch-slide
  if(down(3))UI.A.tab('build');                                                    // Y: build menu
  if(down(4))BUILD.mode?BUILD.rotate(-1):GEAR.cycleHand();if(down(5))BUILD.mode?BUILD.rotate(1):UI.A.wheel(); // LB / RB
  if(down(12)&&BUILD.mode==='place')BUILD.nudge(1);if(down(13)&&BUILD.mode==='place')BUILD.nudge(-1);       // d-pad up/down: raise/lower
@@ -3355,7 +3369,7 @@ PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():
  PAD.prev=B;};
 addEventListener('gamepadconnected',()=>{AUDIO.init&&AUDIO.init();});
 // a controls page in Settings
-{const _m=UI.views.menu;UI.views.menu=function(){const im=S.settings.input||'touch';return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controls</h5><div class="seg"><button class="${im==='touch'?'on':''}" data-a="inputSet" data-v="touch">Touchscreen</button><button class="${im==='controller'?'on':''}" data-a="inputSet" data-v="controller">Controller</button></div><p class="mut">${im==='controller'?(PAD.on?'Controller connected. The touchscreen still works too.':'Pair your controller (Backbone, Xbox, PlayStation) and press any button.'):'Switch to Controller to play with a Backbone, Xbox or PlayStation controller.'}<br>Left stick move · Right stick look · L3 sprint<br>RT mine / place / use · X interact · A jump (hold in air: jetpack)<br>Y build menu · LT dismantle · RB quick wheel · LB switch tool<br>While building: LB/RB rotate · D-pad ▲▼ raise/lower · ◀ row · ▶ power line<br>D-pad ◀ scanner · View map · Menu pause · R3 inventory<br>In menus: D-pad or stick to move · A select · B back · LB/RB tabs</p></div><div class="sc"><h5>Audio</h5>`);};}
+{const _m=UI.views.menu;UI.views.menu=function(){const im=S.settings.input||'touch';return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controls</h5><div class="seg"><button class="${im==='touch'?'on':''}" data-a="inputSet" data-v="touch">Touchscreen</button><button class="${im==='controller'?'on':''}" data-a="inputSet" data-v="controller">Controller</button></div><p class="mut">${im==='controller'?(PAD.on?'Controller connected. The touchscreen still works too.':'Pair your controller (Backbone, Xbox, PlayStation) and press any button.'):'Switch to Controller to play with a Backbone, Xbox or PlayStation controller.'}<br>Left stick move · Right stick look · L3 sprint · B crouch-slide (jump mid-slide to keep your speed)<br>RT mine / place / use · X interact · A jump (hold in air: jetpack)<br>Y build menu · LT dismantle · RB quick wheel · LB switch tool<br>While building: LB/RB rotate · D-pad ▲▼ raise/lower · ◀ row · ▶ power line<br>D-pad ◀ scanner · View map · Menu pause · R3 inventory<br>In menus: D-pad or stick to move · A select · B back · LB/RB tabs</p></div><div class="sc"><h5>Audio</h5>`);};}
 
 UI.A.inputSet=v=>{S.settings.input=v;AUDIO.click();UI.refresh();saveSoon();};
 // ---- controller diagnostics, shown live in Settings ----
@@ -3376,7 +3390,7 @@ setInterval(()=>{let c=document.getElementById('sndchip');if(!c){c=document.crea
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.1.5',VERSION_MARK='FFVER@0.1.5@';
+const VERSION='0.1.6',VERSION_MARK='FFVER@0.1.6@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -3391,7 +3405,7 @@ function onKey(c,e){AUDIO.init();if(c==='Tab'){e.preventDefault();UI.A.tab('inv'
  if(c==='Escape'){if(GAME.mode!=='play')return;if(GAME.paused)MENU.resume();else if(UI.panel)UI.closePanel();else if(BUILD.mode)BUILD.cancel();else MENU.pause();return;}
  if(GAME.mode!=='play'||GAME.paused)return;
  if(UI.panel&&c!=='KeyB'&&c!=='KeyM')return;
- if(c==='KeyB'||c==='KeyQ')UI.A.tab('build');else if(c==='KeyM')UI.A.tab('map');else if(c==='KeyR'){if(BUILD.mode==='place'||BUILD.mode==='belt'||BUILD.mode==='pipe')BUILD.rotate(1);}else if(c==='KeyX')UI.A.dismantle();
+ if(c==='KeyB')UI.A.tab('build');else if(c==='KeyQ')UI.A.wheel();else if(c==='KeyC'||c==='ControlLeft')INPUT.crouch=true;else if(c==='KeyM')UI.A.tab('map');else if(c==='KeyR'){if(BUILD.mode==='place'||BUILD.mode==='belt'||BUILD.mode==='pipe')BUILD.rotate(1);}else if(c==='KeyX')UI.A.dismantle();
  else if(c==='KeyT'&&BUILD.mode==='place')BUILD.nudge(1);else if(c==='KeyG'&&BUILD.mode==='place')BUILD.nudge(-1);else if(c==='KeyF'&&BUILD.mode==='place')BUILD.cycleZoop();
  else if(c==='KeyE'){const H=handTarget();if(H&&(H.kind==='spot'||H.kind==='pod'||H.kind==='building'))GAME.primary(true);}else if(c==='KeyH')UI.A.tab('hub');else if(c==='KeyV')SCAN.open();else if(c==='KeyL')UI.A.wireTool();else if(c==='KeyZ')GEAR.cycleHand();
  else if(/^Digit[1-5]$/.test(c)&&BUILD.mode==='belt'){const k='belt'+c.slice(5);if(unlocked(BELTS[k])){BUILD.beltTier=k;UI._mk='';}}}
@@ -3411,7 +3425,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
