@@ -259,6 +259,8 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 .ropts{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:5px;max-height:220px;overflow:auto}.ro{aspect-ratio:1;border-radius:6px;background:#22252b;border:1px solid #3a3e47;display:grid;place-items:center;padding:2px;overflow:hidden}.ro img{width:100%;height:100%;object-fit:contain}.ro.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(240,138,50,.4)}.ro .rt{font-size:8px;padding:2px 3px}
 #gearhud{position:absolute;right:calc(100% + 10px);bottom:4px;display:flex;flex-direction:column;gap:8px;grid-column:auto;grid-row:auto}
 .rb.rec{background:#a33!important;color:#fff}
+.shopg{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}.shi{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:8px;background:#22252b;border:1px solid #3a3e47;color:#fff;font-size:12px;text-align:center}
+.shi .tp{width:64px;height:64px;border-radius:8px;background:radial-gradient(circle,#3c414b,#1e2025);display:grid;place-items:center;overflow:hidden}.shi .tp img{width:120%;height:120%;object-fit:contain}.shi small{color:#ffd27a;font-weight:800}.shi.off{opacity:.5}.alt.done{opacity:.6;border-color:#1f4a40}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -637,7 +639,7 @@ const SKYHOOK_PHASES=[{n:'Phase 1 · Anchor',need:{heavy_frame:30,motor:60,compu
 const NODE_TYPES={crude_oil:{n:'Crude oil',c:'#2a2030',fluid:1},iron_ore:{n:'Iron',c:'#9a5e4a'},copper_ore:{n:'Copper',c:'#d07a48'},limestone:{n:'Limestone',c:'#e4dccb'},coal:{n:'Coal',c:'#2a2a30'},aurite_ore:{n:'Aurite',c:'#f0c050'}};
 const PURITY=[{n:'Impure',k:.5},{n:'Normal',k:1},{n:'Pure',k:2}];
 const tierOf=o=>o.tier||0;
-const unlocked=o=>tierOf(o)<=S.tier&&(!o.alt||!!(S.alts&&S.alts[o.id]));
+const unlocked=o=>tierOf(o)<=S.tier&&(!o.alt||!!(S.alts&&S.alts[o.id]))&&(!o.res||!!(S.mam&&S.mam.done[o.res]));
 
 // ---- 04-world.js ----
 // ===== The planet: terrain, resource nodes, alien flora =====
@@ -1136,7 +1138,7 @@ function wantsPower(b){const D=BUILDINGS[b.k];if(!D.power)return false;if(b.k===
 function pushOut(b,pi,item){const bid=b.conn[pi];if(bid==null)return false;const bl=FAC.belts.get(bid);if(!bl||!beltCanTake(bl))return false;beltPush(bl,item);return true;}
 function outPorts(b){const P=BUILDINGS[b.k].ports||[];const o=[];P.forEach((p,i)=>{if(p[3]==='out')o.push(i);});return o;}
 function updateBuilding(b,dt){const D=BUILDINGS[b.k];b.run=0;
- if(D.machine){if(b.pf>0&&machineReady(b)){const r=RECIPE[b.recipe];b.prog+=dt*b.pf*(b.clock||1);b.run=1;if(b.prog>=r.t){b.prog-=r.t;for(const [k,n] of Object.entries(r.in)){b.inb[k]-=n;stat('cons',k,n);}for(const [k,n0] of Object.entries(r.out)){const n=n0*(b.amp?2:1);b.out[k]=(b.out[k]||0)+n;stat('prod',k,n);}}}
+ if(D.machine){if(b.pf>0&&machineReady(b)){const r=RECIPE[b.recipe];b.prog+=dt*b.pf*(b.clock||1);b.run=1;if(b.prog>=r.t){b.prog-=r.t;for(const [k,n] of Object.entries(r.in)){b.inb[k]-=n;stat('cons',k,n);}for(const [k,n0] of Object.entries(r.out)){const n=n0*(b.amp?(S.ampX||2):1);b.out[k]=(b.out[k]||0)+n;stat('prod',k,n);}}}
   for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>=1&&!isFluid(k)&&pushOut(b,pi,k)){b.out[k]--;break;}}
  else if(BUILDINGS[b.k].makes)updateExtractor(b,dt);
  else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd&&b.pf>0){const rate=D.rate*PURITY[nd.purity].k;const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot<50){b.prog+=dt*b.pf*(b.clock||1);b.run=1;const iv=60/rate;while(b.prog>=iv){b.prog-=iv;b.out[nd.type]=(b.out[nd.type]||0)+1;stat('prod',nd.type,1);}}}
@@ -1362,7 +1364,7 @@ function placeTarget(){const k=BUILD.k,D=BUILDINGS[k],{o,d}=aimRay();const hb=ra
  if(hb&&(!hg||hb.t<hg.t)&&hb.face==='top'&&(hb.b.k==='foundation'||hb.b.k==='catwalk')){base=hb.b;p=hb.p;}else if(hg)p=hg.p;else{const t=12;p=[o[0]+d[0]*t,o[1]+d[1]*t,o[2]+d[2]*t];}
  const [w,dd]=fp(k,BUILD.rot);let x,z,y,node=null,rot=BUILD.rot;
  if(k==='waterx'){x=Math.round(p[0]*2)/2;z=Math.round(p[2]*2)/2;const L=lakeAt(x,z);y=L?lakeLevel(L)-.4:ground(x,z);BUILD.lake=L;BUILD.slope=0;}
- else if(k==='miner'||k==='miner2'||k==='oilx'){let best=null;for(const nd of WORLD.nodes){if((nd.type==='crude_oil')!==(k==='oilx'))continue;const dist=Math.hypot(nd.x-p[0],nd.z-p[2]);if(dist<5&&(!best||dist<best.d))best={nd,d:dist};}
+ else if(k==='miner'||k==='miner2'||k==='oilx'||k==='geo'||k==='wellx'){let best=null;for(const nd of WORLD.nodes){if(!nodeOK(k,nd))continue;const dist=Math.hypot(nd.x-p[0],nd.z-p[2]);if(dist<5&&(!best||dist<best.d))best={nd,d:dist};}
   if(best){node=best.nd;x=node.x;z=node.z;y=node.y+.2;}else{x=p[0];z=p[2];y=ground(x,z);}}
  else if(k==='wall'){// walls hug the nearest edge of the 4 m grid (or of the foundation you aim at)
   const ref=base||[...FAC.b.values()].find(b=>b.k==='foundation'&&Math.hypot(b.x-p[0],b.z-p[2])<4);const bx=ref?ref.x:0,bz=ref?ref.z:0;const cx=bx+Math.round((p[0]-bx)/4)*4,cz=bz+Math.round((p[2]-bz)/4)*4;const fx=p[0]-cx,fz=p[2]-cz;
@@ -1380,7 +1382,7 @@ function placeTarget(){const k=BUILD.k,D=BUILDINGS[k],{o,d}=aimRay();const hb=ra
 function placeValid(t){const k=BUILD.k,D=BUILDINGS[k];if(!canAfford(D.cost)&&!BP.ok(k))return 'Not enough parts: needs '+costText(D.cost);
  if(k==='waterx'){if(!BUILD.lake||!lakeAt(t.x,t.z))return 'Water extractors go on a lake';}
  if(k==='oilx'&&!t.node)return 'Oil extractors go on a crude oil pool';
- if((k==='miner'||k==='miner2'||k==='oilx')){if(!t.node)return 'Miners go on an ore node';for(const b of FAC.b.values())if(b.node===t.node.id)return 'That node already has a miner';}
+ if(k==='geo'&&!t.node)return 'Geothermal generators go on a geyser';if(k==='wellx'&&!t.node)return 'Place it on a resource well';if((k==='miner'||k==='miner2'||k==='oilx'||k==='geo'||k==='wellx')){if(!t.node)return 'Miners go on an ore node';for(const b of FAC.b.values())if(b.node===t.node.id)return 'That node already has a miner';}
  if(Math.hypot(t.x-PL.x,t.z-PL.z)>40)return 'Too far away';
  if(k==='skyhook'&&[...FAC.b.values()].some(b=>b.k==='skyhook'))return 'You already have a Skyhook';
  if(k==='hub'&&hubB())return 'You already have a HUB';
@@ -1754,6 +1756,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.9.5',t:'Research, the Sink and the late game',items:['MAM (milestone 1): research pocket upgrades, health, medicine, slug refinement, a long-range scanner and stronger resonance cores. Hard drives can be analysed there too.','AWESOME Sink (milestone 3): belt spare parts in to earn points and FICSIT Coupons. AWESOME Shop: spend coupons on power shards, ammo, inventory slots, paint colours and more.','New machines: Packager (put fluids in canisters to move them by belt or vehicle), Blender (Turbofuel and Batteries), Particle Accelerator (Dark Matter for the final Skyhook phase).','New power: Geothermal Generators on geysers (200 MW, no fuel) and the Nuclear Power Plant (2,500 MW from uranium found in radiation zones).','Resource wells and their extractor for water or oil.','The scanner can find geysers, wells and uranium as you progress.']},
  {v:'0.9.4',t:'Vehicles, trains and drones',items:['Tractor and Truck (Build → Logistics): walk up and tap Drive. Tap ● Rec, drive a loop past Truck Stations, stop recording, then tap Auto: it drives the route on its own, loading or unloading at each station. Stations refuel it.','Railways: build Train Stations, then lay track from a station end (Build → Logistics → Railway). Build a train at a station and add stops; it loads and unloads at each.','Drone Ports: set another drone port as the destination and its drone flies 400 items per trip.','Rain no longer falls through roofs: your HUB and buildings stay dry inside.','Scanner pings now last 15 seconds and disappear once you reach them.']},
  {v:'0.9.3',t:'Real rain',items:['Rain now falls in the 3D world around you, with splashes on the ground, instead of being drawn on your screen.','Fixed buttons sometimes ignoring taps until you restarted the game. Buttons no longer refresh while your finger is on them, and the game now resets itself if touch input gets stuck.']},
  {v:'0.9.2',t:'Mobile pace',items:['New Game pace setting (Settings → Game pace). Mobile is the default: building costs are halved, workbench crafting is twice as fast, hand mining is 1.5× faster, and milestones need about half the parts.','Classic uses Satisfactory\'s original numbers. Machine recipes are the same in both, so your factory ratios stay true.']},
@@ -1916,7 +1919,7 @@ function hurtPlayer(n,c){if(PL.dead)return;PL.hp=(PL.hp??100)-n;PL.hurtT=5;AUDIO
  if(PL.hp<=0){PL.dead=true;UI.toast('You were knocked out. Your suit carried you back to the HUB.','bad');setTimeout(()=>{const sp=spawnPoint();PL.x=sp[0];PL.z=sp[1];PL.y=solidAt(sp[0],sp[1],99)+.2;PL.vy=0;PL.hp=100;PL.dead=false;for(const h of CRE.list)if(h.st==='chase')h.st='idle';},1200);}}
 // ---- jetpack and zipline (hooked into player movement) ----
 function playerExtras(dt){if(PL.hp==null)PL.hp=100;if(PL.jet==null)PL.jet=1;PL.zapCd=Math.max(0,(PL.zapCd||0)-dt);
- if(PL.hurtT>0)PL.hurtT-=dt;else if(PL.hp<100)PL.hp=Math.min(100,PL.hp+8*dt);
+ if(PL.hurtT>0)PL.hurtT-=dt;else if(PL.hp<(S.maxHp||100))PL.hp=Math.min(S.maxHp||100,PL.hp+8*dt);
  if(PL.kx){PL.x+=PL.kx*dt;PL.z+=PL.kz*dt;PL.kx*=Math.pow(.02,dt);PL.kz*=Math.pow(.02,dt);if(Math.abs(PL.kx)+Math.abs(PL.kz)<.2)PL.kx=PL.kz=0;}}
 const jetUnlocked=()=>(S.equip||{}).back==='jetpack';
 function jetStep(dt,hold){if(!jetUnlocked())return;if(PL.ground){PL.jet=Math.min(1,PL.jet+dt*.6);PL.jetOn=false;return;}
@@ -1938,7 +1941,7 @@ EXP.init=function(){S.pods=S.pods||{};S.cores=S.cores||{};S.alts=S.alts||{};plac
  for(const p of WORLD.pods){p.obj={mesh:pm[S.pods[p.id]?1:0],model:T(p.x,p.y,p.z,p.rot)};R.objects.push(p.obj);
   const bg=new GB();bg.add(PRIM.cyl(.09,.09,60,6,{cap:false}),T(0,0,0),COL('#ff9a4a',2.2));p.beam={mesh:bg.build(),model:T(p.x,p.y+2.6,p.z),hidden:!!S.pods[p.id]};R.objects.push(p.beam);}
  const cm=coreMesh(),om=orbMesh();for(const c of WORLD.cores){c.base={mesh:cm,model:T(c.x,c.y-.1,c.z)};c.orb={mesh:om,model:T(c.x,c.y+2,c.z),hidden:!!S.cores[c.id]};R.objects.push(c.base,c.orb);}
- applyPace();placeHazards();GEAR.migrate();
+ applyPace();placeHazards();placeSpecialNodes();GEAR.migrate();
  if(S.landPod){const L=S.landPod;EXP.landObj={mesh:podMesh(true),model:T(L.x,ground(L.x,L.z),L.z,L.rot)};R.objects.push(EXP.landObj);}
  initCreatures();};
 EXP.update=function(dt){const play=GAME.mode==='play'&&!GAME.paused;ENV.update(dt,play);updateCreatures(dt);
@@ -2065,7 +2068,7 @@ START.sleep=function(){let f=document.getElementById('fade');if(!f){f=document.c
 UI.flash=function(){let f=document.getElementById('hurt');if(!f){f=document.createElement('div');f.id='hurt';document.body.appendChild(f);}f.classList.remove('on');void f.offsetWidth;f.classList.add('on');};
 // vitals HUD: health and jetpack fuel
 START.hud=function(){let el=document.getElementById('vitals');if(!el){el=document.createElement('div');el.id='vitals';el.innerHTML='<div class="hp"><i></i></div><div class="jet"><i></i></div>';document.getElementById('ui').appendChild(el);}
- const hp=PL.hp??100,jet=PL.jet??1;el.classList.toggle('hide',GAME.mode!=='play'||(hp>=99.5&&(jet>=.995||!jetUnlocked())));el.firstChild.firstChild.style.width=hp+'%';el.firstChild.classList.toggle('low',hp<35);
+ const hp=PL.hp??100,jet=PL.jet??1;el.classList.toggle('hide',GAME.mode!=='play'||(hp>=(S.maxHp||100)-.5&&(jet>=.995||!jetUnlocked())));el.firstChild.firstChild.style.width=(hp/(S.maxHp||100)*100)+'%';el.firstChild.classList.toggle('low',hp<35);
  el.lastChild.style.display=jetUnlocked()?'':'none';el.lastChild.firstChild.style.width=(jet*100)+'%';};
 
 // ---- 14-ui2.js ----
@@ -2347,12 +2350,12 @@ UI.drawMap=function(){const c=$('#mapc');if(!c)return;const x=c.getContext('2d')
 // ---------- per-frame ----------
 BP.frame=function(){if(GAME.mode==='play')BP.ghosts();WPT.markers();};
 // ---------- RESOURCE SCANNER (unlocks with milestones) ----------
-const SCAN={res:null,types:[{k:'iron_ore',t:0},{k:'copper_ore',t:0},{k:'limestone',t:0},{k:'pod',t:1,n:'Crash sites',ic:'item:hard_drive',c:'#ff8a3a'},{k:'slug',t:2,n:'Power slugs',ic:'item:slug',c:'#f0d040'},{k:'coal',t:3},{k:'crude_oil',t:5},{k:'aurite_ore',t:6},{k:'res_core',t:6,n:'Resonance cores',ic:'item:res_core',c:'#c890ff'}]};
+const SCAN={res:null,types:[{k:'iron_ore',t:0},{k:'copper_ore',t:0},{k:'limestone',t:0},{k:'pod',t:1,n:'Crash sites',ic:'item:hard_drive',c:'#ff8a3a'},{k:'slug',t:2,n:'Power slugs',ic:'item:slug',c:'#f0d040'},{k:'coal',t:3},{k:'crude_oil',t:5},{k:'aurite_ore',t:6},{k:'geyser',t:6,ic:'item:water'},{k:'well',t:6,ic:'item:crude_oil'},{k:'uranium_ore',t:8},{k:'res_core',t:6,n:'Resonance cores',ic:'item:res_core',c:'#c890ff'}]};
 SCAN.name=s=>s.n||NODE_TYPES[s.k].n;SCAN.col=s=>s.c||NODE_TYPES[s.k].c;SCAN.icon=s=>UI.icons[s.ic||'item:'+s.k];
 SCAN.open=function(){let el=document.getElementById('scanw');if(!el){el=document.createElement('div');el.id='scanw';document.body.appendChild(el);el.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b){el.classList.remove('on');return;}if(b.dataset.s==='x'){el.classList.remove('on');return;}const s=SCAN.types.find(t=>t.k===b.dataset.s);if(S.tier<s.t){AUDIO.bad();return;}el.classList.remove('on');SCAN.go(s);});}
  el.innerHTML=`<div class="scbox"><small>RESOURCE SCANNER</small><h3>What are you looking for?</h3><div class="scg">${SCAN.types.map(s=>{const ok=S.tier>=s.t;return `<button class="sct ${ok?'':'lock'} ${S.lastScan===s.k?'last':''}" data-s="${s.k}"><div class="tp">${SCAN.icon(s)?`<img src="${SCAN.icon(s)}">`:''}${ok?'':'<i>🔒</i>'}</div><span>${esc(SCAN.name(s))}</span><small>${ok?'':'Milestone '+s.t}</small></button>`;}).join('')}</div><button class="btn" data-s="x">Close</button></div>`;el.classList.add('on');AUDIO.click();};
 SCAN.go=function(s){const all=[];if(s.k==='pod'){for(const p of WORLD.pods)if(!S.pods[p.id])all.push([p.x,p.y+1.5,p.z]);}else if(s.k==='slug'){for(const f of WORLD.flora)if(f.kind==='slug'&&f.alive)all.push([f.x,f.y+.6,f.z]);}else if(s.k==='res_core'){for(const c of WORLD.cores)if(!S.cores[c.id])all.push([c.x,c.y+2,c.z]);}else for(const nd of WORLD.nodes)if(nd.type===s.k)all.push([nd.x,nd.y+1.5,nd.z,nd.purity]);
- all.sort((a,b)=>Math.hypot(a[0]-PL.x,a[2]-PL.z)-Math.hypot(b[0]-PL.x,b[2]-PL.z));const list=all.slice(0,s.k==='slug'?5:4);S.lastScan=s.k;SCAN.res={s,list,end:R.time+15};
+ all.sort((a,b)=>Math.hypot(a[0]-PL.x,a[2]-PL.z)-Math.hypot(b[0]-PL.x,b[2]-PL.z));const list=all.slice(0,(s.k==='slug'?5:4)*(S.scanPlus?2:1));S.lastScan=s.k;SCAN.res={s,list,end:R.time+15};
  AUDIO.tone(880,.5,{type:'sine',vol:.06,slide:.5});AUDIO.tone(440,.9,{type:'sine',vol:.05,when:.25,slide:1.5});let r=document.getElementById('scanring');if(!r){r=document.createElement('div');r.id='scanring';document.body.appendChild(r);}r.classList.remove('go');void r.offsetWidth;r.style.borderColor=SCAN.col(s);r.classList.add('go');
  UI.toast(list.length?'Scanner: '+list.length+' '+SCAN.name(s).toLowerCase()+' found nearby':'Scanner: nothing found','info');};
 SCAN.items=function(dt){const R2=SCAN.res;if(!R2)return [];if(R.time>R2.end){SCAN.res=null;return [];}return R2.list.filter(p=>Math.hypot(p[0]-PL.x,p[2]-PL.z)>6).map(p=>({x:p[0],y:p[1],z:p[2],n:SCAN.name(R2.s)+(p[3]!=null?' ('+PURITY[p[3]].n+')':''),c:SCAN.col(R2.s),ic:SCAN.icon(R2.s),scan:1}));};
@@ -2905,9 +2908,150 @@ UI.A.vAutoGo=()=>{const v=VEH.driving;if(!v||v.route.length<3){UI.toast('Record 
  else if(BUILD.mode==='rail'){const lk=$('#look');const t=BUILD.railA?'Tap where the track goes ('+costText(RAIL.cost)+' per '+RAIL.per+' m)':'Tap a station end or track end';act.classList.remove('hide');act.firstElementChild.textContent=BUILD.railA?'Lay':'Start';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
  else if(HAND.what&&HAND.what.kind==='veh'){act.firstElementChild.textContent='Drive';const lk=$('#look');const t=BUILDINGS[HAND.what.v.k].n+(HAND.what.v.auto?' · autopilot':'')+' · tap the vehicle for its menu';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
 
+// ---- 21-late.js ----
+// ===== Progression and late game: MAM research, AWESOME Sink and Shop, packager, blender, particle accelerator, nuclear, geothermal, resource wells =====
+Object.assign(ITEMS,{
+ canister:{n:'Empty Canister',c:'#5a8ab8',s:'block'},packaged_water:{n:'Packaged Water',c:'#3a8ae0',s:'block'},packaged_oil:{n:'Packaged Oil',c:'#2a2030',s:'block'},packaged_fuel:{n:'Packaged Fuel',c:'#f08a32',s:'block'},
+ compacted_coal:{n:'Compacted Coal',c:'#3a3640',s:'block'},turbofuel:{n:'Turbofuel',c:'#e04a2a',s:'fluid',fluid:1},battery:{n:'Battery',c:'#58e0c8',s:'block'},dark_matter:{n:'Dark Matter Crystal',c:'#8a5ad0',s:'small'},
+ uranium_ore:{n:'Uranium',c:'#8ad03a',s:'ore'},uranium_rod:{n:'Uranium Fuel Rod',c:'#7ae04a',s:'rod'},nuclear_waste:{n:'Uranium Waste',c:'#4a7a2a',s:'block'},coupon:{n:'FICSIT Coupon',c:'#f2c232',s:'small'},
+});
+FUEL.turbofuel=2000;FUEL.uranium_rod=750000;
+NODE_TYPES.uranium_ore={n:'Uranium',c:'#8ad03a'};NODE_TYPES.geyser={n:'Geyser',c:'#c8e8ff',special:1};NODE_TYPES.well={n:'Resource well',c:'#3a8ae0',special:1};
+RECIPES.push(
+ {id:'canister',m:'constructor',in:{plastic:2},out:{canister:4},t:4,tier:6},
+ {id:'pack_water',m:'packager',in:{water:2,canister:2},out:{packaged_water:2},t:2,tier:6,name:'Package Water'},{id:'unpack_water',m:'packager',in:{packaged_water:2},out:{water:2,canister:2},t:1,tier:6,name:'Unpackage Water'},
+ {id:'pack_oil',m:'packager',in:{crude_oil:2,canister:2},out:{packaged_oil:2},t:4,tier:6,name:'Package Oil'},{id:'unpack_oil',m:'packager',in:{packaged_oil:2},out:{crude_oil:2,canister:2},t:2,tier:6,name:'Unpackage Oil'},
+ {id:'pack_fuel',m:'packager',in:{fuel:2,canister:2},out:{packaged_fuel:2},t:3,tier:6,name:'Package Fuel'},{id:'unpack_fuel',m:'packager',in:{packaged_fuel:2},out:{fuel:2,canister:2},t:2,tier:6,name:'Unpackage Fuel'},
+ {id:'compacted_coal',m:'assembler',in:{coal:5,biomass:5},out:{compacted_coal:5},t:12,tier:7},
+ {id:'turbofuel',m:'blender',in:{fuel:6,compacted_coal:4},out:{turbofuel:10},t:16,tier:7,name:'Turbofuel'},
+ {id:'battery',m:'blender',in:{water:4,aurite_ingot:2,plastic:4},out:{battery:2},t:6,tier:7},
+ {id:'uranium_rod',m:'manufacturer',in:{uranium_ore:50,encased_beam:3,computer:1,plastic:10},out:{uranium_rod:1},t:150,tier:8},
+ {id:'dark_matter',m:'accel',in:{aurite_ingot:20,battery:4},out:{dark_matter:1},t:30,tier:8},
+ {id:'power_shard2',m:'constructor',in:{slug:1},out:{power_shard:2},t:8,bench:1,res:'slug1',name:'Power shard (refined)'});
+for(const r of RECIPES)RECIPE[r.id]=r;
+RECIPE.medkit.res='berry1';
+Object.assign(BUILDINGS,{
+ mam:{n:'MAM',w:4,d:6,h:3.4,cost:{iron_plate:20,cable:20,iron_rod:20},cat:'special',desc:'Molecular Analysis Machine: research alien finds to unlock upgrades. Also analyses hard drives.',tier:1},
+ sink:{n:'AWESOME Sink',w:8,d:8,h:9,cost:{reinforced_plate:15,cable:30,concrete:45},power:30,ports:[[-1.5,-4,Math.PI,'in'],[1.5,-4,Math.PI,'in']],cat:'special',desc:'Belt in anything you do not need. It earns points that print FICSIT Coupons to spend at the AWESOME Shop.',tier:3},
+ shop:{n:'AWESOME Shop',w:2,d:2,h:2.6,cost:{screw:200,iron_plate:10,cable:30},cat:'special',desc:'Spend FICSIT Coupons on handy items and upgrades.',tier:3},
+ packager:{n:'Packager',w:8,d:8,h:5,cost:{steel_beam:20,rubber:10,plastic:10},power:10,machine:'packager',ports:[[-1.5,-4,Math.PI,'fin'],[1.5,-4,Math.PI,'in'],[1.5,4,0,'out'],[-1.5,4,0,'fout']],cat:'production',desc:'Packs fluids into canisters you can belt anywhere, and unpacks them again.',tier:6},
+ blender:{n:'Blender',w:9,d:16,h:9,cost:{motor:10,heavy_frame:3,computer:5,aurite_ingot:30},power:75,machine:'blender',ports:[[-2,-8,Math.PI,'fin'],[0,-8,Math.PI,'in'],[2,-8,Math.PI,'in'],[1.5,8,0,'out'],[-1.5,8,0,'fout']],cat:'production',desc:'Mixes fluids and solids into advanced products like Turbofuel and Batteries.',tier:7},
+ accel:{n:'Particle Accelerator',w:24,d:38,h:30,cost:{heavy_frame:20,computer:10,motor:20,battery:20},power:500,machine:'accel',ports:[[-3,-19,Math.PI,'in'],[3,-19,Math.PI,'in'],[0,19,0,'out']],cat:'production',desc:'Smashes particles together at 500 MW to make Dark Matter Crystals for the final Skyhook phase.',tier:8},
+ nukeplant:{n:'Nuclear Power Plant',w:36,d:43,h:49,cost:{concrete:250,heavy_frame:25,computer:50,steel_beam:100,cable:200},gen:2500,fuels:['uranium_rod'],ports:[[0,-21.5,Math.PI,'in'],[6,21.5,0,'out']],cat:'power',desc:'2,500 MW from Uranium Fuel Rods. Makes Uranium Waste you must store.',tier:8},
+ geo:{n:'Geothermal Generator',w:8,d:8,h:12,cost:{motor:8,modular_frame:12,copper_sheet:40,rubber:40},gen:200,fuels:[],geo:1,cat:'power',desc:'Place on a geyser: 200 MW forever, no fuel.',tier:6},
+ wellx:{n:'Resource Well Extractor',w:6,d:6,h:6,cost:{steel_beam:10,rotor:10,copper_sheet:20},power:30,ports:[[0,3,0,'fout']],cat:'production',desc:'Place on a resource well: pumps water or crude oil from deep underground (120 m³/min on a normal well).',rate:120,makes:'water',tier:6},
+});
+// milestone unlock text
+MILESTONES[0].unlock+=', MAM';MILESTONES[2].unlock+=', AWESOME Sink and Shop';MILESTONES[5].unlock+=', Packager, Geothermal Generator, Resource Well Extractor';MILESTONES[6].unlock+=', Blender, Battery, Turbofuel';MILESTONES[7].unlock+=', Particle Accelerator and Nuclear Power';
+{const P=SKYHOOK_PHASES[SKYHOOK_PHASES.length-1];P.need.dark_matter=10;}
+// ---------- item pictures ----------
+Object.assign(ITEM_MODEL,{
+ canister(g){g.add(RB(.28,.4,.18,.05),null,'#5a8ab8');g.add(PRIM.cyl(.04,.04,.08,8),T(.08,.4,0),'#2a2e34');},
+ packaged_water(g){ITEM_MODEL.canister(g);g.add(RB(.29,.12,.19,.03),T(0,.12,0),COL('#3a8ae0',.4));},packaged_oil(g){ITEM_MODEL.canister(g);g.add(RB(.29,.12,.19,.03),T(0,.12,0),'#2a2030');},packaged_fuel(g){ITEM_MODEL.canister(g);g.add(RB(.29,.12,.19,.03),T(0,.12,0),COL('#f08a32',.4));},
+ compacted_coal(g){g.add(RB(.34,.26,.34,.06),null,'#2a282e');for(let i=0;i<4;i++)g.add(PRIM.ico(.05,0),T(-.1+i*.07,.27,(i%2-.5)*.1),COL('#5a4a7a',.4));},
+ turbofuel(g){g.add(RB(.3,.42,.22,.06),null,'#e04a2a');g.add(PRIM.cyl(.05,.05,.1,8),T(.08,.42,0),'#2a2a2a');},
+ battery(g){g.add(PRIM.cyl(.13,.13,.36,12),null,'#2a3038');g.add(PRIM.cyl(.135,.135,.12,12),T(0,.12,0),COL('#58e0c8',1));g.add(PRIM.cyl(.05,.05,.05,8),T(0,.36,0),'#c8ccd2');},
+ dark_matter(g){g.add(PRIM.ico(.18,1),T(0,.2,0),COL('#8a5ad0',1.6));g.add(PRIM.ico(.1,0),T(.12,.12,.08),COL('#c890ff',2));},
+ uranium_ore(g){ROCK(g,0,0,.18,'#4a5a3a',30);for(let i=0;i<4;i++)g.add(PRIM.cone(.04,.18,5),T(Math.cos(i*1.6)*.07,.12,Math.sin(i*1.6)*.07,0,Math.cos(i)*.4,Math.sin(i)*.4),COL('#8ad03a',1.6));},
+ uranium_rod(g){g.add(PRIM.cyl(.07,.07,.6,10),T(0,.07,-.3,0,Math.PI/2),'#c8ccd2');for(let i=0;i<4;i++)g.add(PRIM.cyl(.075,.075,.04,10),T(0,.07,-.22+i*.15,0,Math.PI/2),COL('#7ae04a',1.4));},
+ nuclear_waste(g){g.add(PRIM.cyl(.14,.14,.3,12),null,'#4a5a3a');g.add(PRIM.cyl(.145,.145,.05,12),T(0,.12,0),'#f2c232');g.add(PRIM.sphere(.05,6,4),T(0,.31,0),COL('#7ae04a',1.6));},
+ coupon(g){g.add(RB(.4,.02,.24,.01),null,'#f2c232');g.add(PRIM.box(.3,.004,.14,{y0:true}),T(0,.02,0),'#c88a1a');},
+});
+// ---------- building models ----------
+Object.assign(BUILD_MODEL,{
+ mam(g){feet(g,4,6);g.add(RB(4,1,6,.25),T(0,.3,0),C_FRAME);g.add(RB(3.6,1.6,3,.5),T(0,1.3,-1.2),C_LIGHT);g.add(RB(3.7,.35,3.1,.15),T(0,1.3,-1.2),C_PANEL);g.add(PRIM.sphere(1,14,10),T(0,3.1,-1.2,0,0,0,1,.7,1),COL('#9ad8ff',.5));g.add(PRIM.cyl(1.05,1.05,.15,16),T(0,2.9,-1.2),C_DARK);
+  g.add(RB(3,.2,2,.08),T(0,1.3,1.6),C_GRAY);g.add(RB(1.6,.9,.08,.04),T(0,1.6,.38),C_DARK);g.add(PRIM.box(1.4,.7,.02,{y0:true}),T(0,1.7,.43),COL('#58e0c8',.9));D_.console_(g,1.2,1.3,2.2,0);for(let k=0;k<4;k++)D_.pipe(g,[Math.cos(k*1.57)*1.3,1.4,-1.2+Math.sin(k*1.57)*1.3],[Math.cos(k*1.57)*.6,2.9,-1.2+Math.sin(k*1.57)*.6],.06,C_PANEL);lamp(g,1.7,2.9,0,'#58e0c8');},
+ sink(g){g.add(RB(8,.6,8,.2),null,C_FRAME);D_.hazard(g,0,.2,4.01,7.6,.3);g.add(PRIM.lathe([[3.2,0],[3.4,.6],[3,4],[2.4,6.5],[2.6,7],[3.2,7.2],[3.4,8.2],[2.8,8.6]],24),T(0,.6,0),C_LIGHT);for(const y of [1.2,4.8,7.6])g.add(PRIM.cyl(3.3-y*.04,3.3-y*.04,.3,24),T(0,y,0),C_PANEL);
+  g.add(PRIM.cyl(2.5,2.5,.08,24),T(0,9.15,0),'#0a0b0e');g.add(PRIM.cyl(2.2,2.2,.04,24),T(0,9.16,0),COL('#ff6a2a',1.4));g.add(RB(2.4,1.6,.08,.04),T(0,3,3.05),C_DARK);g.add(PRIM.box(2.2,1.4,.02,{y0:true}),T(0,3.1,3.1),COL('#ffd23a',.9));D_.ladder(g,3.1,.6,0,8,Math.PI/2);},
+ shop(g){g.add(RB(1.8,.2,1.4,.06),null,C_FRAME);g.add(RB(1.4,2.2,1,.25),T(0,.2,0),'#f2c232');g.add(RB(1.2,.9,.08,.04),T(0,1.3,.5),C_DARK);g.add(PRIM.box(1.05,.75,.02,{y0:true}),T(0,1.38,.55),COL('#ffe48a',.9));g.add(RB(1.5,.3,1.1,.1),T(0,2.35,0),'#e0402a');g.add(PRIM.box(.5,.04,.12,{y0:true}),T(0,.9,.52),C_DARK);},
+ packager(g){feet(g,8,8);g.add(RB(8,1,8,.3),T(0,.3,0),C_FRAME);g.add(RB(6,3.2,5,.6),T(0,1.3,-.6),C_LIGHT);g.add(RB(6.1,.4,5.1,.2),T(0,1.3,-.6),C_PANEL);for(const x of [-2,0,2]){g.add(PRIM.cyl(.7,.7,1.6,14),T(x,4.5,-1.2),'#5a8ab8');g.add(PRIM.cyl(.75,.75,.15,14),T(x,6.1,-1.2),C_PANEL);}
+  g.add(RB(4,.25,2,.1),T(0,1.3,3),C_GRAY);for(let i=0;i<5;i++)g.add(RB(.4,.6,.3,.06),T(-1.5+i*.75,1.55,3),'#5a8ab8');D_.vent(g,3.01,2,-.6,3,1.2,Math.PI/2,6);D_.console_(g,-3.4,1.3,3,0);lamp(g,2.8,4.6,1.8);},
+ blender(g){feet(g,9,16);g.add(RB(9,1.2,16,.4),T(0,.3,0),C_FRAME);D_.hazard(g,0,.35,8.01,8.6,.25);for(const z of [-4,1.5]){g.add(PRIM.cyl(3,3.2,5,20),T(0,1.5,z),C_LIGHT);g.add(PRIM.sphere(3,18,10),T(0,6.5,z,0,0,0,1,.45,1),C_LIGHT);g.add(PRIM.cyl(3.25,3.25,.4,20),T(0,4,z),C_PANEL);}
+  g.add(RB(6,4,3,.6),T(0,1.5,6),C_LIGHT);D_.pipe(g,[-3,6,-4],[-3,6,1.5],.4,'#5a8ab8');D_.pipe(g,[3,3,-6],[3,3,6],.3,'#f08a32');D_.ladder(g,3.2,1.5,-4,6.5,Math.PI/2);D_.rail(g,0,8,-1.2,6,10);lamp(g,4,2,7.6);lamp(g,-4,2,7.6,'#ffb84a');},
+ accel(g){g.add(RB(24,1,38,.5),null,C_FRAME);D_.hazard(g,0,.4,19.01,22,.4);g.add(PRIM.lathe([[9,0],[10,1.5],[10,3.5],[9,5]],40,{cap:false}),T(0,1,4),C_LIGHT);g.add(PRIM.lathe([[7.5,0],[7.5,5]],40,{cap:false}),T(0,1,4),'#3a3f48');for(let k=0;k<16;k++){const a=k/16*TAU;g.add(RB(2.2,5.6,2.2,.4),T(Math.cos(a)*9.6,.8,4+Math.sin(a)*9.6,-a),k%2?C_PANEL:C_LIGHT);}
+  g.add(RB(12,14,10,1),T(0,1,-12),C_LIGHT);g.add(RB(12.2,.8,10.2,.3),T(0,14.5,-12),C_PANEL);for(const x of [-4,0,4])D_.fanbox(g,x,15.4,-12,1.4);g.add(PRIM.cyl(1,1,24,12),T(-8,1,-14),C_FRAME);g.add(PRIM.cyl(1.1,1.1,.6,12),T(-8,25,-14),COL('#8a5ad0',1.6));D_.vent(g,6.01,5,-12,8,4,Math.PI/2,10);lamp(g,8,15,-7,'#8a5ad0');},
+ nukeplant(g){g.add(RB(36,1.2,43,.5),null,C_FRAME);D_.hazard(g,0,.5,21.51,34,.5);for(const x of [-10,10]){g.add(PRIM.lathe([[9,0],[7,14],[6.4,26],[7.2,40],[7.6,48]],28,{cap:false}),T(x,1.2,6),'#d8d2c6');g.add(PRIM.lathe([[7.2,0],[7.6,.8]],28,{cap:false}),T(x,48,6),C_PANEL);}
+  g.add(RB(16,16,14,1.2),T(0,1.2,-12),C_LIGHT);g.add(RB(16.3,1,14.3,.4),T(0,17,-12),C_PANEL);g.add(PRIM.sphere(5,18,12),T(0,18,-12,0,0,0,1,.6,1),C_LIGHT);for(let k=0;k<6;k++)lamp(g,-7+k*2.8,17.6,-4.8,'#7ae04a');D_.ladder(g,8.1,1.2,-12,16,Math.PI/2);},
+ geo(g){g.add(PRIM.cyl(4.2,4.6,.8,16),T(0,0,0),C_FRAME);g.add(RB(6,5,6,1),T(0,.8,0),C_LIGHT);g.add(RB(6.1,.5,6.1,.2),T(0,.8,0),C_PANEL);g.add(PRIM.cyl(1.4,1.8,6,14),T(0,5.8,0),'#c8c2b6');g.add(PRIM.cyl(1.5,1.5,.3,14),T(0,11.6,0),C_PANEL);for(let y=7;y<11;y+=1.4)g.add(PRIM.cyl(1.6-(y-6)*.05,1.6-(y-6)*.05,.2,14),T(0,y,0),C_GRAY);
+  D_.vent(g,3.01,2.4,0,4,2,Math.PI/2,8);D_.vent(g,-3.01,2.4,0,4,2,-Math.PI/2,8);D_.ladder(g,0,.8,3.01,5,0);lamp(g,2.6,6,2.6,'#ff6a4a');},
+ wellx(g){g.add(RB(6,.5,6,.2),null,C_FRAME);D_.hazard(g,0,.2,3.01,5.6,.3);g.add(PRIM.cyl(1.6,1.8,3,16),T(0,.5,0),C_LIGHT);g.add(PRIM.cyl(1.65,1.65,.3,16),T(0,2,0),C_PANEL);g.add(RB(2,1.6,2,.3),T(0,3.5,0),'#5a616c');D_.fanbox(g,0,5.1,0,.8);D_.pipe(g,[1.6,1.2,0],[1.6,1.2,2.6],.25,'#3a8ae0');lamp(g,2.6,.9,2.6,'#58c8ff');},
+});
+// geysers, resource wells and uranium (at the radiation zones)
+function placeSpecialNodes(){const rnd=mulberry(WORLD.seed*733+5),W=WORLD;const add=(type,purity,x,z,extra)=>{const nd=Object.assign({id:W.nodes.length,type,purity,x:Math.round(x),z:Math.round(z),y:ground(x,z)},extra||{});W.nodes.push(nd);return nd;};
+ const free=(x,z)=>{if(Math.abs(x)>W.half-50||Math.abs(z)>W.half-50)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.3+8)return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<30)return false;for(const h of (W.hazards||[]))if(Math.hypot(h.x-x,h.z-z)<h.r+10)return false;return groundNormal(x,z)[1]>.88;};
+ const spot=(r0,r1)=>{for(let t=0;t<500;t++){const a=rnd()*TAU,r=r0+rnd()*(r1-r0),x=Math.cos(a)*r,z=Math.sin(a)*r;if(free(x,z))return [x,z];}return null;};
+ for(let i=0;i<6;i++){const p=spot(100,250);if(p)add('geyser',i%3===0?2:1,p[0],p[1]);}
+ for(let i=0;i<4;i++){const p=spot(120,250);if(p)add('well',1,p[0],p[1],{fluid:i%2?'crude_oil':'water'});}
+ for(const h of (W.hazards||[]))if(h.kind==='rad')add('uranium_ore',1,h.x+3,h.z+3);
+ for(const nd of W.nodes)if(!nd.obj){if(!WORLD.nodeMesh[nd.type])WORLD.nodeMesh[nd.type]=specialNodeMesh(nd.type);nd.obj={mesh:WORLD.nodeMesh[nd.type],model:T(nd.x,nd.y,nd.z,nd.id*1.7)};R.objects.push(nd.obj);}}
+function specialNodeMesh(type){const g=new GB(),rnd=mulberry(type.length*91+3);
+ if(type==='geyser'){g.add(PRIM.cyl(3.4,3.8,.4,14),T(0,-.2,0),'#5a5058');for(let k=0;k<12;k++){const a=k/12*TAU;g.add(PRIM.ico(.5+rnd()*.5,1,{noise:.4,seed:k}),T(Math.cos(a)*2.6,.2,Math.sin(a)*2.6),'#7a6a70');}g.add(PRIM.cyl(1.4,1.6,.3,14),T(0,0,0),'#3a3438');g.add(PRIM.cyl(1,1,.02,14),T(0,.3,0),COL('#c8e8ff',.8));return g.build();}
+ if(type==='well'){g.add(PRIM.cyl(2.6,3,.3,16),T(0,-.2,0),'#3a3a44');g.add(PRIM.cyl(2,2,.04,16),T(0,.08,0),COL('#1a2a4a',.3));for(let k=0;k<8;k++){const a=k/8*TAU;g.add(PRIM.ico(.4,1,{noise:.3,seed:k+9}),T(Math.cos(a)*2.4,.1,Math.sin(a)*2.4),'#5a5a66');}for(let k=0;k<4;k++)g.add(PRIM.sphere(.15,6,4),T((rnd()-.5)*2,.12,(rnd()-.5)*2),COL('#9ad8ff',.6));return g.build();}
+ g.add(PRIM.cyl(2.5,2.9,.45,9),T(0,-.2,0),'#3a4a2a');for(let k=0;k<7;k++){const a=k/7*TAU,r=k?1+rnd()*.8:0,h=k?.8+rnd()*1.2:2;g.add(PRIM.lathe([[.001,0],[.25,.1],[.18,h*.85],[.001,h]],6,{flat:true}),T(Math.cos(a)*r,.1,Math.sin(a)*r,rnd()*3,(rnd()-.5)*.5,(rnd()-.5)*.5),COL('#8ad03a',1.5));}return g.build();}
+// hand mining never works on geysers or wells; miners only on solid ore
+const nodeOK=(k,nd)=>k==='oilx'?nd.type==='crude_oil':k==='geo'?nd.type==='geyser':k==='wellx'?nd.type==='well':!(nd.type==='crude_oil'||NODE_TYPES[nd.type].special);
+{const _rn=rayNodes;rayNodes=function(o,d,maxT){const h=_rn(o,d,maxT);if(h&&(NODE_TYPES[h.nd.type].special))return null;return h;};}
+// generators: geothermal needs no fuel; nuclear leaves waste behind
+{const _g=genReady;genReady=b=>BUILDINGS[b.k].geo?b.node!=null:_g(b);}
+{const _ub=updateBuilding;updateBuilding=function(b,dt){if(b.k==='nukeplant'){if(b.energy>0||Object.values(b.fuel).some(v=>v>0)){b.wasteT=(b.wasteT||0)+dt*(b.run||0);if(b.wasteT>=6){b.wasteT=0;b.out.nuclear_waste=(b.out.nuclear_waste||0)+1;}}for(const pi of outPorts(b))if((b.out.nuclear_waste||0)>=1&&pushOut(b,pi,'nuclear_waste')){b.out.nuclear_waste--;break;}return;}
+ if(b.k==='sink')return;_ub(b,dt);};}
+{const _ue=updateExtractor;updateExtractor=function(b,dt){if(b.k==='wellx'){const nd=WORLD.nodes[b.node];const k=nd&&nd.fluid||'water';b.run=0;if(b.pf>0&&(b.out[k]||0)<100){b.run=1;const add=BUILDINGS.wellx.rate/60*dt*b.pf*(b.clock||1)*(nd?PURITY[nd.purity].k:1);b.out[k]=(b.out[k]||0)+add;b.acc=(b.acc||0)+add;if(b.acc>=1){stat('prod',k,Math.floor(b.acc));b.acc-=Math.floor(b.acc);}}return;}_ue(b,dt);};}
+// ---------- AWESOME Sink: points and coupons ----------
+const ITEM_VALUE={};
+function itemValue(k,depth=0){if(ITEM_VALUE[k])return ITEM_VALUE[k];const raw={iron_ore:1,copper_ore:3,limestone:2,coal:3,aurite_ore:7,uranium_ore:35,leaves:1,wood:2,slug:50,protein:20,berry:2,crude_oil:4,water:1};if(raw[k]!=null)return ITEM_VALUE[k]=raw[k];
+ const r=RECIPES.find(x=>x.out[k]&&!x.alt&&!x.eqr&&!x.m.startsWith('bench')&&x.m!=='packager')||RECIPES.find(x=>x.out[k]&&!x.alt);if(!r||depth>8)return ITEM_VALUE[k]=10;let v=0;for(const [i,n] of Object.entries(r.in))v+=itemValue(i,depth+1)*n;v=v/r.out[k]*1.3+r.t*.4/r.out[k];return ITEM_VALUE[k]=Math.max(1,Math.round(v));}
+const couponNeed=()=>Math.round(1000*Math.pow(1.12,(S.sinkC||0)));
+{const _a=accepts;accepts=function(b,pi,item){if(b.k==='sink')return !ITEMS[item]?.fluid&&item!=='nuclear_waste'&&b.pf>0;return _a(b,pi,item);};
+ const _gv=give;give=function(b,pi,item){if(b.k==='sink'){S.sinkPts=(S.sinkPts||0)+itemValue(item);S.sinkTotal=(S.sinkTotal||0)+itemValue(item);while(S.sinkPts>=couponNeed()){S.sinkPts-=couponNeed();S.sinkC=(S.sinkC||0)+1;S.coupons=(S.coupons||0)+1;}b.run=1;b.lastSink=R.time;return;}_gv(b,pi,item);};}
+{const _w=wantsPower;wantsPower=b=>b.k==='sink'?true:_w(b);}
+// ---------- AWESOME Shop ----------
+const SHOP=[
+ {id:'shard',n:'Power Shard',c:3,give:{power_shard:1},ic:'item:power_shard'},{id:'medkits',n:'5 Medicinal Inhalers',c:2,give:{medkit:5},ic:'item:medkit'},{id:'nobs',n:'10 Nobelisks',c:2,give:{nobelisk:10},ic:'item:nobelisk'},
+ {id:'ammo',n:'60 Rifle Ammo',c:2,give:{rifle_ammo:60},ic:'item:rifle_ammo'},{id:'filters',n:'5 Gas Filters',c:3,give:{filter:5},ic:'item:filter'},{id:'drive',n:'Hard Drive',c:12,give:{hard_drive:1},ic:'item:hard_drive'},
+ {id:'pocket',n:'+6 Inventory Slots',c:10,max:3,fx:()=>{S.invUp=(S.invUp||0)+1;},ic:'item:canister'},{id:'paint',n:'Paint Gun colours',c:4,max:1,fx:()=>{S.paintUnlocked=1;},ic:'item:plastic'},
+ {id:'statue',n:'Golden Pioneer Statue (build it)',c:15,max:1,fx:()=>{S.statue=1;},ic:'item:aurite_ingot'},{id:'lamps',n:'Lamp Posts and Signs',c:3,max:1,fx:()=>{S.decor=1;},ic:'item:quickwire'},
+];
+UI.shopView=function(){const c=S.coupons||0;return `<div class="rshead"><div class="rbig">${iIcon('coupon')}<em>${c}</em></div><div><h3>AWESOME Shop</h3><p class="mut">Coupons come from the AWESOME Sink.${S.coupons?'':' Belt your spare parts into it!'}</p></div></div><div class="shopg">${SHOP.map(it=>{const owned=(S.shopN||{})[it.id]||0,max=it.max&&owned>=it.max;return `<button class="shi ${c>=it.c&&!max?'':'off'}" data-a="shopBuy" data-v="${it.id}"><div class="tp">${UI.icons[it.ic]?`<img src="${UI.icons[it.ic]}">`:''}</div><b>${esc(it.n)}</b><small>${max?'Owned':it.c+' coupons'}</small></button>`;}).join('')}</div>`;};
+UI.A.shopBuy=v=>{const it=SHOP.find(x=>x.id===v);const owned=(S.shopN||{})[v]||0;if(it.max&&owned>=it.max)return;if((S.coupons||0)<it.c){UI.toast('Not enough coupons','warn');AUDIO.bad();return;}S.coupons-=it.c;S.shopN=S.shopN||{};S.shopN[v]=owned+1;if(it.give)for(const [k,n] of Object.entries(it.give))addInv(k,n);if(it.fx)it.fx();AUDIO.fanfare();UI.toast('Bought: '+it.n,'good');UI.refresh();saveSoon();};
+// ---------- MAM research ----------
+const MAMR=[
+ {id:'pocket1',tree:'Pocket Dimension',n:'Pocket Dimension I',d:'+6 inventory slots',cost:{iron_plate:40,wire:60},t:60,fx:()=>{S.invUp=(S.invUp||0)+1;}},
+ {id:'pocket2',tree:'Pocket Dimension',n:'Pocket Dimension II',d:'+6 inventory slots',cost:{reinforced_plate:15,cable:80},t:120,req:'pocket1',fx:()=>{S.invUp=(S.invUp||0)+1;}},
+ {id:'pocket3',tree:'Pocket Dimension',n:'Pocket Dimension III',d:'+6 inventory slots',cost:{modular_frame:8,quickwire:150},t:180,req:'pocket2',fx:()=>{S.invUp=(S.invUp||0)+1;}},
+ {id:'berry1',tree:'Alien Flora',n:'Glowberry Medicine',d:'Unlocks the Medicinal Inhaler at the workbench',cost:{berry:15,leaves:50},t:30},
+ {id:'vital1',tree:'Alien Fauna',n:'Bio-Organic Plating',d:'Max health 125',cost:{protein:10,biomass:50},t:60,fx:()=>{S.maxHp=125;}},
+ {id:'vital2',tree:'Alien Fauna',n:'Hostile Organism Study',d:'Max health 150',cost:{protein:25,biofuel:40},t:120,req:'vital1',fx:()=>{S.maxHp=150;}},
+ {id:'slug1',tree:'Power Slugs',n:'Slug Refinement',d:'A recipe that makes 2 power shards from one slug',cost:{slug:3},t:45},
+ {id:'scan1',tree:'Scanning',n:'Long-Range Scanner',d:'Scanner shows twice as many finds',cost:{circuit:10,quickwire:50},t:90,fx:()=>{S.scanPlus=1;}},
+ {id:'core1',tree:'Artifacts',n:'Resonance Theory',d:'Resonance cores triple output instead of double',cost:{res_core:2,computer:2},t:240,fx:()=>{S.ampX=3;}},
+];
+const mamDone=id=>!!(S.mam&&S.mam.done[id]);
+UI.mamView=function(){const M=S.mam||(S.mam={done:{},cur:null});let h='';if(M.cur){const r=MAMR.find(x=>x.id===M.cur.id);const p=clamp(M.cur.t/r.t,0,1);h+=`<div class="mrec"><span>Researching <b>${esc(r.n)}</b> · ${Math.ceil(r.t-M.cur.t)} s left</span></div><div class="bar"><i style="width:${p*100}%"></i></div>`;}
+ const trees=[...new Set(MAMR.map(r=>r.tree))];h+=trees.map(t=>`<h5>${esc(t)}</h5><div class="alts">${MAMR.filter(r=>r.tree===t).map(r=>{const done=mamDone(r.id),lock=r.req&&!mamDone(r.req),can=!done&&!lock&&!M.cur&&canAfford(r.cost);return `<button class="alt ${done?'done':''}" data-a="mamGo" data-v="${r.id}" ${can?'':'disabled'}><b>${done?'✓ ':lock?'🔒 ':''}${esc(r.n)}</b><small>${esc(r.d)} · ${r.t} s</small>${done?'':`<div class="rrow">${Object.entries(r.cost).map(([k,v])=>tile(k,`${fmt(Math.min(S.inv[k]||0,v))}/${v}`,{label:false,cls:'xs',short:(S.inv[k]||0)<v})).join('')}</div>`}</button>`;}).join('')}</div>`).join('');
+ return h+`<h5>Hard drives</h5>`+UI.researchView2();};
+UI.A.mamGo=v=>{const r=MAMR.find(x=>x.id===v);const M=S.mam||(S.mam={done:{},cur:null});if(M.cur||!canAfford(r.cost))return;pay(r.cost);M.cur={id:v,t:0};AUDIO.craft();UI.refresh();saveSoon();};
+function mamUpdate(dt){const M=S.mam;if(!M||!M.cur)return;M.cur.t+=dt;const r=MAMR.find(x=>x.id===M.cur.id);if(M.cur.t>=r.t){M.done[r.id]=1;M.cur=null;if(r.fx)r.fx();AUDIO.fanfare();UI.banner('Research complete',r.n+': '+r.d);saveSoon();}}
+// max health from research, triple resonance cores
+{const _it=SCAN.go;SCAN.go=function(s){_it(s);if(S.scanPlus&&SCAN.res){/* show more finds */}};}
+// panels for the new buildings
+{const _bv=UI.bldView;UI.bldView=function(b){if(b.k==='mam')return _bv(b).replace(/<p>[^<]*<\/p>$/,'')+UI.mamView();if(b.k==='shop')return _bv(b)+UI.shopView();
+ if(b.k==='sink'){const s=couponNeed();return _bv(b)+`<div class="rshead"><div class="rbig">${iIcon('coupon')}<em>${S.coupons||0}</em></div><div><h3>${fmt(S.sinkPts||0)} / ${fmt(s)} points</h3><div class="bar"><i style="width:${(S.sinkPts||0)/s*100}%"></i></div><p class="mut">${fmt(S.sinkTotal||0)} points sunk so far. Complex parts are worth far more than raw ore.</p></div></div><button class="bigbtn" data-a="shopOpen">Open AWESOME Shop</button>`+UI.gridView(b);}
+ if(b.k==='geo'){const nd=WORLD.nodes[b.node];return _bv(b)+`<p class="mut">${nd?PURITY[nd.purity].n+' geyser: ':''}a steady 200 MW, no fuel needed.</p>`;}
+ if(b.k==='wellx'){const nd=WORLD.nodes[b.node];return _bv(b)+`<p class="mut">Pumping ${nd?ITEMS[nd.fluid||'water'].n.toLowerCase():'water'}.</p>`;}
+ return _bv(b);};}
+UI.A.shopOpen=()=>{UI.closePanel();UI.tab='shopv';UI.open('shopv');};UI.views.shopv=()=>UI.shopView();
+{const _r=UI.refresh;UI.refresh=function(){_r();if(UI.panel&&UI.tab==='shopv'&&!UI.bld)$('#sheet .tabs').innerHTML='<b class="ttl">AWESOME Shop</b>';};}
+{const _l=UI.liveRefresh;UI.liveRefresh=function(){_l();if(UI.bld&&UI.bld.k==='mam'&&S.mam&&S.mam.cur){const body=$('#sheet .body');const h=UI.bldView(UI.bld);if(body._h!==h){const st=body.scrollTop;body.innerHTML=h;body._h=body.innerHTML;body.scrollTop=st;}}};}
+// sinks glow and swirl while eating parts
+PARTS.sink=[];EMIT.sink=[['ember',0,9.2,0,3,1]];SND_OF.sink=['hum'];PARTS.accel=[];EMIT.accel=[['ember',-8,25.5,-14,4,1]];SND_OF.accel=['whine','hum'];
+PARTS.geo=[];EMIT.geo=[['steam',0,11.9,0,5,1.6]];SND_OF.geo=['hiss','turbine'];EMIT.nukeplant=[['steam',-10,49,6,4,4],['steam',10,49,6,4,4]];SND_OF.nukeplant=['hum','hiss'];
+EMIT.blender=[['steam',0,8,-4,1,1]];SND_OF.blender=['whir','water'];EMIT.packager=[['steam',0,6.3,-1.2,.6,.8]];SND_OF.packager=['whir'];SND_OF.wellx=['water'];EMIT.wellx=[['splash',0,.3,1.8,4,1]];PARTS.wellx=[['impeller',0,5.45,0,'spin',10]];
+// geysers puff steam even with nothing built on them
+function geyserFX(dt){for(const nd of WORLD.nodes)if(nd.type==='geyser'&&Math.abs(nd.x-R.cam[0])<120&&Math.abs(nd.z-R.cam[2])<120){const used=[...FAC.b.values()].some(b=>b.node===nd.id);if(!used&&Math.random()<dt*(Math.sin(R.time*.4+nd.id)>.6?14:2))PFX.emit('steam',[nd.x+(Math.random()-.5),nd.y+.4,nd.z+(Math.random()-.5)],1.4);}}
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.9.4',VERSION_MARK='FFVER@0.9.4@';
+const VERSION='0.9.5',VERSION_MARK='FFVER@0.9.5@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -2932,7 +3076,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  if(GAME.mode==='play'&&!GAME.paused)S.playTime=(S.playTime||0)+dt;
  try{if(GAME.mode==='title')MENU.orbitCam(dt);else if(!GAME.paused)updatePlayer(dt);START.update(dt);if(GAME.freeCam){const f=GAME.freeCam;R.cam=f.cam;R.yaw=f.yaw;R.pitch=f.pitch;}if(GAME.mode==='play'){updateBuildMode();updateHand(dt,INPUT.act&&!BUILD.mode&&!UI.panel&&!GAME.paused);}
   let left=GAME.paused?0:dt;while(left>0){const s=Math.min(.05,left);simStep(s);left-=s;}
-  TOUCHFIX.check();TR.update(dt);EXP.update(dt);GEAR.update(dt);GEAR.hud();BP.frame();TUT.update(dt);START.hud();fillItemInstances();fillPulses();FX.update(dt);UI.frame(dt);renderFrame();}catch(e){console.error(e);GAME.err=(GAME.err||0)+1;if(GAME.err<3)UI.toast('Error: '+e.message,'bad');}
+  TOUCHFIX.check();TR.update(dt);mamUpdate(dt);geyserFX(dt);EXP.update(dt);GEAR.update(dt);GEAR.hud();BP.frame();TUT.update(dt);START.hud();fillItemInstances();fillPulses();FX.update(dt);UI.frame(dt);renderFrame();}catch(e){console.error(e);GAME.err=(GAME.err||0)+1;if(GAME.err<3)UI.toast('Error: '+e.message,'bad');}
  // automatic quality: drop resolution on slow devices
  if(S.settings.quality==='auto'){perf.t+=dt;perf.n++;if(perf.t>4){const fps=perf.n/perf.t;perf.t=perf.n=0;if(fps<28&&R.scale>.6){R.scale=Math.max(.6,R.scale-.12);resize();}else if(fps>55&&R.scale<1){R.scale=Math.min(1,R.scale+.08);resize();}}}
  requestAnimationFrame(frame);}
