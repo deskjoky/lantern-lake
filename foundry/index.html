@@ -651,6 +651,8 @@ const NODE_TYPES={crude_oil:{n:'Crude oil',c:'#2a2030',fluid:1},iron_ore:{n:'Iro
 const PURITY=[{n:'Impure',k:.5},{n:'Normal',k:1},{n:'Pure',k:2}];
 const tierOf=o=>o.tier||0;
 const unlocked=o=>tierOf(o)<=S.tier&&(!o.alt||!!(S.alts&&S.alts[o.id]))&&(!o.res||!!(S.mam&&S.mam.done[o.res]));
+// lookups by key must never find built-in object properties (a building is literally called "constructor")
+for(const o of [ITEMS,BUILDINGS,BELTS,PIPES,RECIPE,NODE_TYPES,FUEL])Object.setPrototypeOf(o,null);
 
 // ---- 04-world.js ----
 // ===== The planet: terrain, resource nodes, alien flora =====
@@ -1787,7 +1789,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
- {v:'0.1.1',t:'Controller support',items:['Play with a controller: Backbone, Xbox, PlayStation and other standard gamepads.','Left stick move, right stick look, L3 sprint. RT mine/place/use, X interact, A jump (hold in the air for the jetpack). Y build menu, LT dismantle, RB quick wheel, LB switch tool.','While building: LB/RB rotate, D-pad up/down raise/lower, left for a row, right for power lines.','Menus: D-pad or stick moves a highlight, A selects, B goes back, LB/RB switch tabs. The full list is in Settings.']},
+ {v:'0.1.1',t:'Controller support',items:['Play with a controller: Backbone, Xbox, PlayStation and other standard gamepads.','Left stick move, right stick look, L3 sprint. RT mine/place/use, X interact, A jump (hold in the air for the jetpack). Y build menu, LT dismantle, RB quick wheel, LB switch tool.','While building: LB/RB rotate, D-pad up/down raise/lower, left for a row, right for power lines.','Menus: D-pad or stick moves a highlight, A selects, B goes back, LB/RB switch tabs. The full list is in Settings.','Fixed: picking the Constructor started the pipe tool instead of placing it.']},
  {v:'0.1.0',t:'Fresh numbering and build fixes',items:['Version numbers restarted at 0.1.0: the game is still early, so the numbers now say so. Everything you have built is kept.','Conveyor belts can no longer pass through buildings, other belts, trees or rocks. The preview turns red and tells you what is in the way. Use Wall and Floor Conveyor Holes to go through walls and floors.','The in and out arrows on building holograms are now much smaller.']},
  {v:'0.0.21',t:'Power switches',items:['Every generator has a button to turn it off, plus one to turn off every generator on its grid at once.','Tap a power pole to turn it off: power stops passing through it.']},
  {v:'0.0.20',t:'Polish pass',items:['Machine status screens now sit on a little stand beside each machine, like a boat sonar, so nothing blocks them.','Rotate button while laying conveyor belts and pipes: it turns the next pole or lift you drop.','See-through arrows on building holograms and blueprints show which openings take items in (teal) and send them out (orange).','Belts now join right at the conveyor pole with no gap, and items flow straight from one belt onto the next.']},
