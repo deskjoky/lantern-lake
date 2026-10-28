@@ -269,6 +269,8 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 .whmid{position:absolute;left:-28px;top:-28px;width:56px;height:56px;border-radius:50%;background:#2a2d34;color:#fff;font-size:18px;border:2px solid #444955}.whhint{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#c9ccd2;font-size:12px}
 .whadd{margin:2px 0 6px}
 .pwrsw{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}.pwrsw .btn{flex:1;min-width:200px}
+.padf{outline:3px solid #ffd27a!important;outline-offset:2px;box-shadow:0 0 0 6px rgba(255,210,122,.25)!important;z-index:2;position:relative}
+body.padmode #joyHint,body.padmode #joy{display:none!important}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1785,6 +1787,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.1.1',t:'Controller support',items:['Play with a controller: Backbone, Xbox, PlayStation and other standard gamepads.','Left stick move, right stick look, L3 sprint. RT mine/place/use, X interact, A jump (hold in the air for the jetpack). Y build menu, LT dismantle, RB quick wheel, LB switch tool.','While building: LB/RB rotate, D-pad up/down raise/lower, left for a row, right for power lines.','Menus: D-pad or stick moves a highlight, A selects, B goes back, LB/RB switch tabs. The full list is in Settings.']},
  {v:'0.1.0',t:'Fresh numbering and build fixes',items:['Version numbers restarted at 0.1.0: the game is still early, so the numbers now say so. Everything you have built is kept.','Conveyor belts can no longer pass through buildings, other belts, trees or rocks. The preview turns red and tells you what is in the way. Use Wall and Floor Conveyor Holes to go through walls and floors.','The in and out arrows on building holograms are now much smaller.']},
  {v:'0.0.21',t:'Power switches',items:['Every generator has a button to turn it off, plus one to turn off every generator on its grid at once.','Tap a power pole to turn it off: power stops passing through it.']},
  {v:'0.0.20',t:'Polish pass',items:['Machine status screens now sit on a little stand beside each machine, like a boat sonar, so nothing blocks them.','Rotate button while laying conveyor belts and pipes: it turns the next pole or lift you drop.','See-through arrows on building holograms and blueprints show which openings take items in (teal) and send them out (orange).','Belts now join right at the conveyor pole with no gap, and items flow straight from one belt onto the next.']},
@@ -3283,9 +3286,69 @@ UI.A.genOff=()=>{const b=UI.bld;b.off=!b.off;FAC.powerDirty=true;AUDIO.flip();UI
 UI.A.gridOff=()=>{const b=UI.bld;const g=b.grid!=null?FAC.grids[b.grid]||[]:[b];const gens=g.filter(x=>BUILDINGS[x.k].gen);const anyOn=gens.some(x=>!x.off);for(const x of gens)x.off=anyOn;FAC.powerDirty=true;AUDIO.flip();UI.toast(anyOn?'Grid powered down':'Grid powered up','info');UI.refresh();saveSoon();};
 UI.A.poleOff=()=>{const b=UI.bld;b.off=!b.off;FAC.powerDirty=true;AUDIO.flip();UI.refresh();saveSoon();};
 
+// ---- 24-pad.js ----
+// ===== Controller support (Xbox layout: Backbone, Xbox, PlayStation and other standard gamepads) =====
+const PAD={on:false,prev:[],focus:null,repeat:0,run:false,hint:0};
+// which overlay is on top right now, for menu navigation
+function padLayer(){const vis=el=>el&&el.offsetParent!==null&&getComputedStyle(el).display!=='none';
+ for(const id of ['modal','scanw','wheel']){const el=document.getElementById(id);if(el&&el.classList.contains('on'))return el;}
+ const pz=document.getElementById('pause');if(GAME.paused&&pz&&!pz.classList.contains('hide'))return pz;
+ if(GAME.mode==='title'&&!UI.panel)return document.getElementById('title');if(UI.panel)return document.getElementById('sheet');return null;}
+function padItems(L){return [...L.querySelectorAll('button:not([disabled]),[data-a],[data-m],[data-p],[data-w],[data-s],[data-t],[data-hold],input')].filter(e=>{const r=e.getBoundingClientRect();return r.width>4&&r.height>4&&r.bottom>0&&r.top<innerHeight&&getComputedStyle(e).visibility!=='hidden';});}
+function padMove(dx,dy){const L=padLayer();if(!L)return;const items=padItems(L);if(!items.length)return;let cur=PAD.focus&&items.includes(PAD.focus)?PAD.focus:null;
+ if(!cur){cur=items[0];}else{const a=cur.getBoundingClientRect(),ax=a.left+a.width/2,ay=a.top+a.height/2;let best=null,bs=1e9;
+  for(const e of items){if(e===cur)continue;const r=e.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;const vx=x-ax,vy=y-ay;const along=vx*dx+vy*dy;if(along<=4)continue;const side=Math.abs(vx*dy-vy*dx);const sc=along+side*2.2;if(sc<bs){bs=sc;best=e;}}
+  if(best)cur=best;}
+ padSetFocus(cur);}
+function padSetFocus(e){if(PAD.focus)PAD.focus.classList.remove('padf');PAD.focus=e;if(e){e.classList.add('padf');e.scrollIntoView({block:'nearest',inline:'nearest'});}}
+function padPress(){const e=PAD.focus;if(!e||!e.isConnected)return;if(e.dataset.hold){e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));PAD.holding=e;return;}if(e.tagName==='INPUT'){if(e.type==='checkbox'){e.click();}else e.focus();return;}e.click();AUDIO.click();}
+function padTab(dir){const t=[...document.querySelectorAll('#sheet .tabs button')];if(!t.length)return;let i=t.findIndex(b=>b.classList.contains('on'));i=(i+dir+t.length)%t.length;t[i].click();PAD.focus=null;}
+function padBack(){const m=document.getElementById('modal');if(m&&m.classList.contains('on')){const c=m.querySelector('[data-w="cancel"],[data-w="close"],[data-w="back"],[data-m="ok"],[data-m="no"]');if(c)c.click();else m.classList.remove('on');return;}
+ for(const id of ['scanw','wheel']){const el=document.getElementById(id);if(el&&el.classList.contains('on')){el.classList.remove('on');if(id==='wheel')WHEEL.open=false;return;}}
+ if(UI.panel){UI.closePanel();return;}if(GAME.paused){MENU.resume();return;}if(BUILD.mode){BUILD.cancel();return;}if(VEH.driving){VEH.exit();return;}}
+const dz=(v,d=.18)=>Math.abs(v)<d?0:(v-Math.sign(v)*d)/(1-d);
+PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():[];let gp=null;for(const g of gps)if(g&&g.connected){gp=g;break;}
+ if(!gp){if(PAD.on){PAD.on=false;document.body.classList.remove('padmode');INPUT.jx=INPUT.jy=0;}return;}
+ const B=gp.buttons.map(b=>b.pressed||b.value>.5),P=PAD.prev,down=i=>B[i]&&!P[i],up=i=>!B[i]&&P[i];
+ if(!PAD.on){PAD.on=true;document.body.classList.add('padmode');UI.toast('Controller connected','good');AUDIO.init();}
+ const ax=gp.axes;const lx=dz(ax[0]||0),ly=dz(ax[1]||0),rx=dz(ax[2]||0),ry=dz(ax[3]||0);
+ const L=padLayer();
+ if(L){// ----- menus -----
+  INPUT.jx=INPUT.jy=0;PAD.repeat-=dt;const dirX=B[15]?1:B[14]?-1:Math.abs(lx)>.5?Math.sign(lx):0,dirY=B[13]?1:B[12]?-1:Math.abs(ly)>.5?Math.sign(ly):0;
+  if(dirX||dirY){if(PAD.repeat<=0){padMove(dirX,dirY);PAD.repeat=PAD.lastDir?.14:.32;PAD.lastDir=1;}}else{PAD.repeat=0;PAD.lastDir=0;}
+  if(PAD.focus&&!PAD.focus.isConnected)PAD.focus=null;if(!PAD.focus)padMove(0,0);
+  if(down(0))padPress();if(up(0)&&PAD.holding){PAD.holding.dispatchEvent(new PointerEvent('pointerup',{bubbles:true}));PAD.holding=null;}
+  if(down(1))padBack();if(down(4))padTab(-1);if(down(5))padTab(1);
+  if(Math.abs(ry)>.2){const sc=L.querySelector('.body')||L;const col=PAD.focus&&PAD.focus.closest('.col,.maps,.bdet,.bgrid,.nscroll');(col||sc).scrollTop+=ry*dt*700;}
+  if(down(9)&&GAME.paused)MENU.resume();else if(down(9)&&UI.panel)UI.closePanel();
+  if(UI.panel&&UI.tab==='map'&&!UI.bld){UI.map.cx+=lx*dt*80/UI.map.z;UI.map.cz+=ly*dt*80/UI.map.z;if(lx||ly)UI.drawMap();if(down(2))UI.A.mapZ(1);if(down(3))UI.A.mapZ(-1);}
+  PAD.prev=B;return;}
+ if(PAD.focus){PAD.focus.classList.remove('padf');PAD.focus=null;}
+ if(GAME.mode!=='play'||GAME.landing){if(down(0)||down(9)){const s=document.getElementById('skipcine');if(GAME.landing&&s)s.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));}PAD.prev=B;return;}
+ // ----- playing -----
+ if(INPUT.joyId===null){INPUT.jx=lx;INPUT.jy=-ly;}if(down(10))PAD.run=!PAD.run;if(!lx&&!ly)PAD.run=false;INPUT.keys.ShiftLeft=PAD.run;
+ const sens=2.6*(S.settings.sens||1);PL.yaw-=rx*Math.abs(rx)*dt*sens;PL.pitch=clamp(PL.pitch-ry*Math.abs(ry)*dt*sens*.75,-1.45,1.45);
+ if(down(0)){INPUT.jump=true;}INPUT.jumpHeld=B[0];
+ if(down(7))GAME.primary(true);if(up(7))GAME.primary(false);                     // RT: mine, place, use
+ if(down(2)){const H=handTarget();if(H&&H.kind!=='node'&&H.kind!=='flora')GAME.primary(true);else{GAME.primary(true);}}if(up(2))GAME.primary(false); // X: interact
+ if(down(6)){if(BUILD.mode==='dismantle')BUILD.cancel();else BUILD.dismantle();}  // LT: dismantle
+ if(down(1))padBack();                                                            // B: cancel / back
+ if(down(3))UI.A.tab('build');                                                    // Y: build menu
+ if(down(4))BUILD.mode?BUILD.rotate(-1):GEAR.cycleHand();if(down(5))BUILD.mode?BUILD.rotate(1):UI.A.wheel(); // LB / RB
+ if(down(12)&&BUILD.mode==='place')BUILD.nudge(1);if(down(13)&&BUILD.mode==='place')BUILD.nudge(-1);       // d-pad up/down: raise/lower
+ if(down(12)&&!BUILD.mode)UI.A.hud('ms');if(down(13)&&!BUILD.mode)UI.A.hud('todo');
+ if(down(14))BUILD.mode==='place'?BUILD.cycleZoop():SCAN.open();if(down(15))BUILD.mode?UI.A.wireTool():UI.A.wheel(); // d-pad left/right
+ if(down(8))UI.A.tab('map');if(down(9))MENU.pause();if(down(11))UI.A.tab('inv');  // View: map · Menu: pause · R3: inventory
+ if(VEH.driving&&down(2))VEH.exit();
+ if(Date.now()-PAD.hint>0&&!PAD.shown){PAD.shown=1;UI.toast('Controller: RT use · A jump · X interact · Y build · LT dismantle · RB quick wheel · B back','info');}
+ PAD.prev=B;};
+addEventListener('gamepadconnected',()=>{AUDIO.init&&AUDIO.init();});
+// a controls page in Settings
+{const _m=UI.views.menu;UI.views.menu=function(){return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controller</h5><p class="mut">${PAD.on?'Connected.':'Plug in or pair a controller (Backbone, Xbox, PlayStation) and press any button.'}<br>Left stick move · Right stick look · L3 sprint<br>RT mine / place / use · X interact · A jump (hold in air: jetpack)<br>Y build menu · LT dismantle · RB quick wheel · LB switch tool<br>While building: LB/RB rotate · D-pad ▲▼ raise/lower · ◀ row · ▶ power line<br>D-pad ◀ scanner · View map · Menu pause · R3 inventory<br>In menus: D-pad or stick to move · A select · B back · LB/RB tabs</p></div><div class="sc"><h5>Audio</h5>`);};}
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.1.0',VERSION_MARK='FFVER@0.1.0@';
+const VERSION='0.1.1',VERSION_MARK='FFVER@0.1.1@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -3308,7 +3371,7 @@ function applyQuality(){const q=S.settings.quality;R.maxDPR=q==='low'?1:q==='hig
 let lastT=performance.now(),perf={t:0,n:0};
 function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  if(GAME.mode==='play'&&!GAME.paused)S.playTime=(S.playTime||0)+dt;
- try{if(GAME.mode==='title')MENU.orbitCam(dt);else if(!GAME.paused)updatePlayer(dt);START.update(dt);if(GAME.freeCam){const f=GAME.freeCam;R.cam=f.cam;R.yaw=f.yaw;R.pitch=f.pitch;}if(GAME.mode==='play'){updateBuildMode();updateHand(dt,INPUT.act&&!BUILD.mode&&!UI.panel&&!GAME.paused);}
+ try{PAD.update(dt);if(GAME.mode==='title')MENU.orbitCam(dt);else if(!GAME.paused)updatePlayer(dt);START.update(dt);if(GAME.freeCam){const f=GAME.freeCam;R.cam=f.cam;R.yaw=f.yaw;R.pitch=f.pitch;}if(GAME.mode==='play'){updateBuildMode();updateHand(dt,INPUT.act&&!BUILD.mode&&!UI.panel&&!GAME.paused);}
   let left=GAME.paused?0:dt;while(left>0){const s=Math.min(.05,left);simStep(s);left-=s;}
   TOUCHFIX.check();TR.update(dt);mamUpdate(dt);geyserFX(dt);EXP.update(dt);GEAR.update(dt);GEAR.hud();BP.frame();TUT.update(dt);START.hud();fillItemInstances();fillPulses();FX.update(dt);UI.frame(dt);renderFrame();}catch(e){console.error(e);GAME.err=(GAME.err||0)+1;if(GAME.err<3)UI.toast('Error: '+e.message,'bad');}
  // automatic quality: drop resolution on slow devices
@@ -3320,7 +3383,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
