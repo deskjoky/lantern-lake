@@ -271,6 +271,8 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 .pwrsw{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}.pwrsw .btn{flex:1;min-width:200px}
 .padf{outline:3px solid #ffd27a!important;outline-offset:2px;box-shadow:0 0 0 6px rgba(255,210,122,.25)!important;z-index:2;position:relative}
 body.padmode #joyHint,body.padmode #joy{display:none!important}
+.pdiag{background:#101a20;border:1px solid #3a8ab0;border-radius:8px;padding:8px 10px;font-size:12.5px;color:#c9e8ff;margin-bottom:8px;line-height:1.5}
+#padchip{position:fixed;left:50%;bottom:calc(8px + var(--safe-b,0px));transform:translateX(-50%);z-index:30;background:rgba(16,26,32,.9);border:1px solid #3a8ab0;color:#c9e8ff;border-radius:10px;padding:6px 10px;font:600 11.5px system-ui;max-width:92vw;pointer-events:none}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -3358,12 +3360,15 @@ addEventListener('gamepadconnected',e=>{PAD.diag.events++;PAD.diag.lastId=e.game
 PAD.diagText=function(){const has=!!navigator.getGamepads;let list=[];try{list=[...(navigator.getGamepads()||[])].filter(Boolean);}catch(e){}
  const g=list[0];let pressed='none';if(g){const b=g.buttons.map((x,i)=>(x.pressed||x.value>.5)?i:-1).filter(i=>i>=0);if(b.length){pressed='button '+b.join(', ');PAD.diag.lastBtn=pressed;}const a=g.axes.map(v=>Math.abs(v)>.3?v.toFixed(1):'0');if(a.some(v=>v!=='0'))PAD.diag.lastBtn='sticks '+a.join(' ');}
  return `Controller support in this browser: <b>${has?'yes':'NO'}</b><br>Controllers found: <b>${list.length}</b>${g?` · ${esc(g.id.slice(0,40))} (${esc(g.mapping||'no mapping')})`:''}<br>Connect events: ${PAD.diag.events} · Last input: <b>${esc(PAD.diag.lastBtn)}</b>`;};
-{const _m=UI.views.menu;UI.views.menu=function(){return _m().replace('<div class="sc"><h5>Audio</h5>',`<div class="sc"><h5>Controller check</h5><p class="mut" id="paddiag">${PAD.diagText()}</p><p class="mut">Press a button on your controller: the numbers above should change. If “Controllers found” stays 0, tap the screen once, then press A again.</p></div><div class="sc"><h5>Audio</h5>`);};}
+{const _m=UI.views.menu;UI.views.menu=function(){return _m().replace('<div class="sc"><h5>Controls</h5><div class="seg">',`<div class="sc"><h5>Controls</h5><div class="pdiag" id="paddiag">${PAD.diagText()}</div><div class="seg">`);};}
 setInterval(()=>{const el=document.getElementById('paddiag');if(el)el.innerHTML=PAD.diagText();},250);
+
+// a small status chip on the HUD while controller mode is on but no controller is seen
+setInterval(()=>{let c=document.getElementById('padchip');if(!c){c=document.createElement('div');c.id='padchip';document.body.appendChild(c);}const want=S&&S.settings&&S.settings.input==='controller'&&!PAD.on&&GAME.mode;c.style.display=want?'':'none';if(want)c.innerHTML='🎮 '+PAD.diagText().replace(/<br>/g,' · ');},500);
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.1.3',VERSION_MARK='FFVER@0.1.3@';
+const VERSION='0.1.4',VERSION_MARK='FFVER@0.1.4@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
