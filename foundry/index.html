@@ -258,6 +258,7 @@ body.tutHide #tut,body.tutHide #wp{display:none!important}
 .rt{display:inline-block;font-weight:900;font-size:10px;padding:4px 6px;border-radius:5px;letter-spacing:.04em}.rt.any{background:#1f4a40;color:#6fe0c8}.rt.none{background:#3a2a2a;color:#e8a39a}.rt.over{background:#4a3a1a;color:#ffd27a}
 .ropts{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:5px;max-height:220px;overflow:auto}.ro{aspect-ratio:1;border-radius:6px;background:#22252b;border:1px solid #3a3e47;display:grid;place-items:center;padding:2px;overflow:hidden}.ro img{width:100%;height:100%;object-fit:contain}.ro.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(240,138,50,.4)}.ro .rt{font-size:8px;padding:2px 3px}
 #gearhud{position:absolute;right:calc(100% + 10px);bottom:4px;display:flex;flex-direction:column;gap:8px;grid-column:auto;grid-row:auto}
+.rb.rec{background:#a33!important;color:#fff}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1100,7 +1101,7 @@ function makeThumbs(){const gl=GL.gl,W=220,H=150;const fb=gl.createFramebuffer()
 const FAC={b:new Map(),belts:new Map(),grids:[],powerDirty:true,stats:{prod:{},cons:{}},statT:0,rate:{},rateIn:{}};
 const portWorld=(b,i)=>{const p=BUILDINGS[b.k].ports[i];const c=Math.cos(b.rot),s=Math.sin(b.rot);return {p:[b.x+c*p[0]+s*p[1],b.y+(p[4]??(BUILDINGS[b.k].py||PORT_Y)),b.z-s*p[0]+c*p[1]],d:[Math.sin(b.rot+p[2]),0,Math.cos(b.rot+p[2])],io:p[3]};};
 const inCap=n=>Math.max(6,n*3),outCap=n=>Math.max(10,n*4);
-function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot:o.rot||0,recipe:o.recipe||null,inb:o.inb||{},out:o.out||{},prog:o.prog||0,store:o.store||{},fuel:o.fuel||{},energy:o.energy||0,node:o.node??null,conn:[],wires:[],buf:o.buf||[],clock:o.clock||1,tripped:!!o.tripped,on:o.on!==false,charge:o.charge||0,rr:0,run:0,anim:0,amp:o.amp||0,rules:o.rules||null,limit:o.limit??null};
+function newBuilding(o){const b={id:o.id??S.nextId++,k:o.k,x:o.x,y:o.y,z:o.z,rot:o.rot||0,recipe:o.recipe||null,inb:o.inb||{},out:o.out||{},prog:o.prog||0,store:o.store||{},fuel:o.fuel||{},energy:o.energy||0,node:o.node??null,conn:[],wires:[],buf:o.buf||[],clock:o.clock||1,tripped:!!o.tripped,on:o.on!==false,charge:o.charge||0,rr:0,run:0,anim:0,amp:o.amp||0,rules:o.rules||null,limit:o.limit??null,mode:o.mode||null,dest:o.dest??null,rn:o.rn||null};
  const D=BUILDINGS[b.k];b.conn=(D.ports||[]).map(()=>null);
  const mesh=MODELS.b[b.k];b.obj={mesh,model:T(b.x,b.y,b.z,b.rot),bid:b.id};R.objects.push(b.obj);
  const A=MODELS.anim[b.k];if(A&&!(typeof PARTS!=='undefined'&&PARTS[b.k]))b.animDef=A;
@@ -1279,7 +1280,7 @@ function blockedAt(x,z,y){for(const b of FAC.b.values()){const D=BUILDINGS[b.k];
   const top=b.y+(b.k==='hub'?.5:D.h);if(y<top-.5&&y+1.8>b.y)return true;}
  for(const f of WORLD.flora)if(f.alive&&f.kind!=='bush'&&Math.abs(f.x-x)<2&&Math.abs(f.z-z)<2&&Math.hypot(f.x-x,f.z-z)<(f.kind==='rock'?1.1:.5)*f.s)return true;
  return false;}
-function updatePlayer(dt){let mx=INPUT.jx,my=INPUT.jy;const k=INPUT.keys;if(k.KeyW||k.ArrowUp)my=1;if(k.KeyS||k.ArrowDown)my=-1;if(k.KeyA||k.ArrowLeft)mx=-1;if(k.KeyD||k.ArrowRight)mx=1;
+function updatePlayer(dt){if(VEH.driving){R.yaw=PL.yaw;R.pitch=PL.pitch;return;}let mx=INPUT.jx,my=INPUT.jy;const k=INPUT.keys;if(k.KeyW||k.ArrowUp)my=1;if(k.KeyS||k.ArrowDown)my=-1;if(k.KeyA||k.ArrowLeft)mx=-1;if(k.KeyD||k.ArrowRight)mx=1;
  if(UI.panel){mx=my=0;}const run=k.ShiftLeft||Math.hypot(INPUT.jx,INPUT.jy)>.98;const sp=(run?9:5.2)*GEAR.speedMul()*Math.min(1,Math.hypot(mx,my));
  const ang=Math.atan2(mx,my)+PL.yaw;let nx=PL.x,nz=PL.z;if(Math.hypot(mx,my)>.05){nx+=Math.sin(PL.yaw)*my*sp*dt/Math.max(1,Math.hypot(mx,my))+Math.cos(PL.yaw)*-mx*sp*dt/Math.max(1,Math.hypot(mx,my));nz+=Math.cos(PL.yaw)*my*sp*dt/Math.max(1,Math.hypot(mx,my))-Math.sin(PL.yaw)*-mx*sp*dt/Math.max(1,Math.hypot(mx,my));}
  const lim=WORLD.half-8;nx=clamp(nx,-lim,lim);nz=clamp(nz,-lim,lim);
@@ -1390,7 +1391,7 @@ function placeValid(t){const k=BUILD.k,D=BUILDINGS[k];if(!canAfford(D.cost)&&!BP
   if(Math.abs(t.x-b.x)<(w+bw)/2-.05&&Math.abs(t.z-b.z)<(d+bd)/2-.05)return 'Something is in the way';}
  if(D.surf!=='deck'&&D.surf!=='ramp'&&Math.abs(PL.x-t.x)<w/2+.3&&Math.abs(PL.z-t.z)<d/2+.3&&PL.y<t.y+D.h&&PL.y+1.8>t.y)return 'You are standing in the way';
  return '';}
-function placeOne(t){const D=BUILDINGS[BUILD.k];if(!canAfford(D.cost)&&BP.ok(BUILD.k))return BP.place(t);pay(D.cost);const b=newBuilding({k:BUILD.k,x:t.x,y:t.y,z:t.z,rot:t.rot,node:t.node?t.node.id:null});
+function placeOne(t){const D=BUILDINGS[BUILD.k];if(D.vehicle&&canAfford(D.cost)){pay(D.cost);vehSpawn(BUILD.k,t);return null;}if(!canAfford(D.cost)&&BP.ok(BUILD.k))return BP.place(t);pay(D.cost);const b=newBuilding({k:BUILD.k,x:t.x,y:t.y,z:t.z,rot:t.rot,node:t.node?t.node.id:null});
  if(D.machine){const rs=RECIPES.filter(r=>r.m===D.machine&&unlocked(r));if(BUILD.preset&&BUILD.preset.k===BUILD.k&&RECIPE[BUILD.preset.recipe]&&unlocked(RECIPE[BUILD.preset.recipe]))b.recipe=BUILD.preset.recipe;else if(rs.length===1)b.recipe=rs[0].id;if(BUILD.preset&&BUILD.preset.k===BUILD.k)b.clock=Math.min(BUILD.preset.clock||1,maxClock());}
  autoWire(b);clearFloraAround(b);FX.puff(t.x,t.y,t.z);return b;}
 function placeBuilding(){const t=BUILD.target;if(!t)return;
@@ -1500,10 +1501,10 @@ function handTarget(){const {o,d}=aimRay();const n=rayNodes(o,d,7),f=rayFlora(o,
  const c=rayCreatures(o,d,7),pd=rayPods(o,d,9),cr=rayCores(o,d,7),sp=spotUnderAim(o,d);
  if(c&&(!best||c.t<best.t))best={kind:'creature',t:c.t,c:c.c};if(pd&&(!best||pd.t<best.t+.5))best={kind:'pod',t:pd.t,p:pd.p};if(cr&&(!best||cr.t<best.t+.5))best={kind:'core',t:cr.t,c:cr.c};
  if(sp&&(!best||best.kind==='building'||sp.t<best.t+.3))best={kind:'spot',t:sp.t,b:sp.b,s:sp.s};
- const bq=BP.ray(o,d,9);if(bq&&(!best||bq.t<best.t))best={kind:'bp',t:bq.t,bp:bq.bp};const cq=GEAR.rayCrate(o,d);if(cq&&(!best||cq.t<best.t+.3))best={kind:'crate',t:cq.t,c:cq.c};return best;}
+ const bq=BP.ray(o,d,9);if(bq&&(!best||bq.t<best.t))best={kind:'bp',t:bq.t,bp:bq.bp};const cq=GEAR.rayCrate(o,d);if(cq&&(!best||cq.t<best.t+.3))best={kind:'crate',t:cq.t,c:cq.c};const vq=rayVeh(o,d);if(vq&&(!best||vq.t<best.t+.3))best={kind:'veh',t:vq.t,v:vq.v};return best;}
 function spotPos(b,s){const c=Math.cos(b.rot),sn=Math.sin(b.rot);return [b.x+c*s.x+sn*s.z,b.y+s.y,b.z-sn*s.x+c*s.z];}
 function spotUnderAim(o,d){let best=null;for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(!D.spots||Math.abs(b.x-o[0])>16||Math.abs(b.z-o[2])>16)continue;for(const s of D.spots){const p=spotPos(b,s);const w=v3.sub(p,o);const t=v3.dot(w,d);if(t<0||t>3.6)continue;const q=[o[0]+d[0]*t-p[0],o[1]+d[1]*t-p[1],o[2]+d[2]*t-p[2]];if(Math.hypot(...q)<.95&&(!best||t<best.t))best={t,b,s};}}return best;}
-function updateHand(dt,holding){const t=handTarget();HAND.what=t;if(holding&&t&&t.kind==='creature'){zap(t.c);HAND.t=0;return;}if(!holding||!t||t.kind==='building'||t.kind==='spot'||t.kind==='pod'||t.kind==='creature'||t.kind==='bp'||t.kind==='crate'){HAND.t=0;return;}
+function updateHand(dt,holding){const t=handTarget();HAND.what=t;if(holding&&t&&t.kind==='creature'){zap(t.c);HAND.t=0;return;}if(!holding||!t||t.kind==='building'||t.kind==='spot'||t.kind==='pod'||t.kind==='creature'||t.kind==='bp'||t.kind==='crate'||t.kind==='veh'){HAND.t=0;return;}
  if(t.kind==='core'){HAND.t+=dt;if(HAND.t>=1.2){HAND.t=0;takeCore(t.c);}return;}
  HAND.t+=dt;const saw=(S.equip||{}).hand==='chainsaw'&&t.kind==='flora'&&t.f.kind!=='rock'&&t.f.kind!=='slug';const need=(t.kind==='node'?.55/(t.nd.purity===2?1.4:1):saw?.35:.9)*paceMine();if(saw&&HAND.t>=need){HAND.t=0;GEAR.chainsawHarvest(t.f);return;}if(HAND.t>=need){HAND.t=0;
   if(t.kind==='node'){if(invRoom(t.nd.type)<1){UI.toast('Inventory full','warn');HAND.t=-1;return;}addInv(t.nd.type,1);TOOL.impact('rock');FX.chips(t.nd,ITEMS[t.nd.type].c);UI.pop('+1 '+ITEMS[t.nd.type].n);}
@@ -1535,7 +1536,7 @@ function benchRecipes(){return RECIPES.filter(r=>r.bench&&unlocked(r));}
 function craft(r,times=1){let made=0;for(let t=0;t<times;t++){if(!Object.entries(r.in).every(([k,v])=>(S.inv[k]||0)>=v))break;for(const [k,v] of Object.entries(r.in))addInv(k,-v);for(const [k,v] of Object.entries(r.out))addInv(k,v);made++;}if(made){AUDIO.craft();}return made;}
 // ---- save / load ----
 function serialize(){S.player={x:PL.x,y:PL.y,z:PL.z,yaw:PL.yaw,pitch:PL.pitch};S.time=Date.now();
- S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog,clock:b.clock,amp:b.amp||undefined,rules:b.rules||undefined,limit:b.limit??undefined,tripped:b.tripped||undefined,on:b.on,charge:b.charge||undefined}));
+ S.b=[...FAC.b.values()].map(b=>({id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,inb:b.inb,out:b.out,store:b.store,fuel:b.fuel,energy:b.energy,node:b.node,buf:b.buf,prog:b.prog,clock:b.clock,amp:b.amp||undefined,rules:b.rules||undefined,limit:b.limit??undefined,mode:b.mode||undefined,dest:b.dest??undefined,rn:b.rn||undefined,tripped:b.tripped||undefined,on:b.on,charge:b.charge||undefined}));
  S.pipes=[...FAC.pipes.values()].map(pp=>({id:pp.id,tier:pp.tier,from:pp.from,to:pp.to,fluid:pp.fluid}));
  S.belts=[...FAC.belts.values()].map(bl=>({id:bl.id,tier:bl.tier,from:bl.from,to:bl.to,items:bl.items.map(i=>[i.t,Math.round(i.d*100)/100])}));return JSON.stringify(S);}
 function saveGame(){if(GAME.wiping)return;try{localStorage.setItem(SAVE_KEY,serialize());}catch(e){}}
@@ -1624,7 +1625,7 @@ UI.frame=function(dt){UI._t=(UI._t||0)+dt;
  else if(BUILD.mode==='pipe'){label=BUILD.pipeA?'Connect':'Start';const P=BUILD.target;look=P?(P.w.io==='fout'?'Fluid output':'Fluid input')+' · '+BUILDINGS[P.b.k].n:PIPES[BUILD.pipeTier].n;}
  else if(BUILD.mode==='wire'){label=BUILD.wireA?'Connect':'Start';const t=BUILD.target;look=t?BUILDINGS[t.k].n+' · '+wiresOf(t.id)+'/'+connsOf(t.k)+' lines':'Aim at a pole, generator or machine';}
  else if(BUILD.mode==='dismantle'){label='Remove';const t=BUILD.target;look=t?(t.bpx?'Blueprint: '+BUILDINGS[t.bpx.k].n:t.pipe?PIPES[t.pipe.tier].n:t.wire?'Power line':t.belt?BELTS[t.belt.tier].n:BUILDINGS[t.b.k].n):'Aim at something';}
- else if(H){if(H.kind==='node'){label='Mine';look=PURITY[H.nd.purity].n+' '+NODE_TYPES[H.nd.type].n+' node · hold to mine';holdK=HAND.t/.55;}else if(H.kind==='flora'){label='Harvest';look=(H.f.kind==='slug'?'Power slug! Grab it to craft power shards':H.f.kind==='bush'?'Bush · leaves':H.f.kind==='rock'?'Boulder · break it for limestone':'Tree · wood and leaves');if(H.f.kind==='rock')label='Break';holdK=HAND.t/.9;}else if(H.kind==='spot'){const k=H.s.k;label=k==='bench'?'Craft':k==='terminal'?'Use':'Sleep';look=k==='bench'?'Workbench · craft parts by hand':k==='terminal'?'HUB terminal · milestones and research':'Bed · sleep through the night';}else if(H.kind==='creature'){label='Zap';look='Spinehog · '+'●'.repeat(H.c.hp)+(S.settings.peaceful?'':' · it will charge if you get close');}else if(H.kind==='pod'){label=S.pods[H.p.id]?'Look':'Open';look=S.pods[H.p.id]?'Crash site · already looted':'Crash site · needs '+costText(H.p.cost);}else if(H.kind==='crate'){label='Pick up';look='Crate · '+Object.entries(H.c.items).map(([k,v])=>v+' '+ITEMS[k].n).slice(0,3).join(', ');}else if(H.kind==='bp'){label='Fill';const nd=BP.need(H.bp);look='Blueprint: '+BUILDINGS[H.bp.k].n+' · needs '+(costText(nd)||'nothing');}else if(H.kind==='core'){label='Take';look='Resonance core · an alien artifact';holdK=HAND.t/1.2;}else{label='Open';look=BUILDINGS[H.b.k].n+bStatusShort(H.b);}}
+ else if(H){if(H.kind==='node'){label='Mine';look=PURITY[H.nd.purity].n+' '+NODE_TYPES[H.nd.type].n+' node · hold to mine';holdK=HAND.t/.55;}else if(H.kind==='flora'){label='Harvest';look=(H.f.kind==='slug'?'Power slug! Grab it to craft power shards':H.f.kind==='bush'?'Bush · leaves':H.f.kind==='rock'?'Boulder · break it for limestone':'Tree · wood and leaves');if(H.f.kind==='rock')label='Break';holdK=HAND.t/.9;}else if(H.kind==='spot'){const k=H.s.k;label=k==='bench'?'Craft':k==='terminal'?'Use':'Sleep';look=k==='bench'?'Workbench · craft parts by hand':k==='terminal'?'HUB terminal · milestones and research':'Bed · sleep through the night';}else if(H.kind==='creature'){label='Zap';look='Spinehog · '+'●'.repeat(H.c.hp)+(S.settings.peaceful?'':' · it will charge if you get close');}else if(H.kind==='pod'){label=S.pods[H.p.id]?'Look':'Open';look=S.pods[H.p.id]?'Crash site · already looted':'Crash site · needs '+costText(H.p.cost);}else if(H.kind==='veh'){label='Drive';look='';}else if(H.kind==='crate'){label='Pick up';look='Crate · '+Object.entries(H.c.items).map(([k,v])=>v+' '+ITEMS[k].n).slice(0,3).join(', ');}else if(H.kind==='bp'){label='Fill';const nd=BP.need(H.bp);look='Blueprint: '+BUILDINGS[H.bp.k].n+' · needs '+(costText(nd)||'nothing');}else if(H.kind==='core'){label='Take';look='Resonance core · an alien artifact';holdK=HAND.t/1.2;}else{label='Open';look=BUILDINGS[H.b.k].n+bStatusShort(H.b);}}
  const act=$('#act');act.classList.toggle('hide',!label);act.firstElementChild.textContent=label;act.classList.toggle('red',BUILD.mode==='dismantle');act.querySelector('circle').style.strokeDashoffset=String(289*(1-clamp(holdK,0,1)));
  const lk=$('#look');if(lk._v!==look){lk._v=look;lk.textContent=look;lk.style.display=look?'':'none';}
  const mk=BUILD.mode||'';const mkk=mk+BUILD.k+BUILD.dy+BUILD.zoop+BUILD.beltTier+BUILD.tallPole;if(UI._mk!==mkk&&!UI._pressing){UI._mk=mkk;$('#modeBtns').innerHTML=mk?`${mk==='place'?`${NUDGE.has(BUILD.k)?`<button class="rb" data-a="nudge" data-v="-1" title="Lower (G)">▼</button><button class="rb tier" data-a="nudge" data-v="0">${BUILD.dy>0?'+':''}${BUILD.dy} m</button><button class="rb" data-a="nudge" data-v="1" title="Raise (T)">▲</button>`:''}${ZOOP[BUILD.k]?`<button class="rb tier" data-a="zoop" title="Build a row (F)">×${BUILD.zoop}</button>`:''}<button class="rb" data-a="rot" title="Rotate (R)">${ICO.rot}</button>`:''}${mk==='belt'?`<button class="rb tier" data-a="tab" data-v="build">${BELTS[BUILD.beltTier].n.replace('Conveyor Belt ','')}</button><button class="rb tier" data-a="tallPole">${BUILD.tallPole?'Tall pole':'Low pole'}</button>`:''}<button class="rb" data-a="cancel" title="Cancel">${ICO.x}</button>`:`<button class="rb" data-a="wireTool" title="Power line (L)"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></svg></button><button class="rb" data-a="dismantle" title="Dismantle (X)">${ICO.bin}</button>`;}
@@ -1753,6 +1754,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.9.4',t:'Vehicles, trains and drones',items:['Tractor and Truck (Build → Logistics): walk up and tap Drive. Tap ● Rec, drive a loop past Truck Stations, stop recording, then tap Auto: it drives the route on its own, loading or unloading at each station. Stations refuel it.','Railways: build Train Stations, then lay track from a station end (Build → Logistics → Railway). Build a train at a station and add stops; it loads and unloads at each.','Drone Ports: set another drone port as the destination and its drone flies 400 items per trip.','Rain no longer falls through roofs: your HUB and buildings stay dry inside.','Scanner pings now last 15 seconds and disappear once you reach them.']},
  {v:'0.9.3',t:'Real rain',items:['Rain now falls in the 3D world around you, with splashes on the ground, instead of being drawn on your screen.','Fixed buttons sometimes ignoring taps until you restarted the game. Buttons no longer refresh while your finger is on them, and the game now resets itself if touch input gets stuck.']},
  {v:'0.9.2',t:'Mobile pace',items:['New Game pace setting (Settings → Game pace). Mobile is the default: building costs are halved, workbench crafting is twice as fast, hand mining is 1.5× faster, and milestones need about half the parts.','Classic uses Satisfactory\'s original numbers. Machine recipes are the same in both, so your factory ratios stay true.']},
  {v:'0.9.1',t:'Smarter logistics',items:['Smart Splitter: set each output to an item, Any, None or Overflow.','Programmable Splitter: each output can take up to 4 items.','Overflow: an output that only gets items when the others are backed up.','Industrial Storage: 4,800 items, two inputs and two outputs.','Pipeline Pump: pushes fluid uphill (pipes climbing over 10 m are slow without one) and speeds up flow.','Valve: limit or shut off fluid flow.','Wall and Floor Conveyor Holes for running belts through walls and floors.']},
@@ -2226,7 +2228,7 @@ MENU.slots=function(){const el=modal();let pend=null;const render=()=>{el.innerH
 // ===== Planning: blueprints (ghost buildings you fill in), the to-do list, waypoints and the big map =====
 // ---------- BLUEPRINTS ----------
 const BP={};
-BP.ok=k=>k!=='hub'&&!!BUILDINGS[k]&&unlocked(BUILDINGS[k])&&Object.keys(BUILDINGS[k].cost||{}).length>0;
+BP.ok=k=>k!=='hub'&&!(BUILDINGS[k]&&BUILDINGS[k].vehicle)&&!!BUILDINGS[k]&&unlocked(BUILDINGS[k])&&Object.keys(BUILDINGS[k].cost||{}).length>0;
 BP.list=()=>S.bps||(S.bps=[]);
 BP.place=function(t){const k=BUILD.k;const bp={id:'bp'+(S.nextId++),k,x:t.x,y:t.y,z:t.z,rot:t.rot,node:t.node?t.node.id:null,got:{},recipe:BUILD.preset&&BUILD.preset.k===k?BUILD.preset.recipe:null};BP.list().push(bp);
  FX.puff(t.x,t.y,t.z,COL('#7ad8ff',1.2));AUDIO.tone(660,.18,{type:'sine',vol:.06,slide:1.4});UI.toast('Blueprint placed: bring the parts and fill it in','info');saveSoon();return null;};
@@ -2350,10 +2352,10 @@ SCAN.name=s=>s.n||NODE_TYPES[s.k].n;SCAN.col=s=>s.c||NODE_TYPES[s.k].c;SCAN.icon
 SCAN.open=function(){let el=document.getElementById('scanw');if(!el){el=document.createElement('div');el.id='scanw';document.body.appendChild(el);el.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b){el.classList.remove('on');return;}if(b.dataset.s==='x'){el.classList.remove('on');return;}const s=SCAN.types.find(t=>t.k===b.dataset.s);if(S.tier<s.t){AUDIO.bad();return;}el.classList.remove('on');SCAN.go(s);});}
  el.innerHTML=`<div class="scbox"><small>RESOURCE SCANNER</small><h3>What are you looking for?</h3><div class="scg">${SCAN.types.map(s=>{const ok=S.tier>=s.t;return `<button class="sct ${ok?'':'lock'} ${S.lastScan===s.k?'last':''}" data-s="${s.k}"><div class="tp">${SCAN.icon(s)?`<img src="${SCAN.icon(s)}">`:''}${ok?'':'<i>🔒</i>'}</div><span>${esc(SCAN.name(s))}</span><small>${ok?'':'Milestone '+s.t}</small></button>`;}).join('')}</div><button class="btn" data-s="x">Close</button></div>`;el.classList.add('on');AUDIO.click();};
 SCAN.go=function(s){const all=[];if(s.k==='pod'){for(const p of WORLD.pods)if(!S.pods[p.id])all.push([p.x,p.y+1.5,p.z]);}else if(s.k==='slug'){for(const f of WORLD.flora)if(f.kind==='slug'&&f.alive)all.push([f.x,f.y+.6,f.z]);}else if(s.k==='res_core'){for(const c of WORLD.cores)if(!S.cores[c.id])all.push([c.x,c.y+2,c.z]);}else for(const nd of WORLD.nodes)if(nd.type===s.k)all.push([nd.x,nd.y+1.5,nd.z,nd.purity]);
- all.sort((a,b)=>Math.hypot(a[0]-PL.x,a[2]-PL.z)-Math.hypot(b[0]-PL.x,b[2]-PL.z));const list=all.slice(0,s.k==='slug'?5:4);S.lastScan=s.k;SCAN.res={s,list,end:R.time+45};
+ all.sort((a,b)=>Math.hypot(a[0]-PL.x,a[2]-PL.z)-Math.hypot(b[0]-PL.x,b[2]-PL.z));const list=all.slice(0,s.k==='slug'?5:4);S.lastScan=s.k;SCAN.res={s,list,end:R.time+15};
  AUDIO.tone(880,.5,{type:'sine',vol:.06,slide:.5});AUDIO.tone(440,.9,{type:'sine',vol:.05,when:.25,slide:1.5});let r=document.getElementById('scanring');if(!r){r=document.createElement('div');r.id='scanring';document.body.appendChild(r);}r.classList.remove('go');void r.offsetWidth;r.style.borderColor=SCAN.col(s);r.classList.add('go');
  UI.toast(list.length?'Scanner: '+list.length+' '+SCAN.name(s).toLowerCase()+' found nearby':'Scanner: nothing found','info');};
-SCAN.items=function(dt){const R2=SCAN.res;if(!R2)return [];if(R.time>R2.end){SCAN.res=null;return [];}return R2.list.map(p=>({x:p[0],y:p[1],z:p[2],n:SCAN.name(R2.s)+(p[3]!=null?' ('+PURITY[p[3]].n+')':''),c:SCAN.col(R2.s),ic:SCAN.icon(R2.s),scan:1}));};
+SCAN.items=function(dt){const R2=SCAN.res;if(!R2)return [];if(R.time>R2.end){SCAN.res=null;return [];}return R2.list.filter(p=>Math.hypot(p[0]-PL.x,p[2]-PL.z)>6).map(p=>({x:p[0],y:p[1],z:p[2],n:SCAN.name(R2.s)+(p[3]!=null?' ('+PURITY[p[3]].n+')':''),c:SCAN.col(R2.s),ic:SCAN.icon(R2.s),scan:1}));};
 UI.A.scan=()=>SCAN.open();
 {const _r=UI.refresh;UI.refresh=function(){if(UI.panel&&UI.tab==='bp'&&!UI.bld){_r();$('#sheet .tabs').innerHTML='<b class="ttl">Blueprint</b>';return;}_r();};}
 
@@ -2712,16 +2714,20 @@ UI.A.paceSet=v=>{S.settings.pace=v;applyPace();AUDIO.click();UI.toast(v==='mobil
 {const _m=UI.views.menu;UI.views.menu=function(){const h=_m();const p=S.settings.pace||'mobile';return h.replace('<div class="sc"><h5>Graphics</h5>',`<div class="sc"><h5>Game pace</h5><div class="seg"><button class="${p==='mobile'?'on':''}" data-a="paceSet" data-v="mobile">Mobile</button><button class="${p==='classic'?'on':''}" data-a="paceSet" data-v="classic">Classic</button></div><p class="mut">${p==='mobile'?'Half building costs, faster hand crafting and mining, smaller milestones. Machine recipes are unchanged.':'The original Satisfactory costs and times.'}</p></div><div class="sc"><h5>Graphics</h5>`);};}
 // ===== Rain that falls in the world (not on the screen): streaks around you, splashes on the ground =====
 const RAIN={drops:[],N:700};
+// rain stops on the highest roof above it: buildings (including the HUB roof) keep the inside dry
+function rainFloor(x,z){let top=ground(x,z);for(const b of FAC.b.values()){if(Math.abs(b.x-x)>12||Math.abs(b.z-z)>12)continue;const D=BUILDINGS[b.k];const [lx,lz]=bLocal(b,x,z);
+  if(D.tops){for(const t of D.tops)if(lx>=t[0]&&lx<=t[2]&&lz>=t[1]&&lz<=t[3])top=Math.max(top,b.y+t[4]);continue;}if(Math.abs(lx)<=D.w/2&&Math.abs(lz)<=D.d/2)top=Math.max(top,b.y+(D.top||D.h));}return top;}
 EXP.rain=function(dt,k){const c=EXP.rc;if(c)c.style.display='none';
  if(!RAIN.I){const g=new GB();g.add(PRIM.box(.018,.75,.018),null,COL('#cfe4ff',.35));RAIN.I=instancer(g.build(),RAIN.N);R.inst.push(RAIN.I);}
  const I=RAIN.I,want=GAME.mode==='play'?Math.round(RAIN.N*clamp(k,0,1)):0;const cx=R.cam[0],cy=R.cam[1],cz=R.cam[2],rad=22;
- while(RAIN.drops.length<want){const a=Math.random()*TAU,r=Math.sqrt(Math.random())*rad;RAIN.drops.push({x:cx+Math.cos(a)*r,y:cy+Math.random()*24-4,z:cz+Math.sin(a)*r,v:16+Math.random()*6});}
+ while(RAIN.drops.length<want){const a=Math.random()*TAU,r=Math.sqrt(Math.random())*rad;const x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;RAIN.drops.push({x,y:cy+Math.random()*24-4,z,v:16+Math.random()*6,f:rainFloor(x,z)});}
  if(RAIN.drops.length>want)RAIN.drops.length=want;let n=0;const wind=.18;
- for(const d of RAIN.drops){d.y-=d.v*dt;d.x+=wind*d.v*dt;const gy=ground(d.x,d.z);
+ for(const d of RAIN.drops){d.y-=d.v*dt;d.x+=wind*d.v*dt;if(d.f==null||Math.random()<.02)d.f=rainFloor(d.x,d.z);const gy=d.f;
   if(d.y<gy){if(Math.random()<.25&&Math.abs(d.x-cx)<12&&Math.abs(d.z-cz)<12)PFX.puffs.push({x:d.x,y:gy+.05,z:d.z,vx:0,vy:.6,vz:0,life:.25,t:0,s0:.12,s1:.25,c:[.85,.9,1]});
-   const a=Math.random()*TAU,r=Math.sqrt(Math.random())*rad;d.x=cx+Math.cos(a)*r;d.z=cz+Math.sin(a)*r;d.y=cy+14+Math.random()*10;}
+   const a=Math.random()*TAU,r=Math.sqrt(Math.random())*rad;d.x=cx+Math.cos(a)*r;d.z=cz+Math.sin(a)*r;d.y=cy+14+Math.random()*10;d.f=rainFloor(d.x,d.z);}
   // keep the rain centred on you as you walk
-  if(d.x-cx>rad)d.x-=rad*2;else if(cx-d.x>rad)d.x+=rad*2;if(d.z-cz>rad)d.z-=rad*2;else if(cz-d.z>rad)d.z+=rad*2;
+  if(d.x-cx>rad){d.x-=rad*2;d.f=null;}else if(cx-d.x>rad){d.x+=rad*2;d.f=null;}if(d.z-cz>rad){d.z-=rad*2;d.f=null;}else if(cz-d.z>rad){d.z+=rad*2;d.f=null;}
+  if(d.y<d.f+.3&&d.y>d.f-.6&&false){}
   const o=n*8;I.data[o]=d.x;I.data[o+1]=d.y;I.data[o+2]=d.z;I.data[o+3]=1;I.data[o+4]=1;I.data[o+5]=1;I.data[o+6]=1;I.data[o+7]=0;n++;}I.n=n;};
 // ===== Touch safety net: recover from anything that could leave the screen ignoring taps =====
 const TOUCHFIX={down:0};
@@ -2742,9 +2748,166 @@ TOUCHFIX.check=function(){
 // the live START.update must never leave you stuck in the landing cutscene
 {const _su=START.update;START.update=function(dt){try{_su(dt);}catch(e){console.error(e);try{START.finish();}catch(_){document.body.classList.remove('cine');GAME.landing=null;GAME.freeCam=null;}}};}
 
+// ---- 20-transport.js ----
+// ===== Transport: drones, trucks and tractors you drive and record, railways and trains =====
+Object.assign(BUILDINGS,{
+ droneport:{n:'Drone Port',w:8,d:8,h:3,cost:{heavy_frame:4,computer:4,motor:8,rubber:40},power:20,ports:[[-2,-4,Math.PI,'in'],[2,-4,Math.PI,'out']],cat:'logistics',desc:'Holds 1,200 items. Pick another drone port as its destination: its drone flies loads there and back.',cap:1200,tier:7,station:1},
+ truckst:{n:'Truck Station',w:8,d:10,h:4,cost:{modular_frame:12,rotor:16,cable:40},ports:[[-2,-5,Math.PI,'in'],[2,-5,Math.PI,'out']],cat:'logistics',desc:'Trucks and tractors on autopilot stop here to load or unload. Holds 1,200 items.',cap:1200,tier:4,station:1},
+ trainst:{n:'Train Station',w:8,d:16,h:5,cost:{heavy_frame:4,computer:6,concrete:60,cable:30},ports:[[4,-3,Math.PI/2,'in'],[4,3,Math.PI/2,'out']],cat:'logistics',desc:'Trains stop here to load or unload. Rails connect at both ends. Holds 2,400 items.',cap:2400,tier:7,station:1},
+ tractor:{n:'Tractor',w:2.6,d:4,h:2.4,cost:{modular_frame:5,rotor:5,reinforced_plate:15,cable:20},cat:'logistics',desc:'A small cargo vehicle (600 items). Drive it, record a route, then put it on autopilot.',tier:4,vehicle:1,cargo:600},
+ truck:{n:'Truck',w:3.2,d:7,h:3.2,cost:{motor:8,rotor:12,modular_frame:12,rubber:40},cat:'logistics',desc:'A big cargo vehicle (1,800 items). Drive it, record a route, then put it on autopilot.',tier:7,vehicle:1,cargo:1800},
+});
+const RAIL={cost:{steel_pipe:1,steel_beam:1},per:6,tier:7};
+// stations behave like storage for belts
+{const _acc=accepts;accepts=function(b,pi,item){if(BUILDINGS[b.k].station){let t=0;for(const v of Object.values(b.store))t+=v;return t<BUILDINGS[b.k].cap;}return _acc(b,pi,item);};
+ const _give=give;give=function(b,pi,item){if(BUILDINGS[b.k].station){b.store[item]=(b.store[item]||0)+1;return;}_give(b,pi,item);};
+ const _ub=updateBuilding;updateBuilding=function(b,dt){if(BUILDINGS[b.k].station){b.run=0;if(b.mode==='unload'||b.k==='droneport'&&b.isDest){const keys=Object.keys(b.store).filter(k=>b.store[k]>0);if(keys.length){const k=keys[(b.rr=(b.rr||0)+1)%keys.length];if(outPorts(b).some(pi=>pushOut(b,pi,k))){b.store[k]--;if(!b.store[k])delete b.store[k];}}}return;}_ub(b,dt);};}
+// ---------- models ----------
+Object.assign(BUILD_MODEL,{
+ droneport(g){g.add(RB(8,.5,8,.2),null,C_FRAME);D_.hazard(g,0,.5,4.01,7.6,.2);g.add(PRIM.cyl(3,3.1,.3,24),T(0,.5,0),'#5a616c');g.add(PRIM.cyl(2.6,2.6,.04,24),T(0,.8,0),'#3a3f48');
+  for(let k=0;k<12;k++){const a=k/12*TAU;g.add(PRIM.box(.5,.03,.12,{y0:true}),T(Math.cos(a)*2.4,.82,Math.sin(a)*2.4,-a),COL(k%2?'#ffd23a':'#3a3f48',k%2?.6:0));}
+  g.add(PRIM.box(2.4,.02,.3,{y0:true}),T(0,.84,0),COL('#ffd23a',.6));g.add(PRIM.box(.3,.02,2.4,{y0:true}),T(0,.84,0),COL('#ffd23a',.6));
+  for(const [x,z] of [[-3.4,-3.4],[3.4,-3.4],[-3.4,3.4],[3.4,3.4]]){g.add(PRIM.cyl(.12,.15,2.4,8),T(x,.5,z),C_LIGHT);lamp(g,x,3.05,z,'#58e0c8');}
+  g.add(RB(2.6,1.6,1.6,.3),T(0,.5,-3.1),C_LIGHT);g.add(RB(2.7,.3,1.7,.1),T(0,1.9,-3.1),C_PANEL);D_.console_(g,2.8,.5,2.8,0);},
+ truckst(g){g.add(RB(8,.4,10,.15),null,'#5a5e66');for(let i=-4;i<=4;i+=2)g.add(PRIM.box(.15,.02,9.6,{y0:true}),T(i,.4,0),COL('#ffd23a',.3));
+  g.add(RB(3,3.6,4,.4),T(-2.4,.4,-2.8),C_LIGHT);g.add(RB(3.1,.4,4.1,.15),T(-2.4,3.9,-2.8),C_PANEL);for(const z of [-4.2,4.2])g.add(RB(.4,4,.4,.1),T(2.6,.4,z),C_FRAME);g.add(RB(6,.4,9,.2),T(1,4.4,0),C_PANEL);
+  D_.hazard(g,1,4.45,4.51,5.6,.2);g.add(RB(2.2,1.2,.06,.03),T(-2.4,2,-.78),C_DARK);lamp(g,2.6,4.3,4.2,'#ffb84a');lamp(g,2.6,4.3,-4.2,'#ffb84a');D_.vent(g,-3.91,1.4,-2.8,2,1,-Math.PI/2,5);},
+ trainst(g){g.add(RB(8,1.2,16,.2),null,'#9a9fa8');g.add(RB(3.2,.15,16,.05),T(-2.2,1.2,0),'#5a5e66');for(let z=-7.5;z<=7.5;z+=1)g.add(PRIM.box(2.6,.08,.3,{y0:true}),T(-2.2,1.25,z),'#4a3a30');for(const x of [-2.9,-1.5])g.add(PRIM.box(.12,.14,16,{y0:true}),T(x,1.3,0),'#c8ccd2');
+  g.add(RB(4,4,10,.5),T(2,1.2,0),C_LIGHT);g.add(RB(4.1,.4,10.1,.2),T(2,5.2,0),C_PANEL);g.add(RB(6.4,.3,15,.15),T(.8,6.2,0),C_PANEL);for(const z of [-7,0,7])g.add(PRIM.cyl(.18,.22,5,8),T(-1.6,1.2,z),C_FRAME);
+  D_.hazard(g,-.55,1.22,0,15.6,.15,Math.PI/2);for(const z of [-4,0,4])lamp(g,-1.6,5.9,z,'#fff2d8');g.add(RB(2.6,1.4,.06,.03),T(2,3,5.03),C_DARK);D_.vent(g,4.01,2.2,0,6,1.6,Math.PI/2,8);},
+});
+const VEHM={};
+function vehMeshes(){const B=f=>{const g=new GB();f(g);return g.build();};
+ const wheel=(g,x,z,r)=>{g.add(PRIM.cyl(r,r,.4,14),T(x,r,z,0,0,Math.PI/2),'#26282c');g.add(PRIM.cyl(r*.55,r*.55,.42,10),T(x,r,z,0,0,Math.PI/2),'#8a929c');};
+ VEHM.tractor=B(g=>{for(const [x,z] of [[-1.1,-1.3],[1.1,-1.3],[-1.1,1.3],[1.1,1.3]])wheel(g,x,z,.6);g.add(RB(1.9,.9,3.6,.3),T(0,.55,0),C_PANEL);g.add(RB(1.4,1.1,1.4,.35),T(0,1.4,-.6),C_LIGHT);g.add(RB(1.2,.7,.06,.03),T(0,1.75,.12),COL('#9ad8ff',.5));g.add(RB(1.6,.5,1.6,.15),T(0,1.4,1),C_DARK);g.add(PRIM.cyl(.1,.12,.9,8),T(.6,1.4,1.4),C_FRAME);lamp(g,.6,1.15,1.81,'#fff2d8');lamp(g,-.6,1.15,1.81,'#fff2d8');});
+ VEHM.truck=B(g=>{for(const z of [-2.6,-1.6,2.2])for(const x of [-1.25,1.25])wheel(g,x,z,.7);g.add(RB(2.6,.6,6.8,.2),T(0,.7,0),C_FRAME);g.add(RB(2.5,2,2,.4),T(0,1.3,2.2),C_PANEL);g.add(RB(2.2,.9,.06,.03),T(0,2.3,3.21),COL('#9ad8ff',.5));
+  g.add(RB(2.6,2.4,4.2,.3),T(0,1.3,-1.1),C_LIGHT);for(let z=-3;z<=.8;z+=.95)g.add(RB(2.66,2.2,.08,.03),T(0,1.4,z),'#c8c2b6');D_.hazard(g,0,1.35,-3.21,2.4,.25,Math.PI);lamp(g,.9,1.4,3.25,'#fff2d8');lamp(g,-.9,1.4,3.25,'#fff2d8');g.add(PRIM.cyl(.12,.14,1.2,8),T(1.1,2.8,1.3),C_FRAME);});
+ VEHM.drone=B(g=>{g.add(RB(1.6,.5,1.6,.25),T(0,-.25,0),C_LIGHT);g.add(RB(1.1,.6,1.1,.2),T(0,-.85,0),'#5a616c');for(const [x,z] of [[-1.3,-1.3],[1.3,-1.3],[-1.3,1.3],[1.3,1.3]]){D_.pipe(g,[0,0,0],[x,.1,z],.07,C_PANEL);g.add(PRIM.cyl(.75,.75,.04,16),T(x,.18,z),COL('#9ad8ff',.25));g.add(PRIM.cyl(.12,.12,.2,8),T(x,.05,z),C_DARK);}lamp(g,0,-.95,.56,'#58e0c8');});
+ VEHM.loco=B(g=>{g.add(RB(2.6,1.2,12,.2),T(0,.6,0),C_FRAME);for(const z of [-4.5,-3,3,4.5])for(const x of [-.8,.8])g.add(PRIM.cyl(.45,.45,.25,12),T(x,.45,z,0,0,Math.PI/2),'#26282c');g.add(RB(2.5,2.6,8,.6),T(0,1.6,-1.6),C_LIGHT);g.add(RB(2.6,3,3.2,.5),T(0,1.6,4),C_PANEL);g.add(RB(2.2,1,.06,.03),T(0,3.3,5.62),COL('#9ad8ff',.5));
+  for(let z=-5;z<2;z+=1.4)g.add(RB(2.56,.2,.12,.04),T(0,3.5,z),'#c8c2b6');lamp(g,0,4.75,5.3,'#fff2d8');lamp(g,.8,1.6,6.02,'#fff2d8');lamp(g,-.8,1.6,6.02,'#fff2d8');D_.hazard(g,0,1.25,6.02,2.4,.3);});
+ VEHM.wagon=B(g=>{g.add(RB(2.6,1,11,.2),T(0,.6,0),C_FRAME);for(const z of [-4,-3,3,4])for(const x of [-.8,.8])g.add(PRIM.cyl(.45,.45,.25,12),T(x,.45,z,0,0,Math.PI/2),'#26282c');g.add(RB(2.7,2.6,10,.4),T(0,1.6,0),'#4a74a0');for(let z=-4.5;z<=4.5;z+=1.5)g.add(RB(2.76,2.2,.1,.04),T(0,1.8,z),'#3a6490');g.add(RB(2.8,.2,10.1,.08),T(0,4.2,0),C_PANEL);});
+ VEHM.rail=null;}
+function railMesh(c){const g=new GB();const n=Math.max(2,Math.round(c.len/.8));for(let i=0;i<=n;i++){const q=curveAt(c,c.len*i/n);g.add(PRIM.box(2.4,.16,.32),T(q.p[0],q.p[1]-.1,q.p[2],q.yaw,-q.pitch),'#4a3a30');}
+ sweep(g,c,[[-.78,.08,-.66,.08,'#c8ccd2'],[-.66,.08,-.66,-.06,'#9aa0a8'],[.66,.08,.78,.08,'#c8ccd2'],[.66,-.06,.66,.08,'#9aa0a8']]);along(g,c,10,m=>{g.add(PRIM.box(3,.1,.5),mm(m,T(0,-.18,0)),'#7a6e64');});return g.build();}
+// ---------- DRONES ----------
+const TR={drones:new Map(),veh:[],trains:[],railObjs:new Map(),curves:new Map(),paths:new Map()};
+const railC=r=>{let c=TR.curves.get(r.id);if(!c){c=railCurve(r);if(c)TR.curves.set(r.id,c);}return c;};
+function droneFor(b){let d=TR.drones.get(b.id);if(!d){d={home:b.id,x:b.x,y:b.y+1.2,z:b.z,st:'idle',cargo:{},t:0};TR.drones.set(b.id,d);}return d;}
+function updateDrones(dt){for(const b of FAC.b.values()){if(b.k!=='droneport')continue;const d=droneFor(b);const dest=b.dest!=null?FAC.b.get(b.dest):null;if(dest)dest.isDest=true;
+  const H=[b.x,b.y+1.2,b.z];const cnt=o=>Object.values(o).reduce((a,c)=>a+c,0);const fly=(tx,ty,tz,sp)=>{const dx=tx-d.x,dy=ty-d.y,dz=tz-d.z,L=Math.hypot(dx,dy,dz);const st=sp*dt;if(L<=st){d.x=tx;d.y=ty;d.z=tz;return true;}d.x+=dx/L*st;d.y+=dy/L*st;d.z+=dz/L*st;d.yaw=Math.atan2(dx,dz);return false;};
+  if(d.st==='idle'){Object.assign(d,{x:H[0],y:H[1],z:H[2]});if(dest&&b.pf>0&&cnt(b.store)>0){d.t+=dt;if(d.t>2){d.t=0;let room=400;for(const [k,v] of Object.entries(b.store)){const m=Math.min(v,room);if(m<=0)break;d.cargo[k]=(d.cargo[k]||0)+m;b.store[k]-=m;if(!b.store[k])delete b.store[k];room-=m;}d.st='up';MSND.shot('thunk',b);}}}
+  else if(d.st==='up'){if(fly(H[0],H[1]+30,H[2],10))d.st='go';}
+  else if(d.st==='go'){if(!dest){d.st='back';continue;}if(fly(dest.x,dest.y+31,dest.z,45))d.st='down';}
+  else if(d.st==='down'){if(fly(dest.x,dest.y+1.2,dest.z,10)){const cap=BUILDINGS.droneport.cap;for(const [k,v] of Object.entries(d.cargo)){const room=cap-cnt(dest.store);const m=Math.min(v,room);if(m>0){dest.store[k]=(dest.store[k]||0)+m;d.cargo[k]-=m;}if(!d.cargo[k])delete d.cargo[k];}d.st='back';d.t=0;}}
+  else if(d.st==='back'){if(d.y<(dest?dest.y:b.y)+30){d.y+=10*dt;}else if(fly(H[0],H[1]+30,H[2],45))d.st='land';}
+  else if(d.st==='land'){if(fly(H[0],H[1],H[2],10))d.st='idle';}}
+ for(const [id,d] of TR.drones)if(!FAC.b.has(id))TR.drones.delete(id);}
+// ---------- VEHICLES (drive, record, autopilot) ----------
+function vehSpawn(k,t){const v={id:'v'+(S.nextId++),k,x:t.x,y:t.y,z:t.z,yaw:t.rot,spd:0,fuel:{},cargo:{},route:[],auto:false,ri:0,wait:0};S.vehicles=S.vehicles||[];S.vehicles.push(v);FX.puff(t.x,t.y,t.z);return v;}
+const VEH={driving:null,rec:false};
+function vehUpdate(dt){const L=S.vehicles||[];for(const v of L){const D=BUILDINGS[v.k];const fuelOK=()=>{const k=Object.keys(v.fuel).find(x=>v.fuel[x]>0);if(!k)return false;v.burn=(v.burn||0)+dt*(v.k==='truck'?1.2:.6);if(v.burn>=FUEL[k]/60){v.burn=0;v.fuel[k]--;if(!v.fuel[k])delete v.fuel[k];}return true;};
+  let thr=0,steer=0;if(VEH.driving===v){thr=INPUT.jy||(INPUT.keys.KeyW?1:INPUT.keys.KeyS?-1:0);steer=-(INPUT.jx||(INPUT.keys.KeyA?-1:INPUT.keys.KeyD?1:0));if(VEH.rec){const last=v.route[v.route.length-1];if(!last||Math.hypot(last[0]-v.x,last[1]-v.z)>3)v.route.push([v.x,v.z]);}}
+  else if(v.auto&&v.route.length>2){if(v.wait>0){v.wait-=dt;}else{const tg=v.route[v.ri%v.route.length];const dx=tg[0]-v.x,dz=tg[1]-v.z;if(Math.hypot(dx,dz)<3.5){v.ri=(v.ri+1)%v.route.length;
+     for(const b of FAC.b.values())if(b.k==='truckst'&&Math.hypot(b.x-v.x,b.z-v.z)<7&&v.lastSt!==b.id){v.lastSt=b.id;v.wait=4;vehDock(v,b);break;}}
+    let da=Math.atan2(dx,dz)-v.yaw;da=((da+Math.PI)%TAU+TAU)%TAU-Math.PI;steer=clamp(da*2,-1,1);thr=Math.abs(da)>1.2?.3:.85;}}
+  const max=v.k==='truck'?16:12;const go=thr!==0&&fuelOK();v.spd=lerp(v.spd,go?thr*max:0,Math.min(1,dt*(go?1.2:2.5)));v.yaw+=steer*dt*1.4*clamp(v.spd/6,-1,1);
+  const nx=v.x+Math.sin(v.yaw)*v.spd*dt,nz=v.z+Math.cos(v.yaw)*v.spd*dt;if(!blockedAt(nx,nz,v.y)&&Math.abs(nx)<WORLD.half-10&&Math.abs(nz)<WORLD.half-10){v.x=nx;v.z=nz;}else v.spd*=-.2;v.y=lerp(v.y,solidAt(v.x,v.z,v.y+1.5),Math.min(1,dt*10));
+  if(Math.abs(v.spd)>1&&Math.random()<dt*4)PFX.emit('dust',[v.x-Math.sin(v.yaw)*2,v.y+.2,v.z-Math.cos(v.yaw)*2],.8);}
+ if(VEH.driving){const v=VEH.driving;PL.x=v.x;PL.z=v.z;PL.y=v.y+1.2;PL.vy=0;const back=v.k==='truck'?11:8;const cy=PL.yaw;GAME.freeCam={cam:[v.x-Math.sin(cy)*back,v.y+4.5,v.z-Math.cos(cy)*back],yaw:cy,pitch:PL.pitch-.2};if(Math.abs(v.spd)>2)PL.yaw=lerp(PL.yaw,v.yaw,Math.min(1,dt*1.5));}}
+function vehDock(v,b){const cap=BUILDINGS[v.k].cargo,scap=BUILDINGS.truckst.cap;const cnt=o=>Object.values(o).reduce((a,c)=>a+c,0);
+ if(b.mode==='unload'){for(const [k,n] of Object.entries(v.cargo)){const m=Math.min(n,scap-cnt(b.store));if(m>0){b.store[k]=(b.store[k]||0)+m;v.cargo[k]-=m;}if(!v.cargo[k])delete v.cargo[k];}}
+ else{for(const [k,n] of Object.entries(b.store)){const m=Math.min(n,cap-cnt(v.cargo));if(m<=0)break;v.cargo[k]=(v.cargo[k]||0)+m;b.store[k]-=m;if(!b.store[k])delete b.store[k];}}
+ // stations also refuel vehicles from any fuel stored there
+ for(const k of Object.keys(FUEL))if(b.store[k]>0&&!['leaves'].includes(k)){const m=Math.min(b.store[k],50-(v.fuel[k]||0));if(m>0){v.fuel[k]=(v.fuel[k]||0)+m;b.store[k]-=m;if(!b.store[k])delete b.store[k];}}
+ MSND.shot('thunk',b);}
+function rayVeh(o,d){let best=null;for(const v of (S.vehicles||[])){const w=[v.x-o[0],v.y+1.2-o[1],v.z-o[2]];const t=v3.dot(w,d);if(t<0||t>8)continue;const q=[o[0]+d[0]*t-v.x,o[1]+d[1]*t-v.y-1.2,o[2]+d[2]*t-v.z];if(Math.hypot(...q)<(v.k==='truck'?3:2.2)&&(!best||t<best.t))best={t,v};}return best;}
+VEH.enter=function(v){VEH.driving=v;UI.closePanel();UI.toast('Driving: left stick to steer and accelerate · tap Exit to get out','info');UI._mk='';};
+VEH.exit=function(){const v=VEH.driving;if(!v)return;VEH.driving=null;VEH.rec=false;GAME.freeCam=null;PL.x=v.x+Math.cos(v.yaw)*2.6;PL.z=v.z-Math.sin(v.yaw)*2.6;PL.y=solidAt(PL.x,PL.z,v.y+3);PL.camY=null;UI._mk='';saveSoon();};
+// ---------- RAILWAYS AND TRAINS ----------
+// rail nodes are track ends (stations make two at their ends); rails join two nodes with a smooth curve
+const RN=()=>S.rnodes||(S.rnodes=[]),RL=()=>S.rails||(S.rails=[]);
+function stationNodes(b){if(b.rn&&b.rn.every(id=>RN().find(n=>n.id===id)))return b.rn;const c=Math.cos(b.rot),s=Math.sin(b.rot);const mk=(lz,dir)=>{const n={id:'n'+(S.nextId++),x:b.x+c*-2.2+s*lz,y:b.y+1.3,z:b.z-s*-2.2+c*lz,dx:s*dir,dz:c*dir,st:b.id};RN().push(n);return n.id;};b.rn=[mk(-8,-1),mk(8,1)];RL().push({id:'r'+(S.nextId++),a:b.rn[0],b:b.rn[1],inner:1});return b.rn;}
+function railCurve(r){const A=RN().find(n=>n.id===r.a),B=RN().find(n=>n.id===r.b);if(!A||!B)return null;if(r.inner)return beltCurve([A.x,A.y,A.z],[-A.dx,0,-A.dz],[B.x,B.y,B.z],[-B.dx,0,-B.dz]);return beltCurve([A.x,A.y,A.z],[A.dx,0,A.dz],[B.x,B.y,B.z],[-B.dx,0,-B.dz]);}
+function railSync(){const live=new Set();for(const r of RL()){live.add(r.id);if(!TR.railObjs.has(r.id)&&!r.inner){const c=railC(r);if(!c)continue;const o={mesh:railMesh(c),model:M4.create()};R.objects.push(o);TR.railObjs.set(r.id,o);}}
+ for(const [id,o] of TR.railObjs)if(!live.has(id)){const i=R.objects.indexOf(o);if(i>=0)R.objects.splice(i,1);freeMesh(o.mesh);TR.railObjs.delete(id);}}
+// rail tool: tap a track end (or a station end), then a second end or open ground
+BUILD.rail=function(){BUILD.cancel();if(!(S.tier>=RAIL.tier)){UI.toast('Railways unlock at milestone '+RAIL.tier,'info');return;}BUILD.mode='rail';BUILD.railA=null;UI.closePanel();for(const b of FAC.b.values())if(b.k==='trainst')stationNodes(b);UI.hint('Tap a track end or a station end, then the next point');};
+function railTarget(){const {o,d}=aimRay();let best=null;for(const n of RN()){if(RL().filter(r=>!r.inner&&(r.a===n.id||r.b===n.id)).length&&!n.st&&RL().filter(r=>r.a===n.id||r.b===n.id).length>=2)continue;const w=[n.x-o[0],n.y-o[1],n.z-o[2]];const t=v3.dot(w,d);if(t<0||t>40)continue;const q=[o[0]+d[0]*t-n.x,o[1]+d[1]*t-n.y,o[2]+d[2]*t-n.z];if(Math.hypot(...q)<2.5&&(!best||t<best.t))best={t,n};}
+ if(best)return {node:best.n,p:[best.n.x,best.n.y,best.n.z]};const g=rayGround(o,d,40);return g?{p:[g.p[0],g.p[1]+.3,g.p[2]]}:null;}
+function railCost(L){const n=Math.max(1,Math.ceil(L/RAIL.per));const c={};for(const [k,v] of Object.entries(RAIL.cost))c[k]=v*n;return c;}
+BUILD.railAction=function(){const t=railTarget();if(!t)return;if(!BUILD.railA){if(!t.node){UI.toast('Start from a station end or a track end','warn');return;}BUILD.railA=t.node;UI.hint('Now tap where the track goes');AUDIO.click();return;}
+ const A=BUILD.railA;let B=t.node;const L=Math.hypot(t.p[0]-A.x,t.p[2]-A.z);if(L<4){UI.toast('Too short','warn');return;}if(L>80){UI.toast('Too long: 80 m at most per piece','warn');return;}const cost=railCost(L);if(!canAfford(cost)){UI.toast('Needs '+costText(cost),'warn');AUDIO.bad();return;}
+ if(!B){const dx=t.p[0]-A.x,dz=t.p[2]-A.z,l=Math.hypot(dx,dz);B={id:'n'+(S.nextId++),x:t.p[0],y:t.p[1],z:t.p[2],dx:dx/l,dz:dz/l};RN().push(B);}
+ // the start direction must point away from what is already attached
+ pay(cost);RL().push({id:'r'+(S.nextId++),a:A.id,b:B.id});railSync();AUDIO.place();FX.puff(B.x,B.y,B.z);BUILD.railA=B.st?null:B;UI.hint(BUILD.railA?'Keep going, or cancel':'Connected to the station');saveSoon();};
+function railNeighbors(id){const out=[];for(const r of RL()){if(r.a===id)out.push([r.b,r]);else if(r.b===id)out.push([r.a,r]);}return out;}
+function railPath(fromSt,toSt){const A=FAC.b.get(fromSt),B=FAC.b.get(toSt);if(!A||!B)return null;const sa=stationNodes(A),sb=stationNodes(B);const goal=new Set(sb);const prev=new Map(sa.map(n=>[n,null]));const q=sa.slice();
+ while(q.length){const id=q.shift();if(goal.has(id)&&!sa.includes(id))break;for(const [nb,r] of railNeighbors(id))if(!prev.has(nb)&&!(r.inner&&sa.includes(id)&&sa.includes(nb))){prev.set(nb,[id,r]);q.push(nb);}}
+ let end=[...goal].find(g=>prev.has(g));if(!end)return null;const segs=[];let cur=end;while(prev.get(cur)){const [p,r]=prev.get(cur);segs.unshift({r,fwd:r.a===p});cur=p;}
+ const pts=[];for(const sgm of segs){const c=railC(sgm.r);if(!c)return null;const P=sgm.fwd?c.pts:c.pts.slice().reverse();for(const p of P)if(!pts.length||Math.hypot(p[0]-pts[pts.length-1][0],p[2]-pts[pts.length-1][2])>.3)pts.push(p);}
+ const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1],pts[i][2]-pts[i-1][2]));return {pts,cum,len:cum[cum.length-1]};}
+function pathAt(P,s){s=clamp(s,0,P.len);let lo=0,hi=P.cum.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(P.cum[m]<s)lo=m;else hi=m;}const a=P.pts[lo],b=P.pts[hi],seg=P.cum[hi]-P.cum[lo]||1,t=(s-P.cum[lo])/seg;return {p:[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)],yaw:Math.atan2(b[0]-a[0],b[2]-a[2])};}
+function trainUpdate(dt){for(const tr of (S.trains||[])){if(!tr.stops||tr.stops.length<2){continue;}if(tr.wait>0){tr.wait-=dt;continue;}
+  let P=TR.paths.get(tr.id);if(!P){if(!tr.docked){const cur=FAC.b.get(tr.stops[tr.si%tr.stops.length]);if(cur)trainDock(tr,cur);tr.docked=true;tr.wait=4;continue;}tr.docked=false;const a=tr.stops[tr.si%tr.stops.length],b=tr.stops[(tr.si+1)%tr.stops.length];P=railPath(a,b);tr.s=0;tr.spd=0;if(!P){tr.blocked=true;continue;}tr.blocked=false;TR.paths.set(tr.id,P);}
+  const left=P.len-tr.s;const max=28;tr.spd=left<40?Math.max(3,Math.min(tr.spd,left*.7)):Math.min(max,tr.spd+dt*5);tr.s+=tr.spd*dt;
+  if(tr.s>=P.len){tr.si=(tr.si+1)%tr.stops.length;TR.paths.delete(tr.id);tr.wait=6;const st=FAC.b.get(tr.stops[tr.si]);if(st)trainDock(tr,st);tr.docked=true;MSND.shot('chug',st||{x:0,z:0});}}}
+function trainDock(tr,b){const cap=1600*(tr.cars||2),cnt=o=>Object.values(o).reduce((a,c)=>a+c,0);if(b.mode==='unload'){for(const [k,n] of Object.entries(tr.cargo)){const m=Math.min(n,BUILDINGS.trainst.cap-cnt(b.store));if(m>0){b.store[k]=(b.store[k]||0)+m;tr.cargo[k]-=m;}if(!tr.cargo[k])delete tr.cargo[k];}}
+ else{for(const [k,n] of Object.entries(b.store)){const m=Math.min(n,cap-cnt(tr.cargo));if(m<=0)break;tr.cargo[k]=(tr.cargo[k]||0)+m;b.store[k]-=m;if(!b.store[k])delete b.store[k];}}}
+function trainPose(tr){const P=TR.paths.get(tr.id);if(P)return k=>pathAt(P,tr.s-k);const st=FAC.b.get(tr.stops?tr.stops[tr.si%tr.stops.length]:tr.home)||FAC.b.get(tr.home);if(!st)return null;const n=stationNodes(st);const A=RN().find(x=>x.id===n[0]),B=RN().find(x=>x.id===n[1]);
+ return k=>{const t=clamp(1-k/16,0,1);return {p:[lerp(A.x,B.x,t),A.y,lerp(A.z,B.z,t)],yaw:Math.atan2(B.x-A.x,B.z-A.z)};};}
+// ---------- per frame and rendering ----------
+TR.update=function(dt){if(!VEHM.truck)vehMeshes();if(GAME.paused)return;updateDrones(dt);vehUpdate(dt);trainUpdate(dt);if(RL().length&&TR.railObjs.size!==RL().filter(r=>!r.inner).length)railSync();};
+TR.objects=function(){const out=[];if(!VEHM.truck)return out;
+ for(const d of TR.drones.values()){const spin=d.st!=='idle';out.push({mesh:VEHM.drone,model:T(d.x,d.y+1+(spin?Math.sin(R.time*3)*.1:0),d.z,d.yaw||0)});if(spin&&Math.random()<.3)PFX.emit('steam',[d.x,d.y-.6,d.z],.5);}
+ for(const v of (S.vehicles||[]))out.push({mesh:VEHM[v.k],model:T(v.x,v.y,v.z,v.yaw)});
+ for(const tr of (S.trains||[])){const pose=trainPose(tr);if(!pose)continue;const L=[['loco',0]];for(let i=0;i<(tr.cars||2);i++)L.push(['wagon',12+i*11.5]);for(const [m,off] of L){const q=pose(off);out.push({mesh:VEHM[m],model:T(q.p[0],q.p[1],q.p[2],q.yaw)});}}
+ return out;};
+// clean up tracks whose station was removed
+TR.gc=function(){const nodes=RN(),ok=new Set();S.rnodes=nodes.filter(n=>!n.st||FAC.b.has(n.st));for(const n of S.rnodes)ok.add(n.id);S.rails=RL().filter(r=>ok.has(r.a)&&ok.has(r.b));S.trains=(S.trains||[]).filter(t=>FAC.b.has(t.home));for(const t of S.trains)t.stops=t.stops.filter(id=>FAC.b.has(id));};
+{const _u=TR.update;let acc=0;TR.update=function(dt){acc+=dt;if(acc>2){acc=0;TR.gc();}_u(dt);};}
+// ---------- panels ----------
+const storeGrid=(b,cap)=>{const it=Object.entries(b.store).filter(([,v])=>v>0);const tot=it.reduce((a,[,v])=>a+v,0);return `<div class="bar"><i style="width:${tot/cap*100}%"></i></div><p class="mut">${fmt(tot)} / ${fmt(cap)} items</p><div class="slots">${it.map(([k,v])=>`<button class="sl" data-a="takeS" data-v="${k}">${iIcon(k)}<em>${fmt(v)}</em></button>`).join('')}${'<div class="sl empty"></div>'.repeat(Math.max(0,8-it.length))}</div><div class="qrow"><button class="btn gold" data-a="takeAll">Take all</button><button class="btn" data-a="putAll">Store everything</button></div>`;};
+{const _bv=UI.bldView;UI.bldView=function(b){const D=BUILDINGS[b.k];if(!D.station)return _bv(b);let h=_bv(b);const mode=b.mode||'load';
+ if(b.k!=='droneport')h+=`<h5>Mode</h5><div class="seg"><button class="${mode==='load'?'on':''}" data-a="stMode" data-v="load">Load vehicles</button><button class="${mode==='unload'?'on':''}" data-a="stMode" data-v="unload">Unload vehicles</button></div><p class="mut">${mode==='load'?'Belt items in; arriving vehicles take them.':'Arriving vehicles drop their cargo here; it goes out on the output belt.'}</p>`;
+ if(b.k==='droneport'){const others=[...FAC.b.values()].filter(o=>o.k==='droneport'&&o.id!==b.id);const d=TR.drones.get(b.id);
+  h+=`<h5>Destination</h5>${others.length?`<div class="rlist">${others.map(o=>`<button class="ri ${b.dest===o.id?'sel':''}" data-a="dpDest" data-v="${o.id}"><div class="tp">${bIcon('droneport')}</div><span>Drone port #${o.id}<small>${Math.round(Math.hypot(o.x-b.x,o.z-b.z))} m away</small></span></button>`).join('')}</div>`:'<p class="mut">Build a second drone port to send drones to.</p>'}<p class="mut">Drone: ${d?{idle:'docked',up:'taking off',go:'flying out',down:'landing at destination',back:'flying home',land:'landing'}[d.st]:'docked'}. ${b.pf>0?'':'Needs power to fly.'} Carries 400 items per trip.</p>`+UI.gridView(b);}
+ if(b.k==='trainst'){const trains=(S.trains||[]).filter(t=>t.home===b.id||t.stops.includes(b.id));const others=[...FAC.b.values()].filter(o=>o.k==='trainst'&&o.id!==b.id);
+  h+=`<h5>Trains</h5>${trains.map(t=>`<div class="mrec"><span>Train #${t.id.slice(1)} · ${t.cars||2} freight cars · ${t.blocked?'<b style="color:#ff9a8a">no track to next stop</b>':t.stops.length<2?'add a second stop':'running'}<br><small class="mut">Stops: ${t.stops.map(id=>'#'+id).join(' → ')}</small></span><span>${others.map(o=>t.stops.includes(o.id)?'':`<button class="btn sm" data-a="trStop" data-v="${t.id}:${o.id}">+ #${o.id}</button>`).join('')}<button class="btn sm" data-a="trCars" data-v="${t.id}">Cars</button><button class="btn sm red" data-a="trDel" data-v="${t.id}">✕</button></span></div>`).join('')}
+  <button class="bigbtn" data-a="trNew">Build a train here (${costText(TRAIN_COST)})</button><button class="btn pin" data-a="railTool">Lay railway track</button><p class="mut">Lay track from one end of this station to another station. Trains drive the stops in order, loading or unloading at each.</p>`;}
+ return h+`<h5>Storage</h5>`+storeGrid(b,D.cap);};}
+const TRAIN_COST={motor:10,heavy_frame:4,computer:4,steel_pipe:30};
+UI.A.stMode=v=>{UI.bld.mode=v;AUDIO.click();UI.refresh();saveSoon();};UI.A.dpDest=v=>{UI.bld.dest=+v;AUDIO.click();UI.refresh();saveSoon();};
+UI.A.trNew=()=>{const b=UI.bld;const c={};for(const [k,v] of Object.entries(TRAIN_COST))c[k]=paceMobile()?Math.ceil(v/2):v;if(!canAfford(c)){UI.toast('Needs '+costText(c),'warn');return;}pay(c);stationNodes(b);(S.trains||(S.trains=[])).push({id:'t'+(S.nextId++),home:b.id,stops:[b.id],si:0,cars:2,cargo:{},s:0,wait:0});AUDIO.fanfare();UI.refresh();saveSoon();};
+UI.A.trStop=v=>{const [tid,sid]=v.split(':');const t=S.trains.find(x=>x.id===tid);if(t){t.stops.push(+sid);TR.paths.delete(t.id);}UI.refresh();saveSoon();};
+UI.A.trCars=v=>{const t=S.trains.find(x=>x.id===v);if(t)t.cars=(t.cars||2)%4+1;UI.refresh();saveSoon();};UI.A.trDel=v=>{S.trains=S.trains.filter(x=>x.id!==v);TR.paths.delete(v);UI.refresh();saveSoon();};
+UI.A.railTool=()=>BUILD.rail();
+// vehicle panel
+UI.views.veh=function(){const v=UI.veh;if(!v)return '';const D=BUILDINGS[v.k];const cg=Object.entries(v.cargo).filter(([,n])=>n>0),tot=cg.reduce((a,[,n])=>a+n,0);
+ return `<div class="two"><div class="col"><div class="bbig">${bIcon(v.k)}</div><h3>${esc(D.n)}</h3><p class="mut">${v.auto?'On autopilot':'Parked'} · route ${v.route.length?Math.round(v.route.length*3)+' m':'not recorded'}</p>
+  <button class="bigbtn" data-a="vDrive">Drive</button><div class="qrow"><button class="btn ${v.auto?'gold':''}" data-a="vAuto" ${v.route.length>2?'':'disabled'}>${v.auto?'Stop autopilot':'Autopilot'}</button><button class="btn" data-a="vClear">Clear route</button></div><div class="qrow"><button class="btn red" data-a="vPick">Pick up</button></div></div>
+ <div class="col det"><h5>Fuel</h5><div class="fuels">${['leaves','wood','biomass','biofuel','coal','fuel'].filter(k=>!ITEMS[k].fluid).map(k=>`<div class="pslot">${tile(k,fmt(v.fuel[k]||0),{label:false})}${(S.inv[k]||0)>0?`<button class="btn sm gold" data-a="vFuel" data-v="${k}">Add</button>`:''}</div>`).join('')}</div>
+ <h5>Cargo · ${fmt(tot)} / ${fmt(D.cargo)}</h5><div class="slots">${cg.map(([k,n])=>`<button class="sl" data-a="vTake" data-v="${k}">${iIcon(k)}<em>${fmt(n)}</em></button>`).join('')||'<p class="mut">Empty</p>'}</div>
+ <p class="mut">To automate: drive it, tap ● Rec, drive your loop past truck stations, tap ● Rec again, then turn on Autopilot. Stations refuel it with any fuel they hold.</p></div></div>`;};
+UI.A.vDrive=()=>VEH.enter(UI.veh);UI.A.vAuto=()=>{UI.veh.auto=!UI.veh.auto;UI.veh.ri=0;UI.refresh();saveSoon();};UI.A.vClear=()=>{UI.veh.route=[];UI.veh.auto=false;UI.refresh();};
+UI.A.vFuel=v=>{const n=Math.min(S.inv[v]||0,50-(UI.veh.fuel[v]||0));if(n>0){addInv(v,-n);UI.veh.fuel[v]=(UI.veh.fuel[v]||0)+n;AUDIO.craft();}UI.refresh();};
+UI.A.vTake=v=>{const n=Math.min(UI.veh.cargo[v]||0,invRoom(v));if(n){addInv(v,n);UI.veh.cargo[v]-=n;if(!UI.veh.cargo[v])delete UI.veh.cargo[v];}UI.refresh();};
+UI.A.vPick=()=>{const v=UI.veh;S.vehicles=S.vehicles.filter(x=>x!==v);for(const [k,n] of Object.entries(BUILDINGS[v.k].cost))addInv(k,n);for(const [k,n] of Object.entries(v.cargo))addInv(k,n);UI.closePanel();AUDIO.remove();saveSoon();};
+UI.A.vExit=()=>VEH.exit();UI.A.vRec=()=>{VEH.rec=!VEH.rec;if(VEH.rec&&VEH.driving){VEH.driving.route=[];VEH.driving.auto=false;}UI.toast(VEH.rec?'Recording route: drive your loop':'Route saved ('+(VEH.driving?VEH.driving.route.length*3:0)+' m)','info');UI._mk='';};
+UI.A.vAutoGo=()=>{const v=VEH.driving;if(!v||v.route.length<3){UI.toast('Record a route first','warn');return;}VEH.rec=false;v.auto=true;v.ri=0;VEH.exit();UI.toast('Autopilot on','good');};
+{const _r=UI.refresh;UI.refresh=function(){_r();if(UI.panel&&UI.tab==='veh'&&!UI.bld)$('#sheet .tabs').innerHTML='<b class="ttl">'+esc(UI.veh?BUILDINGS[UI.veh.k].n:'Vehicle')+'</b>';};}
+// build menu: railway track tool in Logistics
+{const _bl=buildList;buildList=function(c){const L=_bl(c);if(c==='logistics')L.push({k:'railTool',n:'Railway',desc:'Lay train track between stations. '+RAIL.per+' m per piece costs '+costText(RAIL.cost)+'.',cost:RAIL.cost,tier:RAIL.tier,ok:S.tier>=RAIL.tier,per:RAIL.per,icon:'item:steel_beam'});return L;};}
+{const _bs=UI.A.bsel;UI.A.bsel=v=>{if(v==='railTool'&&UI.sel.b==='railTool'){if(S.tier>=RAIL.tier)BUILD.rail();return;}_bs(v);};}
+{const _bv=UI.views.build;UI.views.build=function(){return _bv().replace('data-a="pick" data-v="railTool"','data-a="railTool" data-v="railTool"');};}
+// HUD while driving / laying track
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const act=$('#act');
+ if(VEH.driving){act.classList.add('hide');const key='drive'+VEH.rec;if(UI._mk!==key&&!UI._pressing){UI._mk=key;$('#modeBtns').innerHTML=`<button class="rb tier ${VEH.rec?'rec':''}" data-a="vRec">${VEH.rec?'■ Stop':'● Rec'}</button><button class="rb tier" data-a="vAutoGo">Auto</button><button class="rb tier" data-a="vExit">Exit</button>`;}const lk=$('#look');const v=VEH.driving;const t=`${BUILDINGS[v.k].n} · ${Math.round(Math.abs(v.spd)*3.6)} km/h · fuel ${Object.values(v.fuel).reduce((a,c)=>a+c,0)}${VEH.rec?' · recording '+v.route.length*3+' m':''}`;if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
+ else if(BUILD.mode==='rail'){const lk=$('#look');const t=BUILD.railA?'Tap where the track goes ('+costText(RAIL.cost)+' per '+RAIL.per+' m)':'Tap a station end or track end';act.classList.remove('hide');act.firstElementChild.textContent=BUILD.railA?'Lay':'Start';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
+ else if(HAND.what&&HAND.what.kind==='veh'){act.firstElementChild.textContent='Drive';const lk=$('#look');const t=BUILDINGS[HAND.what.v.k].n+(HAND.what.v.auto?' · autopilot':'')+' · tap the vehicle for its menu';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.9.3',VERSION_MARK='FFVER@0.9.3@';
+const VERSION='0.9.4',VERSION_MARK='FFVER@0.9.4@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -2752,9 +2915,9 @@ const setLoad=(f,m)=>{const b=document.getElementById('lbar');if(b)b.style.width
 GAME.primary=function(down){AUDIO.init();if(!down){INPUT.act=false;return;}if(UI.panel)return;
  if(BUILD.mode)updateBuildMode();
  if(BUILD.mode==='place')return placeBuilding();if(BUILD.mode==='belt')return beltAction();if(BUILD.mode==='dismantle')return dismantle();if(BUILD.mode==='wire')return wireAction();if(BUILD.mode==='pipe')return pipeAction();
- if(GAME.landing)return;const H=handTarget();if(H&&H.kind==='crate'){GEAR.takeCrate(H.c);return;}{const hk=(S.equip||{}).hand;if((hk==='rifle'||hk==='nobelisk_det')&&!(H&&['spot','bp','building','pod'].includes(H.kind))){GEAR.fire();return;}}if(H&&H.kind==='spot'){START.useSpot(H);return;}if(H&&H.kind==='bp'){if(!BP.fill(H.bp)&&BP.list().includes(H.bp)){UI.bp=H.bp;UI.open('bp');UI.bp=H.bp;UI.refresh();}return;}if(H&&H.kind==='pod'){UI.pod=H.p;UI.open('pod');UI.pod=H.p;UI.refresh();return;}if(H&&H.kind==='creature'){zap(H.c);INPUT.act=true;TOOL.kick=1;return;}if(H&&H.kind==='building'){UI.open('bld',H.b);return;}INPUT.act=true;};
+ if(GAME.landing)return;if(VEH.driving)return;if(BUILD.mode==='rail'){BUILD.railAction();return;}const H=handTarget();if(H&&H.kind==='veh'){VEH.enter(H.v);return;}if(H&&H.kind==='crate'){GEAR.takeCrate(H.c);return;}{const hk=(S.equip||{}).hand;if((hk==='rifle'||hk==='nobelisk_det')&&!(H&&['spot','bp','building','pod'].includes(H.kind))){GEAR.fire();return;}}if(H&&H.kind==='spot'){START.useSpot(H);return;}if(H&&H.kind==='bp'){if(!BP.fill(H.bp)&&BP.list().includes(H.bp)){UI.bp=H.bp;UI.open('bp');UI.bp=H.bp;UI.refresh();}return;}if(H&&H.kind==='pod'){UI.pod=H.p;UI.open('pod');UI.pod=H.p;UI.refresh();return;}if(H&&H.kind==='creature'){zap(H.c);INPUT.act=true;TOOL.kick=1;return;}if(H&&H.kind==='building'){UI.open('bld',H.b);return;}INPUT.act=true;};
 GAME.secondary=()=>{if(BUILD.mode)BUILD.cancel();};
-GAME.tapAt=function(sx,sy){if(UI.panel||BUILD.mode)return;const r=screenRay(sx/innerWidth,sy/innerHeight);{const bq=BP.ray(r.o,r.d,30),hb0=rayBuildings(r.o,r.d,30);if(bq&&(!hb0||bq.t<hb0.t)){UI.bp=bq.bp;UI.open('bp');UI.bp=bq.bp;UI.refresh();return;}}const h=rayBuildings(r.o,r.d,30);if(h)UI.open('bld',h.b);};
+GAME.tapAt=function(sx,sy){if(UI.panel||BUILD.mode||VEH.driving)return;const r=screenRay(sx/innerWidth,sy/innerHeight);{const vq=rayVeh(r.o,r.d);if(vq){UI.veh=vq.v;UI.open('veh');UI.veh=vq.v;UI.refresh();return;}}{const bq=BP.ray(r.o,r.d,30),hb0=rayBuildings(r.o,r.d,30);if(bq&&(!hb0||bq.t<hb0.t)){UI.bp=bq.bp;UI.open('bp');UI.bp=bq.bp;UI.refresh();return;}}const h=rayBuildings(r.o,r.d,30);if(h)UI.open('bld',h.b);};
 function onKey(c,e){AUDIO.init();if(c==='Tab'){e.preventDefault();UI.A.tab('inv');return;}
  if(c==='Escape'){if(GAME.mode!=='play')return;if(GAME.paused)MENU.resume();else if(UI.panel)UI.closePanel();else if(BUILD.mode)BUILD.cancel();else MENU.pause();return;}
  if(GAME.mode!=='play'||GAME.paused)return;
@@ -2769,17 +2932,17 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  if(GAME.mode==='play'&&!GAME.paused)S.playTime=(S.playTime||0)+dt;
  try{if(GAME.mode==='title')MENU.orbitCam(dt);else if(!GAME.paused)updatePlayer(dt);START.update(dt);if(GAME.freeCam){const f=GAME.freeCam;R.cam=f.cam;R.yaw=f.yaw;R.pitch=f.pitch;}if(GAME.mode==='play'){updateBuildMode();updateHand(dt,INPUT.act&&!BUILD.mode&&!UI.panel&&!GAME.paused);}
   let left=GAME.paused?0:dt;while(left>0){const s=Math.min(.05,left);simStep(s);left-=s;}
-  TOUCHFIX.check();EXP.update(dt);GEAR.update(dt);GEAR.hud();BP.frame();TUT.update(dt);START.hud();fillItemInstances();fillPulses();FX.update(dt);UI.frame(dt);renderFrame();}catch(e){console.error(e);GAME.err=(GAME.err||0)+1;if(GAME.err<3)UI.toast('Error: '+e.message,'bad');}
+  TOUCHFIX.check();TR.update(dt);EXP.update(dt);GEAR.update(dt);GEAR.hud();BP.frame();TUT.update(dt);START.hud();fillItemInstances();fillPulses();FX.update(dt);UI.frame(dt);renderFrame();}catch(e){console.error(e);GAME.err=(GAME.err||0)+1;if(GAME.err<3)UI.toast('Error: '+e.message,'bad');}
  // automatic quality: drop resolution on slow devices
  if(S.settings.quality==='auto'){perf.t+=dt;perf.n++;if(perf.t>4){const fps=perf.n/perf.t;perf.t=perf.n=0;if(fps<28&&R.scale>.6){R.scale=Math.max(.6,R.scale-.12);resize();}else if(fps>55&&R.scale<1){R.scale=Math.min(1,R.scale+.08);resize();}}}
  requestAnimationFrame(frame);}
 (async function boot(){try{
  nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
- initWorld();setLoad(.6,'Unpacking the HUB…');await sleep(20);initModels();FX.init();partMeshes();PFX.init();R.extra=()=>{const dt=Math.min(.05,R.time-(GEAR._t||R.time));GEAR._t=R.time;return animObjects2().concat(toolObjects(),GEAR.crateObjs(),GEAR.nobObjs(dt));};
+ initWorld();setLoad(.6,'Unpacking the HUB…');await sleep(20);initModels();FX.init();partMeshes();PFX.init();R.extra=()=>{const dt=Math.min(.05,R.time-(GEAR._t||R.time));GEAR._t=R.time;return animObjects2().concat(VEH.driving?[]:toolObjects(),GEAR.crateObjs(),GEAR.nobObjs(dt),TR.objects());};
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
