@@ -3266,10 +3266,10 @@ UI.A.wheelAdd=v=>{const L=wheelList();if(L.includes(v)){S.wheel=L.filter(x=>x!==
 addEventListener('keydown',e=>{if(e.code==='KeyC'&&GAME.mode==='play'&&!UI.panel&&e.target.tagName!=='INPUT'){UI.A.wheel();}});
 // ===== Port arrows: see-through arrows on ghosts showing which openings take items in (teal) and which send them out (orange) =====
 let ARROW_M=null;
-function portArrows(k,x,y,z,rot){const D=BUILDINGS[k];if(!D||!D.ports||D.pass)return;if(!ARROW_M){const g=new GB();g.add(PRIM.box(.8,.25,1.6),T(0,0,-.6),'#ffffff');g.add(PRIM.box(.5,.25,1.5),T(-.5,0,.55,-.8),'#ffffff');g.add(PRIM.box(.5,.25,1.5),T(.5,0,.55,.8),'#ffffff');ARROW_M=g.build();}
+function portArrows(k,x,y,z,rot){const D=BUILDINGS[k];if(!D||!D.ports||D.pass)return;if(!ARROW_M){const g=new GB();g.add(PRIM.box(.7,.25,1.5),T(0,0,-.55),'#ffffff');g.add(PRIM.box(.45,.25,1.5),T(-.48,0,.45,.8),'#ffffff');g.add(PRIM.box(.45,.25,1.5),T(.48,0,.45,-.8),'#ffffff');ARROW_M=g.build();}
  const c=Math.cos(rot),s=Math.sin(rot);for(const p of D.ports){const out=p[3]==='out'||p[3]==='fout',fluid=p[3][0]==='f';const off=out?.9:1.1;const lx=p[0]+Math.sin(p[2])*off,lz=p[1]+Math.cos(p[2])*off;
   const wx=x+c*lx+s*lz,wz=z-s*lx+c*lz;const yaw=rot+p[2]+(out?0:Math.PI);const bob=Math.sin(R.time*4)*.12*(out?1:-1);
-  {const ax=wx+Math.sin(yaw)*bob,ay=y+(p[4]??(D.py||PORT_Y))+.6,az=wz+Math.cos(yaw)*bob,tint=out?[1,.55,.15,.7]:fluid?[.4,.7,1,.7]:[.25,1,.8,.7];R.ghosts.push({mesh:ARROW_M,model:T(ax,ay,az,yaw,0,0,.4),tint});R.ghosts.push({mesh:ARROW_M,model:T(ax,ay,az,yaw,0,Math.PI/2,.4),tint});}}}
+  {const ax=wx+Math.sin(yaw)*bob,ay=y+(p[4]??(D.py||PORT_Y))+.6,az=wz+Math.cos(yaw)*bob,tint=out?[1,.55,.15,.7]:fluid?[.4,.7,1,.7]:[.25,1,.8,.7];R.ghosts.push({mesh:ARROW_M,model:T(ax,ay,az,yaw,0,0,.3),tint});R.ghosts.push({mesh:ARROW_M,model:T(ax,ay,az,yaw,0,Math.PI/2,.3),tint});}}}
 {const _ubm=updateBuildMode;updateBuildMode=function(){_ubm();if(BUILD.mode==='place'&&BUILD.target){const L=BUILD.target.list||[BUILD.target];for(const q of L)portArrows(BUILD.k,q.x,q.y,q.z,q.rot);}};}
 {const _bg=BP.ghosts;BP.ghosts=function(){_bg();for(const bp of BP.list())if(Math.hypot(bp.x-PL.x,bp.z-PL.z)<40)portArrows(bp.k,bp.x,bp.y,bp.z,bp.rot);};}
 // ===== Power switches on generators and poles =====
