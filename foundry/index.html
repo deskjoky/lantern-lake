@@ -1242,13 +1242,13 @@ function removeBelt(bl){const A=FAC.b.get(bl.from[0]),B=FAC.b.get(bl.to[0]);if(A
 // ---- what a building will take in ----
 function accepts(b,pi,item){const D=BUILDINGS[b.k];
  if(D.machine){const r=RECIPE[b.recipe];if(!r||!r.in[item])return false;return (b.inb[item]||0)<inCap(r.in[item]);}
- if(b.k==='storage'||b.k==='storage2'){let t=0;for(const v of Object.values(b.store))t+=v;return t<D.cap;}
+ if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock'){let t=0;for(const v of Object.values(b.store))t+=v;return t<D.cap;}
  if(D.pass==='fluid')return false;if(b.k==='splitter'||b.k==='merger'||D.pass||D.split)return b.buf.length<2;
  if(D.fuels){if(!D.fuels.includes(item))return false;let t=0;for(const v of Object.values(b.fuel))t+=v;return t<100;}
  if(b.k==='hub')return hubWants(item)>0;
  if(b.k==='skyhook')return skyWants(item)>0;
  return false;}
-function give(b,pi,item){const D=BUILDINGS[b.k];if(D.machine)b.inb[item]=(b.inb[item]||0)+1;else if(b.k==='storage'||b.k==='storage2')b.store[item]=(b.store[item]||0)+1;else if(D.pass&&D.pass!=='fluid'&&!b.buf.length&&pushOut(b,1,item)){}else if(b.k==='splitter'||b.k==='merger'||D.pass||D.split)b.buf.push(item);else if(D.fuels)b.fuel[item]=(b.fuel[item]||0)+1;else if(b.k==='hub')hubDeliver(item,1);else if(b.k==='skyhook')skyDeliver(item,1);
+function give(b,pi,item){const D=BUILDINGS[b.k];if(D.machine)b.inb[item]=(b.inb[item]||0)+1;else if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock')b.store[item]=(b.store[item]||0)+1;else if(D.pass&&D.pass!=='fluid'&&!b.buf.length&&pushOut(b,1,item)){}else if(b.k==='splitter'||b.k==='merger'||D.pass||D.split)b.buf.push(item);else if(D.fuels)b.fuel[item]=(b.fuel[item]||0)+1;else if(b.k==='hub')hubDeliver(item,1);else if(b.k==='skyhook')skyDeliver(item,1);
  FAC.rateIn[item]=(FAC.rateIn[item]||0)+0;}
 // ---- belts ----
 const beltCanTake=bl=>!bl.items.length||bl.items[bl.items.length-1].d>=1;
@@ -1268,7 +1268,7 @@ function updateBuilding(b,dt){const D=BUILDINGS[b.k];b.run=0;
  else if(BUILDINGS[b.k].makes)updateExtractor(b,dt);
  else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd&&b.pf>0){const rate=D.rate*PURITY[nd.purity].k;const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot<50){b.prog+=dt*b.pf*(b.clock||1);b.run=1;const iv=60/rate;while(b.prog>=iv){b.prog-=iv;b.out[nd.type]=(b.out[nd.type]||0)+1;stat('prod',nd.type,1);}}}
   for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>0&&pushOut(b,pi,k)){b.out[k]--;break;}}
- else if(b.k==='storage'||b.k==='storage2'){const keys=Object.keys(b.store).filter(k=>b.store[k]>0);if(keys.length){const k=keys[b.rr++%keys.length];if(outPorts(b).some(pi=>pushOut(b,pi,k))){b.store[k]--;if(!b.store[k])delete b.store[k];}}}
+ else if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock'){const keys=Object.keys(b.store).filter(k=>b.store[k]>0);if(keys.length){const k=keys[b.rr++%keys.length];if(outPorts(b).some(pi=>pushOut(b,pi,k))){b.store[k]--;if(!b.store[k])delete b.store[k];}}}
  else if(D.split)smartSplit(b);
  else if(b.k==='splitter'){if(b.buf.length){const outs=outPorts(b).filter(i=>b.conn[i]!=null);for(let n=0;n<outs.length&&b.buf.length;n++){const pi=outs[b.rr++%outs.length];if(pushOut(b,pi,b.buf[0])){b.buf.shift();break;}}}}
  else if(b.k==='merger'){if(b.buf.length&&pushOut(b,3,b.buf[0]))b.buf.shift();}
@@ -1923,6 +1923,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.7.0',t:'Stage 2: Build your own rigs',items:['New: the Vehicle Bay. Build one, open it, and design a rig block by block. Tap a face to add a block, switch to Remove to take one off, and Undo any mistake. Parts come from your inventory and come back when you remove them.','Rig parts: frames, armour, a seat or sealed cockpit, wheels, big wheels, tracks, motors, batteries, solar panels, air tanks, cargo boxes, drills, headlights and dock connectors. Later: pistons, rotors and hinges for moving arms, and thrusters for flight.','Rigs really drive: weight, motor power, grip and ground clearance all matter. Too heavy for the hill? Add a motor or lose weight. Stuck on its belly? Big wheels lift it. Wheels slipping? Tracks grip. The designer shows top speed, climb, clearance and width before you build.','Rigs keep you alive out there: an air tank makes the rig a breathing bubble, and its battery runs the motors. Load Battery items and Oxygen Canisters from the rig\'s menu, and craft Repair Kits for crash damage.','New: the Rig Dock. Park a rig with a dock connector on it to unload its cargo onto a belt, charge its battery and refill its air.','Drills fill your cargo when you park over an ore node.','Vael relics can be researched in the Analysis Lab into hover pads (they float, even over water) and the Vael core, an engine that never runs dry.','Undo for building: a ↶ button appears while building, laying belts or dismantling. It takes back your last action and refunds or re-charges the parts.']},
  {v:'0.6.6',t:'The real jetpack fix',items:['You can now look around while holding jump (or the action button): just slide your thumb.','Found it, thanks to a crash report: holding jump in mid-air made the zipline check hit an error every frame, which froze the game until you let go. Fixed, and ziplines along power lines work again.']},
  {v:'0.6.4',t:'Crash reports',items:['If the game hits an error, freezes, or closes by itself, it now saves a crash report with a short error code (like NF-AB12CD) and sends it automatically so the problem can be fixed.','See your reports in Settings → Crash reports, with buttons to copy them, send them now, or clear them.']},
  {v:'0.6.3',t:'Jetpack fix',items:['Fixed the game seeming to freeze when you press jump a second time in mid-air. You were grabbing a nearby power line as a zipline. Now you only catch ziplines when your jetpack is empty (or you have none), and only on real power lines between poles, not the short cables to machines.','Stopped iPhone from treating quick repeated presses on the game screen as zoom gestures.']},
@@ -5397,9 +5398,310 @@ function mapStep5(ms){const M=W5.map;if(!M)return;const t0=performance.now(),W=W
 {const _dm=UI.drawMap;UI.drawMap=function(){_dm();if(!W5.on)return;const c=$('#mapc');if(!c)return;const x=c.getContext('2d'),N=c.width,M=UI.map,s=N/(WORLD.half*2)*M.z;if(M.z<1.5)return;const P=(wx,wz)=>[(wx-M.cx)*s+N/2,(wz-M.cz)*s+N/2];
  x.font='800 11px system-ui';x.textAlign='center';for(let i=9;i<REG5.length;i++){const R=REG5[i];if(R[3]<300&&M.z<4)continue;const q=P(R[1],R[2]);if(q[0]<0||q[0]>N||q[1]<0||q[1]>N)continue;x.fillStyle='rgba(255,255,255,.45)';x.fillText(BIO3[R[0]].n.toUpperCase(),q[0],q[1]);}};}
 
+// ---- 46-rigs.js ----
+// ===== Stage 2: rigs. Vehicles you build block by block at a Vehicle Bay, then drive, dock and improve.
+// Wheels, tracks, motors, batteries, air tanks, cargo, drills, lights, docking connectors, pistons, rotors, hinges,
+// thrusters for flight, and Vael parts unlocked from relics. =====
+const RIGP={
+ frame:{n:'Frame',m:90,cost:{iron_plate:2,iron_rod:2},tier:0,c:'#8a929c',d:'Light structure to build on.'},
+ plate:{n:'Armour',m:320,cost:{steel_beam:1,iron_plate:2},tier:4,c:'#4a525c',hp:1,d:'Heavy plating. Soaks up crash damage.'},
+ seat:{n:'Seat',m:80,cost:{iron_plate:2,wire:4},tier:0,c:'#e08a3a',seat:1,d:'Where you drive from. Every rig needs one.'},
+ cockpit:{n:'Cockpit',m:260,cost:{reinforced_plate:2,quartz_crystal:2},tier:3,c:'#9ad8ff',seat:1,o2:60,d:'A sealed seat. Shields you from storms and holds extra air.'},
+ wheel:{n:'Wheel',m:150,cost:{iron_plate:3,iron_rod:2},tier:0,c:'#2a2c30',wheel:{r:.5,mu:.75,sp:1},d:'Small wheel. Cheap and fast, but low to the ground.'},
+ bigwheel:{n:'Big wheel',m:260,cost:{reinforced_plate:2,iron_rod:6},tier:2,c:'#2a2c30',wheel:{r:.95,mu:.85,sp:.95},d:'Lifts the rig high: great over rough ground and rocks.'},
+ track:{n:'Track',m:380,cost:{modular_frame:1,rotor:1},tier:3,c:'#33363c',wheel:{r:.55,mu:1.15,sp:.7,track:1},d:'Grips steep slopes and turns on the spot. Slow.'},
+ hover:{n:'Vael hover pad',m:180,cost:{relic:1,copper_sheet:10},tier:0,res:'vael_hover',c:'#58e0c8',wheel:{r:1.5,mu:.6,sp:1.15,hover:1},d:'Floats 1.5 m up, even over water. Unlocked from a Vael relic.'},
+ engine:{n:'Motor',m:200,cost:{iron_plate:4,wire:10,iron_rod:4},tier:0,c:'#c86a3a',pw:35,d:'35 kW of drive. Uses battery power.'},
+ engine2:{n:'Big motor',m:460,cost:{rotor:2,modular_frame:1},tier:3,c:'#e05a3a',pw:90,d:'90 kW of drive. Thirsty.'},
+ vengine:{n:'Vael core',m:160,cost:{relic:2,reinforced_plate:10},tier:0,res:'vael_core',c:'#c890ff',pw:140,free:1,d:'140 kW and it never runs dry. Unlocked from Vael relics.'},
+ battery:{n:'Battery',m:150,cost:{iron_plate:2,wire:8,copper_sheet:1},tier:1,c:'#3fc48a',cap:20000,d:'Stores 20 MJ. Charge at a Rig Dock, or swap in battery items.'},
+ solar:{n:'Solar panel',m:60,cost:{copper_sheet:2,wire:6},tier:1,c:'#2a4a8a',sol:1.6,d:'Trickles 1.6 kW in daylight.'},
+ o2tank:{n:'Air tank',m:110,cost:{iron_plate:4,wire:2},tier:0,c:'#e8ecf0',o2:180,d:'3 minutes of air. The rig keeps you breathing within 8 m.'},
+ cargo:{n:'Cargo box',m:150,cost:{iron_plate:4,screw:10},tier:0,c:'#a87a4a',cg:300,d:'Holds 300 items.'},
+ drill:{n:'Drill',m:300,cost:{iron_rod:6,iron_plate:4,screw:20},tier:1,c:'#d0b040',dir:1,d:'Park it over an ore node to fill your cargo.'},
+ light:{n:'Headlight',m:20,cost:{iron_plate:1,wire:3},tier:0,c:'#fff4c0',dir:1,d:'Lights the way at night.'},
+ connector:{n:'Dock connector',m:80,cost:{iron_plate:2,cable:4},tier:1,c:'#3fc4ae',d:'Lets the rig dock at a Rig Dock to unload and recharge.'},
+ piston:{n:'Piston',m:220,cost:{steel_pipe:4,rotor:1},tier:4,c:'#b0b8c4',mech:'piston',dir:1,d:'Pushes whatever is built on its end up to 2.5 m out.'},
+ rotor:{n:'Rotor',m:220,cost:{rotor:2,steel_beam:1},tier:4,c:'#b0b8c4',mech:'rotor',dir:1,d:'Spins whatever is built on its end.'},
+ hinge:{n:'Hinge',m:200,cost:{rotor:1,steel_beam:1},tier:4,c:'#b0b8c4',mech:'hinge',dir:1,d:'Swings whatever is built on its end up to 90°.'},
+ thruster:{n:'Thruster',m:260,cost:{motor:2,heavy_frame:1},tier:6,c:'#5a606a',thr:9000,d:'Lift-off. Enough of them and the rig flies, but it drinks power.'},
+};
+const RIGDIR=[[0,1,0],[0,0,1],[1,0,0],[0,0,-1],[-1,0,0],[0,-1,0]];
+const rigOK=k=>{const P=RIGP[k];if(!P)return false;if(P.res&&!(S.mam&&S.mam.done[P.res]))return false;return (S.tier||0)>=P.tier;};
+const RIGD=new Map();// derived data per rig id (meshes, groups, stats), never saved
+const rigs=()=>S.rigs||(S.rigs=[]);
+// ---------- buildings: the Vehicle Bay (design) and the Rig Dock (unload and recharge) ----------
+Object.assign(BUILDINGS,{
+ rigbay:{n:'Vehicle Bay',w:12,d:12,h:.5,cost:{iron_plate:20,iron_rod:20,wire:20},cat:'logistics',desc:'Design and build your own rigs here, block by block. Open it to start.',tier:0,surf:'deck',top:.5},
+ rigdock:{n:'Rig Dock',w:10,d:10,h:.5,cost:{reinforced_plate:10,cable:30},power:15,ports:[[0,5,0,'out']],cat:'logistics',desc:'Park a rig with a dock connector here: its cargo unloads onto the output belt, its battery charges and its air refills.',cap:3000,tier:2,surf:'deck',top:.5},
+ rig:{n:'Rig',w:1,d:1,h:1,cost:{},cat:'hidden',tier:99}});
+Object.assign(BUILD_MODEL,{
+ rigbay(g){g.add(RB(12,.5,12,.1),null,C_FRAME);for(let i=-5;i<=5;i++){g.add(PRIM.box(.06,.02,11),T(i,.51,0),'#3a3f48');g.add(PRIM.box(11,.02,.06),T(0,.51,i),'#3a3f48');}
+  for(const s of [-1,1]){g.add(PRIM.box(12,.06,.4),T(0,.53,s*5.8),COL('#f2c232',.4));g.add(PRIM.box(.4,.06,12),T(s*5.8,.53,0),COL('#f2c232',.4));}
+  g.add(PRIM.box(.5,6,.5),T(-5.6,3.2,-5.6),C_FRAME);g.add(PRIM.box(.5,6,.5),T(5.6,3.2,-5.6),C_FRAME);g.add(PRIM.box(11.7,.5,.6),T(0,6.2,-5.6),C_PANEL);g.add(PRIM.box(.8,.8,.8),T(0,5.6,-5.6),COL('#3fc4ae',1.2));},
+ rigdock(g){g.add(RB(10,.5,10,.1),null,C_FRAME);for(const s of [-1,1]){g.add(PRIM.box(10,.06,.4),T(0,.53,s*4.8),COL('#3fc4ae',.6));g.add(PRIM.box(.4,.06,10),T(s*4.8,.53,0),COL('#3fc4ae',.6));}
+  g.add(PRIM.cyl(.35,.45,4.5,10),T(4,.5,-4),C_PANEL);g.add(PRIM.box(3,.3,.3),T(2.6,4.6,-4),C_FRAME);g.add(PRIM.cyl(.3,.3,.6,10),T(1.2,4.2,-4),COL('#3fc4ae',1.6));g.add(RB(1.6,1.2,.8,.1),T(0,.5,4.4),C_PANEL);}});
+{const _wp=wantsPower;wantsPower=function(b){if(b.k==='rigdock')return true;return _wp(b);};}
+Object.assign(ITEMS,{repair_kit:{n:'Repair Kit',c:'#e0574a',s:'small'}});
+Object.assign(ITEM_MODEL,{repair_kit(g){g.add(RB(.34,.2,.22,.04),null,'#e0574a');g.add(PRIM.box(.18,.05,.01),T(0,.1,.111),'#ffffff');g.add(PRIM.box(.05,.18,.01),T(0,.1,.111),'#ffffff');}});
+RECIPES.push({id:'repair_kit',m:'constructor',in:{iron_plate:2,screw:8},out:{repair_kit:1},t:6,tier:1},{id:'repair_kit_b',m:'bench',bench:1,in:{iron_plate:3,screw:12},out:{repair_kit:1},t:4,tier:1});
+for(const r of RECIPES.slice(-2))RECIPE[r.id]=r;
+MAMR.push({id:'vael_hover',tree:'Vael Relics',n:'Hover pads',d:'Reverse-engineer a relic into a hover pad for your rigs',cost:{relic:1,copper_sheet:20},t:90,fx:()=>UI.toast('Vael hover pads unlocked for rigs','good')},
+ {id:'vael_core',tree:'Vael Relics',n:'Vael core',d:'An engine that never runs dry',cost:{relic:2,reinforced_plate:20},t:150,req:'vael_hover',fx:()=>UI.toast('Vael core unlocked for rigs','good')});
+// ---------- derived data: groups (moving parts), mass, stats ----------
+const rk=(x,y,z)=>(x+64)*16384+(y+64)*128+(z+64);
+function rigDerive(rig){let D=RIGD.get(rig.id);if(D&&D.ver===rig.ver)return D;if(D)rigFree(D);
+ const B=rig.blocks,cell=new Map();B.forEach((b,i)=>cell.set(rk(b[0],b[1],b[2]),i));
+ const head=i=>{const b=B[i],d=RIGDIR[b[4]||0];return [b[0]+d[0],b[1]+d[1],b[2]+d[2]];};
+ const isMech=i=>!!RIGP[B[i][3]].mech;const grp=new Int32Array(B.length).fill(-1);const groups=[];
+ const flood=(start,g)=>{const q=[start];grp[start]=g;while(q.length){const i=q.pop();const b=B[i];for(const d of RIGDIR){const j=cell.get(rk(b[0]+d[0],b[1]+d[1],b[2]+d[2]));if(j==null||grp[j]>=0)continue;
+   // a moving part's head face is not a fixed joint
+   if(isMech(i)){const h=head(i);if(h[0]===B[j][0]&&h[1]===B[j][1]&&h[2]===B[j][2])continue;}if(isMech(j)){const h=head(j);if(h[0]===b[0]&&h[1]===b[1]&&h[2]===b[2])continue;}grp[j]=g;q.push(j);}}};
+ let root=B.findIndex(b=>RIGP[b[3]].seat);if(root<0)root=0;groups.push({parent:-1,mech:-1,blocks:[]});if(B.length)flood(root,0);
+ for(let gi=0;gi<groups.length;gi++){for(let i=0;i<B.length;i++){if(grp[i]!==gi||!isMech(i))continue;const h=head(i),j=cell.get(rk(h[0],h[1],h[2]));if(j==null)continue;if(grp[j]>=0){continue;}const ng=groups.length;groups.push({parent:gi,mech:i,blocks:[]});flood(j,ng);}}
+ // anything not connected still rides along on the main body
+ for(let i=0;i<B.length;i++){if(grp[i]<0)grp[i]=0;groups[grp[i]].blocks.push(i);}
+ let m=0,cx=0,cy=0,cz=0;const st={pw:0,free:0,cap:0,o2:0,cg:0,sol:0,thr:0,hp:0,wheels:0,seat:0,conn:0,drill:0,lights:0,mech:0,hover:0,track:0};
+ for(const b of B){const P=RIGP[b[3]];m+=P.m;cx+=b[0]*P.m;cy+=b[1]*P.m;cz+=b[2]*P.m;if(P.pw){st.pw+=P.pw;if(P.free)st.free+=P.pw;}if(P.cap)st.cap+=P.cap;if(P.o2)st.o2+=P.o2;if(P.cg)st.cg+=P.cg;if(P.sol)st.sol+=P.sol;if(P.thr)st.thr+=P.thr;if(P.hp)st.hp++;if(P.wheel){st.wheels++;if(P.wheel.hover)st.hover++;if(P.wheel.track)st.track++;}if(P.seat)st.seat++;if(b[3]==='connector')st.conn++;if(b[3]==='drill')st.drill++;if(b[3]==='light')st.lights++;if(P.mech)st.mech++;}
+ m=Math.max(m,1);const com=[cx/m,cy/m,cz/m];let lo=1e9,minX=1e9,maxX=-1e9,minZ=1e9,maxZ=-1e9,maxY=-1e9;
+ for(const b of B){const P=RIGP[b[3]];const bot=b[1]-(P.wheel?P.wheel.r:.5);if(bot<lo)lo=bot;minX=Math.min(minX,b[0]-.5);maxX=Math.max(maxX,b[0]+.5);minZ=Math.min(minZ,b[2]-.5);maxZ=Math.max(maxZ,b[2]+.5);maxY=Math.max(maxY,b[1]+.5);}
+ let hullLo=1e9;for(const b of B){if(!RIGP[b[3]].wheel)hullLo=Math.min(hullLo,b[1]-.5);}
+ st.mass=m;st.clear=st.wheels?Math.max(0,hullLo-lo):0;st.width=maxX-minX;st.len=maxZ-minZ;st.height=maxY-lo;st.radius=Math.hypot(st.width,st.len,st.height)/2;
+ // what the rig can do, in plain numbers
+ const mu=st.wheels?B.filter(b=>RIGP[b[3]].wheel).reduce((a,b)=>a+RIGP[b[3]].wheel.mu,0)/st.wheels:0;const F3=st.pw*1000/3;
+ st.top=st.pw&&st.wheels?Math.min(st.track?16:30,Math.cbrt(st.pw*1000/36)*((st.track?.75:1))):0;st.climb=st.pw&&st.wheels?Math.round(Math.min(Math.atan(mu),Math.asin(Math.min(1,F3/(m*9.8))))*180/Math.PI):0;st.mu=mu;st.lift=st.thr/(m*9.8);
+ D={ver:rig.ver,B,grp,groups,com,st,lo,meshes:null,wheels:B.map((b,i)=>RIGP[b[3]].wheel?i:-1).filter(i=>i>=0)};RIGD.set(rig.id,D);return D;}
+function rigFree(D){if(D.meshes)for(const m of D.meshes)if(m)freeMesh(m);D.meshes=null;}
+// ---------- looks ----------
+const RIGWM={};
+function rigWheelMesh(k){if(RIGWM[k])return RIGWM[k];const g=new GB(),P=RIGP[k].wheel;
+ if(P.hover){g.add(PRIM.cyl(.45,.5,.25,16),T(0,.12,0),'#2a3040');g.add(PRIM.cyl(.38,.38,.05,16),T(0,0,0),COL('#58e0c8',2.2));for(let a=0;a<6;a++)g.add(PRIM.box(.08,.18,.3),T(Math.cos(a/6*TAU)*.42,.15,Math.sin(a/6*TAU)*.42,a/6*TAU),COL('#c890ff',.8));}
+ else if(P.track){g.add(RB(.9,1.1,1.6,.3),T(0,-.55,0),'#2a2c30');for(let i=0;i<7;i++)g.add(PRIM.box(.95,.06,.14),T(0,-.02,-.75+i*.25),'#4a4e56');g.add(PRIM.cyl(.25,.25,.95,12),T(0,-.55,.55,0,0,Math.PI/2),'#8a929c');g.add(PRIM.cyl(.25,.25,.95,12),T(0,-.55,-.55,0,0,Math.PI/2),'#8a929c');}
+ else{const r=P.r,w=r>.7?.75:.5;g.add(PRIM.cyl(r,r,w,20),T(-w/2,0,0,0,0,Math.PI/2),'#2a2c30');g.add(PRIM.cyl(r*.62,r*.62,w+.04,14),T(-w/2-.02,0,0,0,0,Math.PI/2),'#b8bec6');for(let i=0;i<8;i++){const a=i/8*TAU;g.add(PRIM.box(w+.02,.09,.14),T(0,Math.cos(a)*r*.98,Math.sin(a)*r*.98,0,-a,0),'#1a1c20');}g.add(PRIM.cyl(.12,.12,w+.1,8),T(-w/2-.05,0,0,0,0,Math.PI/2),COL('#e08a3a',.6));}
+ return RIGWM[k]=g.build();}
+function rigBlockGeo(g,b,o){const P=RIGP[b[3]],x=b[0]-o[0],y=b[1]-o[1],z=b[2]-o[2],d=RIGDIR[b[4]||0],k=b[3];const A=(ry,rx)=>[x,y,z,ry,rx];
+ const yawOf=()=>Math.atan2(d[0],d[2]),pitchOf=()=>d[1]>0?-Math.PI/2:d[1]<0?Math.PI/2:0;
+ switch(k){
+  case 'frame':g.add(RB(.98,.98,.98,.06),T(x,y-.49,z),'#8a929c');for(const s of [-1,1])g.add(PRIM.box(1,.08,.08),T(x,y+s*.45,z+.45),'#5a606a');break;
+  case 'plate':g.add(RB(1,1,1,.1),T(x,y-.5,z),'#4a525c');g.add(PRIM.box(.7,.04,.7),T(x,y+.5,z),'#3a4048');break;
+  case 'seat':g.add(RB(.98,.3,.98,.05),T(x,y-.49,z),'#5a606a');g.add(RB(.6,.18,.6,.06),T(x,y-.2,z+.05),'#e08a3a');g.add(RB(.6,.6,.14,.06),T(x,y-.1,z-.28,0,-.15),'#e08a3a');g.add(PRIM.cyl(.04,.04,.4,8),T(x,y-.19,z+.38,0,.6),'#3a3f48');g.add(PRIM.cyl(.18,.18,.04,14),T(x,y+.1,z+.46,0,1.2),'#2a2c30');break;
+  case 'cockpit':g.add(RB(.98,.35,.98,.05),T(x,y-.49,z),'#5a606a');g.add(PRIM.sphere(.5,16,10),T(x,y-.1,z,0,0,0,1,.9,1),COL('#9ad8ff',-4));g.add(RB(.6,.18,.6,.06),T(x,y-.15,z),'#e08a3a');break;
+  case 'engine':g.add(RB(.9,.8,.9,.08),T(x,y-.45,z),'#c86a3a');for(let i=0;i<4;i++)g.add(PRIM.box(.95,.05,.08),T(x,y-.3+i*.16,z+.47),'#3a3f48');g.add(PRIM.cyl(.1,.12,.35,10),T(x+.25,y+.3,z-.25),'#3a3f48');break;
+  case 'engine2':g.add(RB(.96,.9,.96,.08),T(x,y-.48,z),'#e05a3a');for(let i=0;i<5;i++)g.add(PRIM.box(1,.05,.08),T(x,y-.35+i*.16,z+.49),'#3a3f48');for(const s of [-1,1])g.add(PRIM.cyl(.12,.14,.5,10),T(x+s*.25,y+.35,z-.3),'#3a3f48');break;
+  case 'vengine':g.add(RB(.8,.8,.8,.2),T(x,y-.4,z),'#2a2438');g.add(PRIM.sphere(.32,16,10),T(x,y,z),COL('#c890ff',2.6));for(let i=0;i<4;i++)g.add(PRIM.box(.06,.9,.06),T(x+(i%2?.36:-.36),y-.45,z+(i<2?.36:-.36)),COL('#58e0c8',1.4));break;
+  case 'battery':g.add(RB(.9,.8,.9,.06),T(x,y-.45,z),'#3a3f48');for(const yy of [-.2,.1])g.add(PRIM.box(.92,.08,.92),T(x,y+yy,z),COL('#3fc48a',.8));g.add(PRIM.cyl(.08,.08,.12,8),T(x+.2,y+.35,z),'#d0d4da');break;
+  case 'solar':g.add(RB(.98,.12,.98,.03),T(x,y-.49,z),'#5a606a');g.add(PRIM.box(.92,.04,.92),T(x,y-.35,z),COL('#2a4a8a',-1));for(let i=-1;i<=1;i++)g.add(PRIM.box(.92,.045,.02),T(x,y-.34,z+i*.3),'#8a92a0');break;
+  case 'o2tank':g.add(PRIM.cyl(.4,.4,.8,16),T(x,y-.4,z),'#e8ecf0');g.add(PRIM.sphere(.4,14,8),T(x,y+.4,z,0,0,0,1,.4,1),'#e8ecf0');g.add(PRIM.cyl(.41,.41,.12,16),T(x,y-.05,z),COL('#7ad8ff',1.2));break;
+  case 'cargo':g.add(RB(.96,.96,.96,.05),T(x,y-.48,z),'#a87a4a');for(const s of [-1,1])g.add(PRIM.box(.98,.06,.06),T(x,y+s*.3,z+.48),'#6a4a2a');break;
+  case 'drill':{g.add(RB(.8,.5,.8,.08),T(x,y-.4,z),'#d0b040');const ry=yawOf(),rx=pitchOf();const M=T(x,y,z,ry,rx);const P2=PRIM.lathe([[.38,0],[.32,.3],[.04,.95],[.001,1]],10);g.add(P2,mm(M,T(0,0,0,0,Math.PI/2)),'#c8ccd2');break;}
+  case 'light':{g.add(RB(.5,.4,.5,.06),T(x,y-.4,z),'#3a3f48');const M=T(x,y-.1,z,yawOf(),pitchOf());g.add(PRIM.cyl(.18,.22,.2,12),mm(M,T(0,0,.3,0,Math.PI/2)),'#3a3f48');g.add(PRIM.cyl(.17,.17,.02,12),mm(M,T(0,0,.41,0,Math.PI/2)),COL('#fff4c0',3));break;}
+  case 'connector':g.add(RB(.9,.5,.9,.06),T(x,y-.48,z),'#3a3f48');g.add(PRIM.cyl(.35,.35,.08,16),T(x,y+.05,z),COL('#3fc4ae',1.6));g.add(PRIM.cyl(.2,.2,.12,12),T(x,y+.08,z),'#2a2c30');break;
+  case 'piston':case 'rotor':case 'hinge':{g.add(RB(.9,.9,.9,.12),T(x,y-.45,z),'#5a606a');const M=T(x,y,z,yawOf(),pitchOf());if(k==='piston')g.add(PRIM.cyl(.3,.3,.5,12),mm(M,T(0,0,.25,0,Math.PI/2)),'#b0b8c4');else if(k==='rotor')g.add(PRIM.cyl(.42,.42,.12,18),mm(M,T(0,0,.44,0,Math.PI/2)),COL('#f2c232',.4));else g.add(PRIM.cyl(.22,.22,.9,12),mm(M,T(0,0,.3,0,0,Math.PI/2)),'#b0b8c4');break;}
+  case 'thruster':g.add(RB(.8,.6,.8,.08),T(x,y-.1,z),'#5a606a');g.add(PRIM.lathe([[.2,0],[.38,-.2],[.42,-.5]],14),T(x,y-.05,z),'#3a3f48');g.add(PRIM.cyl(.3,.3,.02,14),T(x,y-.52,z),COL('#ffb84a',1.5));break;
+  default:g.add(RB(.98,.98,.98,.06),T(x,y-.49,z),P.c);}}
+// a mesh per moving group, built around the rig's balance point
+function rigMeshes(rig){const D=rigDerive(rig);if(D.meshes)return D.meshes;D.meshes=D.groups.map(G=>{const g=new GB();let n=0;for(const i of G.blocks){const b=D.B[i];if(RIGP[b[3]].wheel){if(!RIGP[b[3]].wheel.hover&&!RIGP[b[3]].wheel.track)g.add(PRIM.box(.5,.3,.3),T(b[0]-D.com[0]+(b[0]>=D.com[0]?-.3:.3),b[1]-D.com[1]-.15,b[2]-D.com[2]),'#5a606a');continue;}rigBlockGeo(g,b,D.com);n++;}return n||G.blocks.length?g.build():null;});return D.meshes;}
+// ---------- pose: world matrix of the rig and of each moving group ----------
+function axisRot(ax,ay,az,a,px,py,pz){const c=Math.cos(a),s=Math.sin(a),t=1-c;const m=new Float32Array(16);
+ m[0]=t*ax*ax+c;m[1]=t*ax*ay+s*az;m[2]=t*ax*az-s*ay;m[4]=t*ax*ay-s*az;m[5]=t*ay*ay+c;m[6]=t*ay*az+s*ax;m[8]=t*ax*az+s*ay;m[9]=t*ay*az-s*ax;m[10]=t*az*az+c;m[15]=1;
+ m[12]=px-(m[0]*px+m[4]*py+m[8]*pz);m[13]=py-(m[1]*px+m[5]*py+m[9]*pz);m[14]=pz-(m[2]*px+m[6]*py+m[10]*pz);return m;}
+function rigPose(rig){const D=rigDerive(rig);const W=T(rig.x,rig.y,rig.z,rig.yaw,rig.pitch||0,rig.roll||0);const mech=rig.mech||(rig.mech={p:0,r:0,h:0});const G=[];
+ for(let gi=0;gi<D.groups.length;gi++){const g=D.groups[gi];if(g.parent<0){G.push(W);continue;}const b=D.B[g.mech],d=RIGDIR[b[4]||0],P=RIGP[b[3]];const px=b[0]-D.com[0],py=b[1]-D.com[1],pz=b[2]-D.com[2];let L;
+  if(P.mech==='piston'){L=T(d[0]*mech.p*2.5,d[1]*mech.p*2.5,d[2]*mech.p*2.5);}
+  else if(P.mech==='rotor'){L=axisRot(d[0],d[1],d[2],mech.r,px,py,pz);}
+  else{const ax=d[1]!==0?[1,0,0]:[d[2],0,-d[0]];L=axisRot(ax[0],ax[1],ax[2],mech.h,px+d[0]*.5,py+d[1]*.5,pz+d[2]*.5);}
+  G.push(mm(G[g.parent],L));}
+ return G;}
+const rigPt=(G,D,i,ox=0,oy=0,oz=0)=>{const b=D.B[i];return M4.xform(G[D.grp[i]],b[0]-D.com[0]+ox,b[1]-D.com[1]+oy,b[2]-D.com[2]+oz);};
+// ---------- driving ----------
+const RIG={drv:null,rec:false,up:0,down:0};
+function rigNew(x,y,z,yaw){const r={k:'rig',id:'r'+(S.nextId++),name:'Rig '+(rigs().length+1),ver:1,blocks:[[0,0,0,'frame',0],[0,1,0,'seat',0]],x,y,z,yaw:yaw||0,pitch:0,roll:0,vy:0,spd:0,energy:0,o2:0,cargo:{},hp:100,mech:{p:0,r:0,h:0},lights:false};rigs().push(r);return r;}
+function rigCargoN(r){return Object.values(r.cargo).reduce((a,b)=>a+b,0);}
+// collisions with trees, buildings and cave walls for the outline of the rig
+function rigHit(x,z,y){return blockedAt(x,z,y);}
+function rigSupport(rig,D,G){// how high the rig must sit for every wheel and every hull block to stay above the ground
+ const W=G;let need=-1e9,wn=[];const dy=rig.y;
+ for(const i of D.wheels){const P=RIGP[D.B[i][3]].wheel;const p=rigPt(W,D,i);let g=solidAt(p[0],p[2],p[1]+.6);if(P.hover)g=Math.max(g,0);const req=g+P.r-(p[1]-dy);wn.push({i,p,g,req,P});if(req>need)need=req;}
+ let hull=-1e9;for(let i=0;i<D.B.length;i++){const P=RIGP[D.B[i][3]];if(P.wheel)continue;const p=rigPt(W,D,i,0,-.5,0);const g=solidAt(p[0],p[2],p[1]+.3);const req=g+.02-(p[1]-dy);if(req>hull)hull=req;}
+ return {need,hull,wn};}
+function rigFit(rig,D){// tilt the rig to sit on the ground under its wheels
+ if(D.wheels.length<2)return;const c=Math.cos(rig.yaw),s=Math.sin(rig.yaw);let n=0,sf=0,ss=0,sg=0,sff=0,sss=0,sfg=0,ssg=0,sfs=0;
+ for(const i of D.wheels){const b=D.B[i],P=RIGP[b[3]].wheel;const lx=b[0]-D.com[0],lz=b[2]-D.com[2];const wx=rig.x+s*lz+c*lx,wz=rig.z+c*lz-s*lx;let g=solidAt(wx,wz,rig.y+b[1]-D.com[1]+.6);if(P.hover)g=Math.max(g,0);n++;sf+=lz;ss+=lx;sg+=g;sff+=lz*lz;sss+=lx*lx;sfg+=lz*g;ssg+=lx*g;sfs+=lz*lx;}
+ const mf=sf/n,ms=ss/n,mg=sg/n;const vf=sff/n-mf*mf,vs=sss/n-ms*ms,cfs=sfs/n-mf*ms,cfg=sfg/n-mf*mg,csg=ssg/n-ms*mg;const det=vf*vs-cfs*cfs;let bf=0,bs=0;
+ if(Math.abs(det)>1e-3){bf=(cfg*vs-csg*cfs)/det;bs=(csg*vf-cfg*cfs)/det;}else if(vf>.1)bf=cfg/vf;else if(vs>.1)bs=csg/vs;
+ const tp=-Math.atan(clamp(bf,-1.5,1.5)),tr=Math.atan(clamp(bs,-1.5,1.5));return [tp,tr];}
+function rigUpdate(rig,dt){const D=rigDerive(rig),st=D.st;if(rig.edit)return;const drv=VEH.driving===rig;
+ // power and air
+ const day=clamp((ENV.sun||[0,1,0])[1]*1.6,0,1);rig.energy=Math.min(st.cap,(rig.energy||0)+st.sol*day*dt);
+ let thr=0,steer=0;if(drv&&rig.hp>0){thr=INPUT.jy||(INPUT.keys.KeyW?1:INPUT.keys.KeyS?-1:0);steer=-(INPUT.jx||(INPUT.keys.KeyA?-1:INPUT.keys.KeyD?1:0));}
+ const usePw=st.pw-st.free;const hasPw=st.free>0||rig.energy>0;const eff=hasPw?st.pw:st.free;
+ if(Math.abs(thr)>.01&&usePw>0&&rig.energy>0)rig.energy=Math.max(0,rig.energy-usePw*Math.abs(thr)*dt);
+ if(rig.lights&&rig.energy>0)rig.energy=Math.max(0,rig.energy-.3*dt*st.lights);
+ const m=st.mass+rigCargoN(rig)*1.5;
+ // mechanical parts
+ if(drv&&st.mech){const k=RIG.mk||0;const M=rig.mech;if(RIG.up)M.p=Math.min(1,M.p+dt*.4),M.h=Math.min(Math.PI/2,M.h+dt*.8);if(RIG.down)M.p=Math.max(0,M.p-dt*.4),M.h=Math.max(-Math.PI/2,M.h-dt*.8);if(rig.spin)M.r+=dt*2.2*rig.spin;}
+ // flight
+ const G0=rigPose(rig);const sup=rigSupport(rig,D,G0);const floor=Math.max(sup.need,sup.hull);
+ if(rig.fly&&st.thr>0&&(rig.energy>0)){const want=(RIG.up?5:RIG.down?-5:0);const T_=clamp((want-rig.vy)*m*2+m*9.8,0,st.thr);rig.vy+=(T_/m-9.8)*dt;rig.energy=Math.max(0,rig.energy-T_/1000*dt*1.4);
+  const amax=st.thr>m*9.8?6:2;rig.spd=lerp(rig.spd,thr*Math.min(26,8+st.thr/m),Math.min(1,dt*.8));rig.yaw+=steer*dt*1.1;rig.y+=rig.vy*dt;if(rig.y<floor){rig.y=floor;rig.vy=Math.max(0,rig.vy);}
+  rig.pitch=lerp(rig.pitch||0,thr*.12,Math.min(1,dt*2));rig.roll=lerp(rig.roll||0,-steer*.18,Math.min(1,dt*2));
+  const nx=rig.x+Math.sin(rig.yaw)*rig.spd*dt,nz=rig.z+Math.cos(rig.yaw)*rig.spd*dt;if(Math.abs(nx)<WORLD.half-20&&Math.abs(nz)<WORLD.half-20){rig.x=nx;rig.z=nz;}
+  if(Math.random()<dt*20)PFX.emit('steam',[rig.x,rig.y-D.st.height*.4,rig.z],.6);rigAfter(rig,D,dt,drv);return;}
+ // ground: settle onto the terrain, or fall
+ const supported=rig.y<=floor+.08&&rig.vy<=.5;
+ if(supported){if(rig.vy<-9){rigDamage(rig,(-rig.vy-9)*6);}rig.vy=0;rig.y=lerp(rig.y,floor,Math.min(1,dt*14));const tilt=rigFit(rig,D);if(tilt){rig.pitch=lerp(rig.pitch||0,tilt[0],Math.min(1,dt*8));rig.roll=lerp(rig.roll||0,tilt[1],Math.min(1,dt*8));}}
+ else{rig.vy-=24*dt;rig.y+=rig.vy*dt;if(rig.y<floor){rig.y=floor;}}
+ // traction: only wheels actually touching help; a rig sitting on its belly goes nowhere
+ const touching=supported?sup.wn.filter(w=>w.req>=floor-.22):[];const grip=st.wheels?touching.length/st.wheels:0;const mu=st.mu||0;
+ const N=m*9.8*Math.cos(rig.pitch||0)*grip;const tracF=mu*N;const v=rig.spd;
+ let F=0;if(Math.abs(thr)>.01&&eff>0&&rig.hp>0){F=thr*Math.min(eff*1000/Math.max(Math.abs(v),1.5),tracF);if(st.track)F*=1;}
+ const slope=m*9.8*Math.sin(rig.pitch||0);// downhill pushes forward
+ const drag=36*v*Math.abs(v)+m*.25*Math.sign(v)*grip;let a=(F+slope*(grip>0?1:0)-drag)/m;
+ if(Math.abs(thr)<.01&&grip>0){// brakes hold until the slope beats them
+  const hold=tracF*.9;const net=slope-drag;if(Math.abs(net)<hold&&Math.abs(v)<2)a=-v*4;}
+ rig.spd=v+a*dt;if(st.wheels===0)rig.spd*=Math.pow(.2,dt);
+ const topS=(st.top||10)*1.15;rig.spd=clamp(rig.spd,-topS*.45,topS);
+ const turn=st.track?1:clamp(Math.abs(rig.spd)/5,0,1);if(grip>0)rig.yaw+=steer*dt*1.15*(st.track?1:turn)*(rig.spd<-.2?-1:1);
+ // move, unless the outline hits something
+ const nx=rig.x+Math.sin(rig.yaw)*rig.spd*dt,nz=rig.z+Math.cos(rig.yaw)*rig.spd*dt;let hit=false;
+ if(Math.abs(rig.spd)>.05){const dir=Math.sign(rig.spd),c=Math.cos(rig.yaw),s=Math.sin(rig.yaw);const L=(dir>0?D.st.len:D.st.len)*.5,Wd=D.st.width*.45;
+  for(const off of [-Wd,0,Wd]){const lz=dir*L,px=nx+s*lz+c*off,pz=nz+c*lz-s*off;if(rigHit(px,pz,rig.y-D.st.height*.2)){hit=true;break;}}}
+ if(hit||Math.abs(nx)>WORLD.half-20||Math.abs(nz)>WORLD.half-20){if(Math.abs(rig.spd)>7)rigDamage(rig,(Math.abs(rig.spd)-7)*5);rig.spd*=-.2;}else{rig.x=nx;rig.z=nz;}
+ if(Math.abs(rig.spd)>1&&grip>0&&Math.random()<dt*6)PFX.emit('dust',[rig.x-Math.sin(rig.yaw)*D.st.len*.5,rig.y-D.st.height*.4,rig.z-Math.cos(rig.yaw)*D.st.len*.5],.8);
+ rig.wspin=(rig.wspin||0)+rig.spd*dt;rig.steer=lerp(rig.steer||0,steer,Math.min(1,dt*6));
+ // feedback when it's not going to make it up the hill
+ if(drv&&thr>.6&&Math.abs(rig.spd)<.6&&grip>0&&(rig.pitch||0)<-.15){RIG.strain=(RIG.strain||0)+dt;if(RIG.strain>2.5&&!RIG.toldStrain){RIG.toldStrain=1;UI.toast(eff*1000/1.5<m*9.8*Math.sin(-(rig.pitch||0))?'Not enough power for this hill: add a motor, or lighten the rig':'Wheels are slipping: try big wheels or tracks','warn');}}else RIG.strain=0;
+ if(drv&&grip<.35&&supported&&thr>.3&&Math.abs(rig.spd)<.5&&!RIG.toldBelly&&st.wheels){RIG.toldBelly=1;UI.toast('Stuck on its belly: big wheels give more ground clearance','warn');}
+ rigAfter(rig,D,dt,drv);}
+function rigDamage(rig,n){const D=rigDerive(rig);n/=1+D.st.hp*.15;if(n<1)return;rig.hp=Math.max(0,(rig.hp??100)-n);AUDIO.bad&&AUDIO.bad();if(VEH.driving===rig)UI.toast(rig.hp>0?'Rig damaged · '+Math.round(rig.hp)+'%':'Rig wrecked: use a Repair Kit','warn');}
+function rigAfter(rig,D,dt,drv){const st=D.st;
+ // air: the rig is a little bubble while it has air in its tanks
+ const near=Math.hypot(PL.x-rig.x,PL.z-rig.z)<8||drv;if(near&&st.o2>0&&rig.o2>0){const base=(typeof o2Sources==='function'?RIG.base||[]:[]).some(s=>Math.hypot(PL.x-s.x,PL.z-s.z)<s.r);if(!base&&(S.settings.o2||'normal')!=='off')rig.o2=Math.max(0,rig.o2-dt*((S.settings.o2==='relaxed')?.35:1));}
+ // drills fill the cargo when parked over a node
+ if(st.drill&&Math.abs(rig.spd)<.5&&rigCargoN(rig)<st.cg&&(st.free>0||rig.energy>0)){rig.dt_=(rig.dt_||0)+dt;if(rig.dt_>1.5){rig.dt_=0;const G=rigPose(rig);for(let i=0;i<D.B.length;i++){if(D.B[i][3]!=='drill')continue;const p=rigPt(G,D,i);let best=null;for(const nd of WORLD.nodes){if(NODE_TYPES[nd.type]&&NODE_TYPES[nd.type].fluid)continue;if(Math.abs(nd.x-p[0])<4&&Math.abs(nd.z-p[2])<4&&Math.abs(nd.y-p[1])<4){best=nd;break;}}
+   if(best){const n=Math.max(1,Math.round(PURITY[best.purity].k));rig.cargo[best.type]=(rig.cargo[best.type]||0)+n;rig.energy=Math.max(0,rig.energy-st.free?0:6);if(drv&&!RIG.toldDrill){RIG.toldDrill=1;UI.toast('Drilling '+NODE_TYPES[best.type].n+' into the cargo','good');}}}}}
+ // docking
+ if(st.conn&&Math.abs(rig.spd)<.4){for(const b of FAC.b.values()){if(b.k!=='rigdock'||Math.abs(b.x-rig.x)>5.5||Math.abs(b.z-rig.z)>5.5)continue;const cap=BUILDINGS.rigdock.cap;let tot=Object.values(b.store).reduce((a,c)=>a+c,0),moved=0;
+   for(const [k,n] of Object.entries(rig.cargo)){const q=Math.min(n,cap-tot,Math.ceil(60*dt)+1);if(q>0){b.store[k]=(b.store[k]||0)+q;rig.cargo[k]-=q;tot+=q;moved+=q;}if(!rig.cargo[k])delete rig.cargo[k];}
+   if(b.pf>0){rig.energy=Math.min(st.cap,(rig.energy||0)+4000*dt*b.pf);rig.o2=Math.min(st.o2,(rig.o2||0)+60*dt);rig.hp=Math.min(100,(rig.hp??100)+2*dt);}
+   if(!rig.dockT||R.time-rig.dockT>20){rig.dockT=R.time;if(drv||Math.hypot(PL.x-b.x,PL.z-b.z)<20)UI.toast('Docked: '+(moved||Object.keys(rig.cargo).length?'unloading cargo, ':'')+(b.pf>0?'charging and refilling air':'no power at the dock'),'good');}break;}}
+ if(drv){PL.x=rig.x;PL.z=rig.z;PL.y=rig.y+.5;PL.vy=0;}}
+// ---------- hooks into the game: update, draw, enter, exit, air ----------
+{const _u=TR.update;TR.update=function(dt){_u(dt);if(GAME.paused)return;for(const r of rigs()){if(r.edit&&!RIGED.on)r.edit=false;r.k='rig';}RIG.base=null;try{RIG.base=o2Sources().filter(s=>!s.rig);}catch(e){}for(const r of rigs())rigUpdate(r,Math.min(dt,.05));if(VEH.driving&&VEH.driving.blocks)rigCam(VEH.driving,dt);};}
+function rigCam(rig,dt){const D=rigDerive(rig);const back=D.st.radius*1.7+5;if(Math.abs(rig.spd)>2)PL.yaw=lerp(PL.yaw,rig.yaw,Math.min(1,dt*1.2));const cy=PL.yaw;GAME.freeCam={cam:[rig.x-Math.sin(cy)*back,rig.y+D.st.height+1.6,rig.z-Math.cos(cy)*back],yaw:cy,pitch:PL.pitch-.22};}
+{const _o=TR.objects;TR.objects=function(){const out=_o();for(const r of rigs()){if(Math.hypot(r.x-R.cam[0],r.z-R.cam[2])>(R.cullD||600)+40)continue;const D=rigDerive(r),M=rigMeshes(r),G=rigPose(r);
+  D.groups.forEach((g,gi)=>{if(M[gi])out.push({mesh:M[gi],model:G[gi]});});
+  for(const i of D.wheels){const b=D.B[i],P=RIGP[b[3]].wheel,k=b[3];const lx=b[0]-D.com[0],ly=b[1]-D.com[1],lz=b[2]-D.com[2];const side=lx>=0?1:-1;const front=lz>0&&!P.track&&!P.hover;
+   const L=mm(T(lx+(P.hover||P.track?0:side*.1),ly,lz,front?(r.steer||0)*.45:0),mm(T(0,0,0,side<0?Math.PI:0),T(0,0,0,0,P.hover||P.track?0:-(r.wspin||0)/P.r)));out.push({mesh:rigWheelMesh(k),model:mm(G[D.grp[i]],L)});}
+  if(r.lights&&r.energy>0&&Math.random()<.02){}}
+ return out;};}
+// lights: headlights add to the lamp list the renderer already uses for building lights
+{const _l=typeof lampLights==='function'?lampLights:null;}
+{const _rv=rayVeh;rayVeh=function(o,d){let best=_rv(o,d);for(const r of rigs()){if(r.edit)continue;const D=rigDerive(r);const w=[r.x-o[0],r.y-o[1],r.z-o[2]];const t=v3.dot(w,d);if(t<0||t>8+D.st.radius)continue;const q=[o[0]+d[0]*t-r.x,o[1]+d[1]*t-r.y,o[2]+d[2]*t-r.z];if(Math.hypot(...q)<D.st.radius*.8+.6&&(!best||t<best.t))best={t,v:r};}return best;};}
+{const _s=o2Sources;o2Sources=function(){const L=_s();for(const r of rigs()){const D=rigDerive(r);if(D.st.o2>0&&r.o2>0)L.push({x:r.x,y:r.y,z:r.z,r:8,rig:1});}return L;};}
+{const _x=VEH.exit;VEH.exit=function(){const v=VEH.driving;if(v&&v.blocks){const D=rigDerive(v);VEH.driving=null;GAME.freeCam=null;const a=v.yaw+Math.PI/2,r=D.st.width/2+1.6;PL.x=v.x+Math.sin(a)*r;PL.z=v.z+Math.cos(a)*r;PL.y=solidAt(PL.x,PL.z,v.y+3);PL.camY=null;UI._mk='';RIG.up=RIG.down=0;saveSoon();return;}_x();};}
+{const _e=VEH.enter;VEH.enter=function(v){if(v&&v.blocks){const D=rigDerive(v);if(!D.st.seat){UI.toast('This rig has no seat','warn');return;}VEH.driving=v;UI.closePanel();UI._mk='';RIG.toldBelly=RIG.toldStrain=RIG.toldDrill=0;
+  if(!D.st.wheels&&!D.st.thr)UI.toast('No wheels yet: add some at a Vehicle Bay','warn');else if(!D.st.pw)UI.toast('No motor yet: add one at a Vehicle Bay','warn');else if(!(v.energy>0)&&D.st.free<=0)UI.toast('Battery is flat: dock it, or load a Battery item from its menu','warn');else UI.toast('Driving '+v.name+' · left stick to drive','info');return;}_e(v);};}
+// ---------- the driving buttons ----------
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const v=VEH.driving;if(!v||!v.blocks)return;const D=rigDerive(v),st=D.st;const act=$('#act');act.classList.add('hide');
+ const key='rig'+(st.mech?1:0)+(st.thr?1:0)+(v.fly?1:0)+(v.lights?1:0)+(st.lights?1:0);if(UI._mk!==key&&!UI._pressing){UI._mk=key;
+  $('#modeBtns').innerHTML=(st.thr?`<button class="rb tier ${v.fly?'on':''}" data-a="rigFly">${v.fly?'Land':'Fly'}</button>`:'')+(st.mech||v.fly?`<button class="rb" id="rigUp">▲</button><button class="rb" id="rigDn">▼</button>`:'')+(D.groups.some(g=>g.mech>=0&&D.B[g.mech][3]==='rotor')?`<button class="rb" data-a="rigSpin">⟳</button>`:'')+(st.lights?`<button class="rb ${v.lights?'on':''}" data-a="rigLight">💡</button>`:'')+`<button class="rb tier" data-a="vExit">Exit</button>`;
+  for(const [id,f] of [['rigUp','up'],['rigDn','down']]){const el=document.getElementById(id);if(!el)continue;el.addEventListener('pointerdown',e=>{e.preventDefault();RIG[f]=1;});const up=()=>{RIG[f]=0;};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('pointerleave',up);}}
+ // gauges
+ let el=document.getElementById('righud');if(!el){el=document.createElement('div');el.id='righud';document.body.appendChild(el);}el.classList.add('on');
+ const t=`<b>${esc(v.name)}</b> · ${Math.round(Math.abs(v.spd)*3.6)} km/h<span>⚡ ${st.cap?Math.round((v.energy||0)/st.cap*100)+'%':st.free?'∞':'none'}</span><span>💨 ${st.o2?Math.round((v.o2||0)/st.o2*100)+'%':'none'}</span><span>📦 ${rigCargoN(v)}/${st.cg}</span><span>🛠 ${Math.round(v.hp??100)}%</span>`;if(el._t!==t){el._t=t;el.innerHTML=t;}};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);if(!(VEH.driving&&VEH.driving.blocks)){const el=document.getElementById('righud');if(el)el.classList.remove('on');}};}
+UI.A.rigFly=()=>{const v=VEH.driving;if(!v)return;const D=rigDerive(v);if(!v.fly&&D.st.lift<1){UI.toast('Too heavy to fly: thrusters lift '+Math.round(D.st.lift*100)+'% of its weight','warn');return;}v.fly=!v.fly;v.vy=v.fly?2:0;UI._mk='';};
+UI.A.rigSpin=()=>{const v=VEH.driving;if(!v)return;v.spin=v.spin?0:1;};
+UI.A.rigLight=()=>{const v=VEH.driving;if(!v)return;v.lights=!v.lights;UI._mk='';};
+// ---------- the rig's own menu (tap it) ----------
+{const _vv=UI.views.veh;UI.views.veh=function(){const v=UI.veh;if(!v||!v.blocks)return _vv();const D=rigDerive(v),st=D.st;const bar=(k,a,b,c)=>`<div class="mrow"><span>${k}</span><div class="bar" style="flex:1;margin:0 8px"><i style="width:${b?clamp(a/b,0,1)*100:0}%;background:${c}"></i></div><b>${b?Math.round(a/b*100)+'%':'—'}</b></div>`;
+ const cg=Object.entries(v.cargo).filter(([,n])=>n>0);
+ return `<div class="rshead"><div><h3>${esc(v.name)}</h3><p class="mut">${D.B.length} blocks · ${Math.round(st.mass)} kg · top speed ${Math.round(st.top*3.6)} km/h · climbs ${st.climb}° · clearance ${st.clear.toFixed(1)} m</p></div></div>
+ ${bar('Battery',v.energy||0,st.cap,'#3fc48a')}${bar('Air',v.o2||0,st.o2,'#7ad8ff')}${bar('Condition',v.hp??100,100,'#f2c232')}
+ <div class="seg"><button data-a="vDrive">🚗 Drive</button><button data-a="rigBat">🔋 Load battery (${S.inv.battery||0})</button><button data-a="rigAir">💨 Load air (${S.inv.o2can||0})</button><button data-a="rigFix">🛠 Repair (${S.inv.repair_kit||0})</button></div>
+ <h5>Cargo · ${rigCargoN(v)} / ${st.cg}</h5>${cg.length?`<div class="inv">${cg.map(([k,n])=>`<button class="slot" data-a="rigTake" data-v="${k}">${iIcon(k)}<em>${n}</em></button>`).join('')}</div>`:'<p class="mut">Empty. Drills fill it when you park over a node; a Rig Dock unloads it.</p>'}
+ <div class="seg"><button data-a="rigRen">Rename</button><button data-a="rigPick">Take apart</button></div><p class="mut">Change the design at a Vehicle Bay: park the rig on the bay and open it.</p>`;};}
+{const _r=UI.refresh;UI.refresh=function(){_r();if(UI.panel&&UI.tab==='veh'&&UI.veh&&UI.veh.blocks)$('#sheet .tabs').innerHTML='<b class="ttl">'+esc(UI.veh.name)+'</b>';};}
+UI.A.rigBat=()=>{const v=UI.veh,D=rigDerive(v);if(!D.st.cap){UI.toast('This rig has no battery block','warn');return;}if(!(S.inv.battery>0)){UI.toast('No Battery items: make them in a factory','warn');return;}addInv('battery',-1);v.energy=Math.min(D.st.cap,(v.energy||0)+12000);AUDIO.craft();UI.refresh();saveSoon();};
+UI.A.rigAir=()=>{const v=UI.veh,D=rigDerive(v);if(!D.st.o2){UI.toast('This rig has no air tank','warn');return;}if(!(S.inv.o2can>0)){UI.toast('No Oxygen Canisters','warn');return;}addInv('o2can',-1);v.o2=Math.min(D.st.o2,(v.o2||0)+90);AUDIO.craft();UI.refresh();saveSoon();};
+UI.A.rigFix=()=>{const v=UI.veh;if(!(S.inv.repair_kit>0)){UI.toast('No Repair Kits: craft them at a workbench or constructor','warn');return;}addInv('repair_kit',-1);v.hp=Math.min(100,(v.hp??100)+40);AUDIO.craft();UI.refresh();saveSoon();};
+UI.A.rigTake=k=>{const v=UI.veh;const n=Math.min(v.cargo[k]||0,invRoom(k));if(n){addInv(k,n);v.cargo[k]-=n;if(!v.cargo[k])delete v.cargo[k];}UI.refresh();};
+UI.A.rigRen=()=>{const v=UI.veh;const n=prompt('Name this rig',v.name);if(n&&n.trim()){v.name=n.trim().slice(0,20);UI.refresh();saveSoon();}};
+UI.A.rigPick=()=>{const v=UI.veh;if(!UI._pk){UI._pk=1;UI.toast('Tap again to take the rig apart (all parts come back)','info');setTimeout(()=>UI._pk=0,3000);return;}UI._pk=0;for(const b of v.blocks)for(const [k,n] of Object.entries(RIGP[b[3]].cost))addInv(k,n);for(const [k,n] of Object.entries(v.cargo))addInv(k,n);S.rigs=rigs().filter(r=>r!==v);const D=RIGD.get(v.id);if(D)rigFree(D);RIGD.delete(v.id);UI.closePanel();AUDIO.remove();saveSoon();};
+// ---------- the Vehicle Bay designer ----------
+const RIGED={on:false};
+{const _bv=UI.bldView;UI.bldView=function(b){let h=_bv(b);if(b.k==='rigbay'){const on=rigs().find(r=>Math.abs(r.x-b.x)<5.5&&Math.abs(r.z-b.z)<5.5&&Math.abs(r.y-b.y)<6);
+  h+=`<div class="pwrsw"><button class="btn big gold" data-a="rigEdit">🛠 ${on?'Edit '+esc(on.name):'Design a new rig'}</button></div><p class="mut">${on?'The rig parked on this bay can be changed. Blocks you add use parts from your inventory; blocks you remove give them back.':'A new rig starts as a seat on a frame. Add wheels, a motor and a battery to get moving.'}</p>`;
+  const L=rigs();if(L.length)h+=`<h5>Your rigs</h5>`+L.map(r=>`<div class="mrow"><span>${esc(r.name)}</span><span class="mut">${Math.round(Math.hypot(r.x-b.x,r.z-b.z))} m away</span></div>`).join('');}
+ if(b.k==='rigdock'){const it=Object.entries(b.store).filter(([,v])=>v>0);h+=`<p class="mut">${b.pf>0?'Powered: rigs charge and refill air here.':'Needs power to charge rigs.'} Cargo goes out on the belt port at the front.</p>`+(it.length?`<div class="inv">${it.map(([k,n])=>`<div class="slot">${iIcon(k)}<em>${n}</em></div>`).join('')}</div>`:'');}
+ return h;};}
+UI.A.rigEdit=()=>{const b=UI.bld;if(!b)return;let r=rigs().find(q=>Math.abs(q.x-b.x)<5.5&&Math.abs(q.z-b.z)<5.5&&Math.abs(q.y-b.y)<6);if(!r){for(const [k,n] of Object.entries(RIGP.frame.cost))if((S.inv[k]||0)<n){}r=rigNew(b.x,b.y+.5,b.z,b.rot);r.energy=0;}UI.closePanel();rigEdOpen(r,b);};
+function rigEdOpen(r,bay){RIGED.on=true;RIGED.rig=r;RIGED.bay=bay;RIGED.sel=RIGED.sel||'frame';RIGED.mode='add';RIGED.dir=0;RIGED.undo=[];RIGED.dist=Math.max(9,rigDerive(r).st.radius*3+6);r.edit=true;r.spd=0;r.vy=0;r.pitch=r.roll=0;r.yaw=bay.rot;rigSeat(r,bay);
+ RIGED.yaw0=PL.yaw;RIGED.pitch0=PL.pitch;PL.yaw=bay.rot+Math.PI*.75;PL.pitch=-.45;document.body.classList.add('riged');rigEdUI();AUDIO.click&&AUDIO.click();}
+function rigSeat(r,bay){const D=rigDerive(r);r.x=bay.x;r.z=bay.z;r.y=bay.y+.5-(D.lo-D.com[1])+.02;}
+function rigEdClose(){const r=RIGED.rig;RIGED.on=false;r.edit=false;r.ver++;document.body.classList.remove('riged');GAME.freeCam=null;PL.yaw=RIGED.yaw0;PL.pitch=RIGED.pitch0;const el=document.getElementById('riged');if(el)el.remove();UI._mk='';
+ if(!r.name||r.name.startsWith('Rig '))0;const D=rigDerive(r);if(D.st.cap&&!(r.energy>0))r.energy=D.st.cap*.25;if(D.st.o2&&!(r.o2>0))r.o2=D.st.o2*.5;saveSoon();UI.toast(r.name+' is ready: walk up to it and tap Drive','good');}
+// keep the camera orbiting the rig while designing, and don't walk around
+{const _up=updatePlayer;updatePlayer=function(dt){if(RIGED.on){const r=RIGED.rig,D=rigDerive(r);const c=[r.x,r.y+D.st.height*.2,r.z],d=RIGED.dist;GAME.freeCam={cam:[c[0]-Math.sin(PL.yaw)*Math.cos(PL.pitch)*d,c[1]-Math.sin(PL.pitch)*d,c[2]-Math.cos(PL.yaw)*Math.cos(PL.pitch)*d],yaw:PL.yaw,pitch:PL.pitch};return;}_up(dt);};}
+function rigEdUI(){let el=document.getElementById('riged');if(!el){el=document.createElement('div');el.id='riged';document.body.appendChild(el);el.addEventListener('click',e=>{const t=e.target.closest('[data-r]');if(!t)return;e.stopPropagation();rigEdAct(t.dataset.r,t.dataset.v);});}
+ const r=RIGED.rig,D=rigDerive(r),st=D.st;const keys=Object.keys(RIGP).filter(rigOK);const sel=RIGP[RIGED.sel];
+ const warn=!st.seat?'Needs a seat':!st.wheels&&!st.thr?'Add wheels':!st.pw?'Add a motor':!st.cap&&!st.free?'Add a battery':'';
+ el.innerHTML=`<div class="rgtop"><b>${esc(r.name)}</b><span>${D.B.length} blocks · ${Math.round(st.mass)} kg</span><span>🏁 ${Math.round(st.top*3.6)} km/h</span><span>⛰ ${st.climb}°</span><span>↕ ${st.clear.toFixed(1)} m</span><span>↔ ${st.width.toFixed(0)} m wide</span><span>⚡ ${Math.round(st.cap/1000)} MJ</span><span>💨 ${Math.round(st.o2/60)} min</span><span>📦 ${st.cg}</span>${st.thr?`<span>🚀 lift ${Math.round(st.lift*100)}%</span>`:''}${warn?`<span class="w">⚠ ${warn}</span>`:''}</div>
+ <div class="rgside"><button data-r="mode" class="${RIGED.mode==='add'?'on':''}">${RIGED.mode==='add'?'＋ Add':'－ Remove'}</button>${sel&&sel.dir?`<button data-r="dir">↻ ${['Up','Front','Left','Back','Right','Down'][RIGED.dir]}</button>`:''}<button data-r="undo" ${RIGED.undo.length?'':'disabled'}>↶ Undo</button><button data-r="zin">＋</button><button data-r="zout">－</button><button data-r="done" class="gold">Done</button></div>
+ <div class="rgpal">${keys.map(k=>{const P=RIGP[k];return `<button data-r="sel" data-v="${k}" class="${RIGED.sel===k?'on':''} ${canAfford(P.cost)?'':'no'}"><i style="background:${P.c}"></i>${P.n}</button>`;}).join('')}</div>
+ <div class="rghint">${sel?`<b>${sel.n}</b> · ${sel.d} · ${costText(sel.cost)}`:''}<br><span class="mut">Drag to look around · tap a block face to ${RIGED.mode==='add'?'add':'remove'}</span></div>`;}
+function rigEdAct(a,v){const r=RIGED.rig;if(a==='sel'){RIGED.sel=v;RIGED.mode='add';RIGED.dir=0;}else if(a==='mode')RIGED.mode=RIGED.mode==='add'?'del':'add';else if(a==='dir')RIGED.dir=(RIGED.dir+1)%6;
+ else if(a==='zin')RIGED.dist=Math.max(4,RIGED.dist/1.25);else if(a==='zout')RIGED.dist=Math.min(60,RIGED.dist*1.25);else if(a==='done'){rigEdClose();return;}
+ else if(a==='undo'){const u=RIGED.undo.pop();if(u){if(u.add){r.blocks=r.blocks.filter(b=>b!==u.b);for(const [k,n] of Object.entries(RIGP[u.b[3]].cost))addInv(k,n);}else{r.blocks.push(u.b);pay(RIGP[u.b[3]].cost);}rigChanged(r);AUDIO.click&&AUDIO.click();}}
+ AUDIO.click&&AUDIO.click();rigEdUI();}
+function rigChanged(r){r.ver=(r.ver||1)+1;const bay=RIGED.bay;if(bay)rigSeat(r,bay);}
+(function(){const st=document.createElement('style');st.textContent=`
+body.riged #pad,body.riged #joy,body.riged #joyHint,body.riged #tr,body.riged #o2hud,body.riged #vitals,body.riged #tut,body.riged #look,body.riged #gearhud,body.riged #ms{display:none!important}
+#riged{position:fixed;inset:0;pointer-events:none;z-index:30;font:13px system-ui;color:#eef1f4}
+#riged button{pointer-events:auto;border:1px solid rgba(255,255,255,.14);background:rgba(18,21,26,.82);color:#eef1f4;border-radius:12px;padding:8px 12px;font:700 13px system-ui;backdrop-filter:blur(8px)}
+#riged button.on{background:#f08a32;color:#1a1006}#riged button.gold{background:#3fc4ae;color:#06201b}#riged button[disabled]{opacity:.4}
+.rgtop{position:absolute;left:calc(10px + var(--safe-l));top:calc(8px + var(--safe-t));right:calc(10px + var(--safe-r));display:flex;flex-wrap:wrap;gap:6px 12px;background:rgba(18,21,26,.72);border-radius:12px;padding:8px 12px;pointer-events:auto}.rgtop .w{color:#ffb15e;font-weight:800}
+.rgside{position:absolute;right:calc(10px + var(--safe-r));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px}
+.rgpal{position:absolute;left:calc(10px + var(--safe-l));right:calc(10px + var(--safe-r));bottom:calc(8px + var(--safe-b));display:flex;gap:6px;overflow-x:auto;pointer-events:auto;padding-bottom:2px;touch-action:pan-x}
+.rgpal button{flex:none;display:flex;align-items:center;gap:6px;white-space:nowrap}.rgpal button.no{opacity:.45}.rgpal i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.rghint{position:absolute;left:calc(10px + var(--safe-l));bottom:calc(56px + var(--safe-b));max-width:60vw;background:rgba(18,21,26,.72);border-radius:10px;padding:6px 10px;font-size:12px}
+#righud{position:fixed;left:50%;top:calc(58px + var(--safe-t));transform:translateX(-50%);display:none;gap:10px;background:rgba(18,21,26,.72);border-radius:12px;padding:6px 12px;font:600 12px system-ui;color:#eef1f4;z-index:6;white-space:nowrap}#righud.on{display:flex}`;document.head.appendChild(st);})();
+// skip the stock vehicle camera and buttons for rigs (they have their own)
+CODEX.push({k:'rig:intro',cat:'Vehicles',n:'Rigs',d:'Build a Vehicle Bay, open it, and design a rig block by block: a seat, wheels, a motor and a battery get you moving. Air tanks keep you breathing on the road, cargo boxes and drills bring ore home, and a Rig Dock unloads it. Struggling on a hill? Add power, lose weight, or swap to big wheels or tracks.'});
+
+// ---- 47-undo.js ----
+// ===== Undo for building: placing, belts and dismantling can be taken back (the ↶ button, or Ctrl+Z) =====
+const UNDO={stack:[],cur:null,busy:false};
+UNDO.begin=function(label){if(UNDO.busy)return;UNDO.cur={label,ops:[],t:Date.now()};};
+UNDO.end=function(){const c=UNDO.cur;UNDO.cur=null;if(c&&c.ops.length){UNDO.stack.push(c);if(UNDO.stack.length>30)UNDO.stack.shift();}};
+const undoSnap=b=>{const o={id:b.id,k:b.k,x:b.x,y:b.y,z:b.z,rot:b.rot,recipe:b.recipe,clock:b.clock,node:b.node,paint:b.paint,mode:b.mode,rules:b.rules,limit:b.limit,text:b.text,dest:b.dest};try{if(typeof extraFields==='function')Object.assign(o,extraFields(b));}catch(e){}return o;};
+const beltN=bl=>Math.max(1,Math.ceil(bl.c.len/BELTS[bl.tier].per));
+{const _nb=newBuilding;newBuilding=function(o){const b=_nb(o);if(UNDO.cur&&b)UNDO.cur.ops.push({t:'b+',id:b.id});return b;};}
+{const _nl=newBelt;newBelt=function(o){const bl=_nl(o);if(UNDO.cur&&bl)UNDO.cur.ops.push({t:'l+',id:bl.id});return bl;};}
+{const _rb=removeBuilding;removeBuilding=function(b){if(UNDO.cur&&b)UNDO.cur.ops.push({t:'b-',o:undoSnap(b),wires:S.wires.filter(w=>w[0]===b.id||w[1]===b.id).map(w=>w.slice())});return _rb(b);};}
+{const _rl=removeBelt;removeBelt=function(bl){if(UNDO.cur&&bl&&FAC.belts.has(bl.id))UNDO.cur.ops.push({t:'l-',o:{id:bl.id,tier:bl.tier,from:bl.from.slice(),to:bl.to.slice()},n:beltN(bl)});return _rl(bl);};}
+{const _p=placeBuilding;placeBuilding=function(){UNDO.begin('place');try{return _p.apply(this,arguments);}finally{UNDO.end();}};}
+{const _a=beltAction;beltAction=function(){UNDO.begin('belt');try{return _a.apply(this,arguments);}finally{UNDO.end();}};}
+{const _d=dismantle;dismantle=function(){UNDO.begin('remove');try{return _d.apply(this,arguments);}finally{UNDO.end();}};}
+UNDO.cost=function(c){const need={};for(const op of c.ops){if(op.t==='b-'){for(const [k,v] of Object.entries(BUILDINGS[op.o.k].cost))need[k]=(need[k]||0)+v;}if(op.t==='l-'){for(const [k,v] of Object.entries(BELTS[op.o.tier].cost))need[k]=(need[k]||0)+v*op.n;}}return need;};
+UNDO.undo=function(){const c=UNDO.stack.pop();if(!c){UI.toast('Nothing to undo','info');return;}const need=UNDO.cost(c);if(!canAfford(need)){UNDO.stack.push(c);UI.toast('Not enough parts to put it back: '+costText(need),'warn');AUDIO.bad();return;}
+ UNDO.busy=true;try{for(let i=c.ops.length-1;i>=0;i--){const op=c.ops[i];
+  if(op.t==='b+'){const b=FAC.b.get(op.id);if(!b)continue;for(const bid of b.conn)if(bid!=null){const bl=FAC.belts.get(bid);if(bl){refund(BELTS[bl.tier].cost,beltN(bl));for(const it of bl.items)addInv(it.t,1);}}refund(BUILDINGS[b.k].cost);for(const m of [b.inb,b.out,b.store,b.fuel])for(const [k,v] of Object.entries(m))if(v>0)addInv(k,v);for(const it of b.buf)addInv(it,1);removeBuilding(b);S.wires=S.wires.filter(w=>w[0]!==op.id&&w[1]!==op.id);}
+  else if(op.t==='l+'){const bl=FAC.belts.get(op.id);if(!bl)continue;refund(BELTS[bl.tier].cost,beltN(bl));for(const it of bl.items)addInv(it.t,1);removeBelt(bl);}
+  else if(op.t==='b-'){if(FAC.b.has(op.o.id))continue;pay(BUILDINGS[op.o.k].cost);const b=newBuilding(op.o);FAC.b.set(b.id,b);for(const w of op.wires)if(FAC.b.has(w[0])&&FAC.b.has(w[1])&&!S.wires.some(x=>x[0]===w[0]&&x[1]===w[1]))S.wires.push(w);}
+  else if(op.t==='l-'){if(FAC.belts.has(op.o.id)||!FAC.b.has(op.o.from[0])||!FAC.b.has(op.o.to[0]))continue;pay(BELTS[op.o.tier].cost,op.n);newBelt(op.o);}}}
+ finally{UNDO.busy=false;}FAC.powerDirty=true;AUDIO.flip&&AUDIO.flip();UI.toast('Undone: '+({place:'placing',belt:'belt',remove:'removal'}[c.label]||c.label),'info');saveSoon();};
+UI.A.undo=()=>UNDO.undo();
+addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.code==='KeyZ'&&GAME.mode==='play'&&!UI.panel){e.preventDefault();UNDO.undo();}});
+// the button shows while building, belting or dismantling, once there's something to undo
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);let el=document.getElementById('undobtn');if(!el){el=document.createElement('button');el.id='undobtn';el.className='rb';el.textContent='↶';el.title='Undo';el.addEventListener('click',e=>{e.stopPropagation();UNDO.undo();});el.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();UNDO.undo();},{passive:false});document.body.appendChild(el);}
+ const on=!!(BUILD.mode&&UNDO.stack.length&&!UI.panel&&GAME.mode==='play');if(el._on!==on){el._on=on;el.style.display=on?'grid':'none';}};}
+(function(){const st=document.createElement('style');st.textContent=`#undobtn{position:fixed;right:calc(14px + var(--safe-r));top:calc(66px + var(--safe-t));z-index:7;display:none;place-items:center;width:46px;height:46px;border-radius:50%;font:900 22px system-ui;color:#eef1f4;pointer-events:auto;border:1px solid rgba(255,255,255,.12);background:rgba(18,21,26,.78)}`;document.head.appendChild(st);})();
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.6.6',VERSION_MARK='FFVER@0.6.6@';
+const VERSION='0.7.0',VERSION_MARK='FFVER@0.7.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -5438,7 +5740,7 @@ function frame(now){CRASH.tick(now);let dt=Math.min(.1,(now-lastT)/1000);lastT=n
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,CRASH,MAMR,saveKey:()=>SAVE_KEY,mapStep5,W5,REG5,stream5,biomeTop2:(x,z)=>biomeTop2(x,z),dryLand:(x,z)=>dryLand(x,z),trenchD:(x,z)=>trenchD(x,z),groundNormal:(x,z)=>groundNormal(x,z),rawHeight:(x,z)=>rawHeight(x,z),BOOTT:0,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,UNDO,dismantle,NODE_TYPES,RIG,CRASH,RIGED,RIGP,rigDerive,rigEdOpen,rigEdClose,rigNew,rigUpdate,VEH,MAMR,saveKey:()=>SAVE_KEY,mapStep5,W5,REG5,stream5,biomeTop2:(x,z)=>biomeTop2(x,z),dryLand:(x,z)=>dryLand(x,z),trenchD:(x,z)=>trenchD(x,z),groundNormal:(x,z)=>groundNormal(x,z),rawHeight:(x,z)=>rawHeight(x,z),BOOTT:0,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;CRASH.start();
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);try{CRASH.add('boot',e.message,e.stack,'the game could not start');}catch(_){}const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
@@ -5449,5 +5751,19 @@ function frame(now){CRASH.tick(now);let dt=Math.min(.1,(now-lastT)/1000);lastT=n
 // tapping your Moss Pup opens its menu
 {const _ta=GAME.tapAt;GAME.tapAt=function(sx,sy){if(!UI.panel&&!BUILD.mode&&!VEH.driving){const r=screenRay(sx/innerWidth,sy/innerHeight);const q=rayDog(r.o,r.d);if(q&&q.pet){const i=pets().indexOf(q.d);if(i>=0){UI.A.dogMenu(i);return;}}}return _ta(sx,sy);};}
 
+// ---- rig designer taps (GAME exists only after 99-main) ----
+{const _t=GAME.tapAt;GAME.tapAt=function(sx,sy){if(!RIGED.on)return _t(sx,sy);const r=RIGED.rig,D=rigDerive(r);const ray=screenRay(sx/innerWidth,sy/innerHeight);
+ // into rig space (no tilt while designing)
+ const c=Math.cos(-r.yaw),s=Math.sin(-r.yaw);const loc=p=>[c*p[0]+s*p[2],p[1],-s*p[0]+c*p[2]];const o=loc([ray.o[0]-r.x,ray.o[1]-r.y,ray.o[2]-r.z]),d=loc(ray.d);for(let k=0;k<3;k++)o[k]+=D.com[k];
+ let best=null;for(const b of r.blocks){let t0=-1e9,t1=1e9,nrm=null;let ok=true;for(let k=0;k<3;k++){const lo=b[k]-.5,hi=b[k]+.5;if(Math.abs(d[k])<1e-9){if(o[k]<lo||o[k]>hi){ok=false;break;}continue;}let a=(lo-o[k])/d[k],bb=(hi-o[k])/d[k];let n=-1;if(a>bb){const tt=a;a=bb;bb=tt;n=1;}if(a>t0){t0=a;nrm=[0,0,0];nrm[k]=d[k]>0?-1:1;}if(bb<t1)t1=bb;if(t0>t1){ok=false;break;}}if(ok&&t0>0&&(!best||t0<best.t))best={t:t0,b,n:nrm};}
+ let cell=null;if(best){if(RIGED.mode==='del'){const b=best.b;if(RIGP[b[3]].seat&&r.blocks.filter(q=>RIGP[q[3]].seat).length<2&&r.blocks.length>1){UI.toast('Keep at least one seat','warn');return;}if(r.blocks.length<2){UI.toast('A rig needs at least one block','warn');return;}
+   r.blocks=r.blocks.filter(q=>q!==b);for(const [k,n] of Object.entries(RIGP[b[3]].cost))addInv(k,n);RIGED.undo.push({add:false,b});rigChanged(r);AUDIO.remove&&AUDIO.remove();rigEdUI();return;}
+  cell=[best.b[0]+best.n[0],best.b[1]+best.n[1],best.b[2]+best.n[2]];}
+ else if(RIGED.mode==='add'){// the floor of the bay, next to an existing block
+  const fy=D.lo+.5;if(d[1]<-1e-4){const t=(fy-.5-o[1])/d[1];const p=[o[0]+d[0]*t,fy,o[2]+d[2]*t];const q=[Math.round(p[0]),Math.round(D.lo+.5),Math.round(p[2])];if(r.blocks.some(b=>Math.abs(b[0]-q[0])+Math.abs(b[1]-q[1])+Math.abs(b[2]-q[2])===1))cell=q;}}
+ if(!cell||RIGED.mode!=='add')return;if(Math.abs(cell[0])>8||Math.abs(cell[2])>8||cell[1]<-4||cell[1]>10){UI.toast('That is the edge of the bay','warn');return;}if(r.blocks.some(b=>b[0]===cell[0]&&b[1]===cell[1]&&b[2]===cell[2]))return;
+ if(r.blocks.length>=220){UI.toast('Rigs are limited to 220 blocks','warn');return;}const P=RIGP[RIGED.sel];if(!P)return;if(!canAfford(P.cost)){UI.toast('Not enough parts: '+costText(P.cost),'warn');AUDIO.bad&&AUDIO.bad();return;}
+ if(P.mech&&r.blocks.filter(b=>RIGP[b[3]].mech).length>=6){UI.toast('Up to 6 moving parts per rig','warn');return;}
+ pay(P.cost);const b=[cell[0],cell[1],cell[2],RIGED.sel,P.dir?RIGED.dir:0];r.blocks.push(b);RIGED.undo.push({add:true,b});rigChanged(r);AUDIO.craft&&AUDIO.craft();rigEdUI();};}
 
 })();</script></body></html>
