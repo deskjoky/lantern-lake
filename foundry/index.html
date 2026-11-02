@@ -1623,7 +1623,7 @@ function slotInfo(i){let d=null;try{d=JSON.parse(localStorage.getItem(SLOT_KEYS[
 function gotoSlot(i,fresh,name){if(fresh){GAME.wiping=true;clearTimeout(_saveT);}else saveGame();try{localStorage.setItem('nf_slot',String(i));if(fresh){localStorage.removeItem(SLOT_KEYS[i]);sessionStorage.setItem('ff_new','1');sessionStorage.setItem('nf_name',name||'');}else sessionStorage.setItem('nf_cont','1');}catch(e){}location.reload();}
 function deleteSlot(i){try{localStorage.removeItem(SLOT_KEYS[i]);}catch(e){}if(i===SLOT){GAME.wiping=true;location.reload();}}
 let S=null;
-function newState(){return {v:2,worldV:4,landed:false,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true,autoWire:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
+function newState(){return {v:2,worldV:5,landed:false,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true,autoWire:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
 // ---- milestones ----
 const curMilestone=()=>MILESTONES[S.tier]||null;
 function hubWants(item){const M=curMilestone();if(!M||!M.need[item])return 0;return M.need[item]-(S.hub[item]||0);}
@@ -1860,6 +1860,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.6.0',t:'A planet 25 times bigger',items:['New games start on a brand-new planet about 9 km across, 25 times the area of the last one. Your home continent is surrounded by four more: frozen peaks and crystal ridges to the north, mesas and dunes to the east, forests and marsh to the west, and a southern continent across the trench that you can only reach by sea or air. Islands sit in between.','Land bridges link the home continent to the north, east and west, so you can travel a long way on foot (and later by rover).','There are no loading screens. The ground, plants, caves and creatures are made around you as you travel, a little at a time, so the game stays smooth.','150 caves, more than 600 resource nodes spread across every region, 110 drop pods, 56 crash sites and 150 Echo Cores to find.','The map paints itself in the background, nearest places first, and you can zoom in much further. When zoomed out it shows a cleaner overview.','Creatures follow you around the bigger world, so the wilds never feel empty.','Saves made before this update keep their old planet. Start a new game to land on the new one.']},
  {v:'0.5.1',t:'Making it our own',items:['Lots of things got new names that fit this planet and its story. Somersloops are now Echo Cores, Mercer Spheres are Vael Orbs, and the friendly Lizard Doggos are Moss Pups.','The AWESOME Sink and Shop are now the Recycler and the Trade Post, and they pay out Credits. The MAM is now the Analysis Lab.','Hard drives are Data caches, power slugs are Power seeds, SAM is Vaelite, Ficsite is Vaelsteel, Nobelisks are Blast Charges, Hypertubes are Vac Tubes, and Blade Runners are Spring Boots.','Your saves keep everything: only the names changed.']},
  {v:'0.5.0',t:'Stage 1: An ocean planet with no air',items:['A brand-new ocean planet for new games: continents and islands, beaches and sea cliffs, a shallow shelf full of kelp and coral, deep basins and a glowing trench almost 150 m down. You can swim anywhere: look down and move forward to dive, jump to swim up.','There\'s no air on this planet. Your suit tank lasts about a minute and a half away from the drop pod or the HUB. Drop tethers as you explore (📍 button, Y, or tap RB on a controller); connected tethers keep you breathing. A new Oxygenator building makes a 32 m bubble of air while it has power.','Air runs out faster at night, in storms, underwater and on the Frost Highlands. Oxygen Canisters (workbench: leaves and an iron plate) give you a quick refill. Run out completely and you pass out: your suit brings you home and your backpack waits where you fell, marked on the map.','Your tank gets bigger as you reach new milestones. Settings → Survival lets you pick Relaxed (three times the air) or turn oxygen off.','Storms: strong winds push you around, lightning strikes nearby and thunder rolls in.','The story begins. Shortly after you land, your suit picks up a signal. It leads you to the ruins of the Vael, the ancient race who made this world. Each ruin plays an Echo with part of their story and gives you Vael Relics for alien tech later. Eleven Echoes are spread across every biome, two of them under the sea; the Codex keeps them under Story.','Sixteen crashed ships are scattered around the planet, a few in shallow water. Hold to strip them for plates, wire, rotors, frames, the odd computer, canisters and tethers.','Old saves are no longer supported going forward; start a new game to play on the new planet.']},
  {v:'0.4.0',t:'A whole new look',items:['A new graphics engine. Every surface now has real textures with depth and detail, all painted by your device when the game starts: grass blades, layered cliff rock, sand ripples, sparkling snow, pebbles, moss, metal panels with rivets, tiled concrete, chipped paint, rubber and bark.','Buildings get proper materials: brushed metal, painted plating with worn edges, concrete floors with seams, and glass. Corners catch the light.','New lighting: softer shadows, realistic shine and reflections, sky and ground light, and darker crevices.','Screen effects: anti-aliasing (smooth edges), ambient occlusion (soft contact shadows), bloom on lights, lava and crystals, sun shafts at sunrise and sunset, and colour grading that changes with each biome and the time of day.','A new sky: glowing sunsets along the horizon, two layers of sunlit clouds, brighter stars, the Milky Way, and auroras over the Frost Highlands at night.','New water with layered ripples, reflections and sun glints.','The world feels alive: flocks of birds by day, fireflies at night, spores drifting through the forests and hollows, and dust kicked up by your feet.','The pioneer is remodelled with a smoother suit, joints, gear pouches, a reflective visor and a better jetpack. They breathe and look around while standing still.','Trees and bushes have more detail up close. The HUD has a sleeker, glassier look.','Settings → Graphics: Fast turns all effects off for older phones. Auto keeps phones smooth by skipping ambient occlusion. Sharp turns everything on, and Ultra runs at full resolution with longer shadows.']},
@@ -1982,10 +1983,10 @@ const AMB={on:false,
 const POD_COSTS=[{iron_plate:30,iron_rod:20},{reinforced_plate:6,cable:30},{rotor:8,concrete:60},{modular_frame:4,cable:60},{steel_beam:20,encased_beam:6},{steel_pipe:40,rotor:12},{plastic:30,rubber:30},{motor:4,circuit:10}];
 const POD_LOOT=[{screw:120,wire:60},{reinforced_plate:6,rotor:4},{modular_frame:4,power_shard:1},{steel_beam:30,cable:80},{encased_beam:10,power_shard:1},{rubber:40,plastic:40},{motor:3,circuit:12},{computer:2,power_shard:2}];
 function placeExplore(){const rnd=mulberry(WORLD.seed*331+17),W=WORLD;const taken=[];const clear=(x,z,d)=>{if(Math.abs(x)>W.half-60||Math.abs(z)>W.half-60||!dryLand(x,z))return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.4+5)return false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<14)return false;for(const o of taken)if(Math.hypot(o[0]-x,o[1]-z)<d)return false;return true;};
- const NP=wv3()?34:12;W.pods=[];for(let i=0;i<NP;i++){for(let t=0;t<600;t++){const a=rnd()*TAU,r=NP===12?70+i*16+rnd()*30:80+i/NP*(W.half-190)+rnd()*40,x=Math.cos(a)*r,z=Math.sin(a)*r;if(!clear(x,z,40)||groundNormal(x,z)[1]<.88)continue;taken.push([x,z]);const lv=Math.min(POD_COSTS.length-1,Math.floor(i*POD_COSTS.length/NP));W.pods.push({id:i,x,z,y:ground(x,z),rot:rnd()*TAU,cost:POD_COSTS[lv],loot:POD_LOOT[lv]});break;}}
+ const NP=wv5()?110:wv3()?34:12;W.pods=[];for(let i=0;i<NP;i++){for(let t=0;t<600;t++){const a=rnd()*TAU,r=NP===12?70+i*16+rnd()*30:80+i/NP*(W.half-190)+rnd()*40,x=Math.cos(a)*r,z=Math.sin(a)*r;if(!clear(x,z,40)||groundNormal(x,z)[1]<.88)continue;taken.push([x,z]);const lv=Math.min(POD_COSTS.length-1,Math.floor(i*POD_COSTS.length/NP));W.pods.push({id:i,x,z,y:ground(x,z),rot:rnd()*TAU,cost:POD_COSTS[lv],loot:POD_LOOT[lv]});break;}}
  // resonance cores sit on high ground and in odd corners
- const cand=[];for(let t=0;t<3000;t++){const x=(rnd()*2-1)*(W.half-70),z=(rnd()*2-1)*(W.half-70);if(Math.hypot(x,z)<90||!clear(x,z,30))continue;const n=groundNormal(x,z);if(n[1]<.8)continue;cand.push([ground(x,z)+rnd()*8,x,z]);}
- cand.sort((a,b)=>b[0]-a[0]);W.cores=[];for(const [,x,z] of cand){if(W.cores.length>=(wv3()?36:16))break;if(!clear(x,z,45))continue;taken.push([x,z]);W.cores.push({id:W.cores.length,x,z,y:ground(x,z)});}}
+ const cand=[];for(let t=0;t<(wv5()?12000:3000);t++){const x=(rnd()*2-1)*(W.half-70),z=(rnd()*2-1)*(W.half-70);if(Math.hypot(x,z)<90||!clear(x,z,30))continue;const n=groundNormal(x,z);if(n[1]<.8)continue;cand.push([ground(x,z)+rnd()*8,x,z]);}
+ cand.sort((a,b)=>b[0]-a[0]);W.cores=[];for(const [,x,z] of cand){if(W.cores.length>=(wv5()?110:wv3()?36:16))break;if(!clear(x,z,45))continue;taken.push([x,z]);W.cores.push({id:W.cores.length,x,z,y:ground(x,z)});}}
 function podMesh(open,fly){const g=new GB(),RB2=(w,h,d,r)=>PRIM.rbox?PRIM.rbox(w,h,d,r):PRIM.box(w,h,d);
  if(!fly){g.add(PRIM.cyl(4.6,5.2,.25,22),T(0,-.18,0),COL('#2a2228'));g.add(PRIM.cyl(3.4,3.4,.06,22),T(0,.0,0),COL('#1a1418'));}
  for(let k=0;k<(fly?0:9);k++){const a=k/9*TAU+.3;g.add(PRIM.ico(.4+(k%3)*.18,1,{noise:.4,seed:k+60}),T(Math.cos(a)*4.4,.1,Math.sin(a)*4.4,k),'#5a4e58');}
@@ -2432,8 +2433,8 @@ UI.views.map=function(){const M=UI.map;if(M.cx==null){M.cx=PL.x;M.cz=PL.z;}const
  h+=`<h5>Waypoints</h5>`+(L.length?L.map((w,i)=>`<div class="mrow2"><i style="background:${w.c}"></i><span>${esc(w.n)}<small>${Math.round(Math.hypot(w.x-PL.x,w.z-PL.z))} m away</small></span><button class="sw2 sm ${w.on!==false?'on':''}" data-a="wpOn" data-v="${i}" title="Show on screen"><i></i></button><button class="btn sm" data-a="wpRm" data-v="${i}">✕</button></div>`).join(''):'<p class="mut">None yet. Tap anywhere on the map to add one.</p>');
  h+=`<h5>Legend</h5><div class="legend"><span><i class="lgc" style="background:#f08a32"></i>HUB</span><span><i class="lgd"></i>Crash site</span><span><i class="lgc" style="background:#c890ff"></i>Resonance core</span>${Object.entries(NODE_TYPES).map(([k,n])=>`<span><i class="lgc" style="background:${n.c}"></i>${n.n}</span>`).join('')}</div>`;
  return h+'</div></div>';};
-UI.A.mapZ=v=>{UI.map.z=clamp(UI.map.z*(+v>0?1.5:1/1.5),1,12);UI.drawMap();};UI.A.mapMe=()=>{UI.map.cx=PL.x;UI.map.cz=PL.z;UI.drawMap();};
-UI.A.mapGo=v=>{const [x,z]=v.split(',').map(Number);UI.map.cx=x;UI.map.cz=z;UI.map.z=Math.max(UI.map.z,3);UI.drawMap();};
+UI.A.mapZ=v=>{UI.map.z=clamp(UI.map.z*(+v>0?1.5:1/1.5),1,wv5()?40:12);UI.drawMap();};UI.A.mapMe=()=>{UI.map.cx=PL.x;UI.map.cz=PL.z;UI.drawMap();};
+UI.A.mapGo=v=>{const [x,z]=v.split(',').map(Number);UI.map.cx=x;UI.map.cz=z;UI.map.z=Math.max(UI.map.z,wv5()?10:3);UI.drawMap();};
 UI.A.wpCol=v=>{UI.map.col=+v;const n=$('#wpn');UI.map.name=n&&n.value;UI.refresh();const n2=$('#wpn');if(n2&&UI.map.name)n2.value=UI.map.name;};
 UI.A.wpAdd=()=>{const p=UI.map.pend;if(!p)return;const n=($('#wpn')&&$('#wpn').value.trim())||'Waypoint';WPT.list().push({x:p[0],z:p[1],n,c:WP_COLS[UI.map.col||0],on:true});UI.map.pend=null;AUDIO.craft();UI.refresh();saveSoon();};
 UI.A.wpCancel=()=>{UI.map.pend=null;UI.refresh();};UI.A.wpRm=v=>{WPT.list().splice(+v,1);UI.refresh();saveSoon();};UI.A.wpOn=v=>{const w=WPT.list()[+v];w.on=w.on===false;UI.refresh();saveSoon();};
@@ -2454,8 +2455,8 @@ UI.drawMap=function(){const c=$('#mapc');if(!c)return;const x=c.getContext('2d')
  for(const b of FAC.b.values()){const [w,d]=fp(b.k,b.rot);const q=P(b.x,b.z);x.fillStyle=b.k==='hub'?'#f08a32':b.k==='foundation'?'rgba(220,220,220,.8)':'#f4f4f4';x.strokeStyle='rgba(0,0,0,.5)';x.lineWidth=1;x.fillRect(q[0]-w*s/2,q[1]-d*s/2,Math.max(3,w*s),Math.max(3,d*s));x.strokeRect(q[0]-w*s/2,q[1]-d*s/2,Math.max(3,w*s),Math.max(3,d*s));}
  for(const bp of BP.list()){const [w,d]=fp(bp.k,bp.rot);const q=P(bp.x,bp.z);x.setLineDash([4,3]);x.strokeStyle='#7ad8ff';x.lineWidth=1.5;x.strokeRect(q[0]-w*s/2,q[1]-d*s/2,Math.max(4,w*s),Math.max(4,d*s));x.setLineDash([]);}
  const r0=Math.min(9,3+M.z*.8);
- for(const nd of W.nodes){const q=P(nd.x,nd.z);x.fillStyle=NODE_TYPES[nd.type].c;x.strokeStyle='#111';x.lineWidth=1.5;x.beginPath();x.arc(q[0],q[1],r0+nd.purity*1.5,0,TAU);x.fill();x.stroke();if(M.z>=4){x.fillStyle='#fff';x.font='bold 11px system-ui';x.textAlign='center';x.fillText(PURITY[nd.purity].n,q[0],q[1]+r0+14);}}
- for(const p of (W.pods||[])){const q=P(p.x,p.z),k=r0+2;x.fillStyle=S.pods[p.id]?'#777':'#ff8a3a';x.strokeStyle='#111';x.lineWidth=1.5;x.beginPath();x.moveTo(q[0],q[1]-k);x.lineTo(q[0]+k,q[1]);x.lineTo(q[0],q[1]+k);x.lineTo(q[0]-k,q[1]);x.closePath();x.fill();x.stroke();}
+ const far5=wv5()&&M.z<3;for(const nd of W.nodes){const q=P(nd.x,nd.z);if(q[0]<-20||q[0]>N+20||q[1]<-20||q[1]>N+20)continue;if(far5){x.fillStyle=NODE_TYPES[nd.type].c;x.fillRect(q[0]-1.5,q[1]-1.5,3,3);continue;}x.fillStyle=NODE_TYPES[nd.type].c;x.strokeStyle='#111';x.lineWidth=1.5;x.beginPath();x.arc(q[0],q[1],r0+nd.purity*1.5,0,TAU);x.fill();x.stroke();if(M.z>=4){x.fillStyle='#fff';x.font='bold 11px system-ui';x.textAlign='center';x.fillText(PURITY[nd.purity].n,q[0],q[1]+r0+14);}}
+ for(const p of (W.pods||[])){const q=P(p.x,p.z),k=far5?3:r0+2;x.fillStyle=S.pods[p.id]?'#777':'#ff8a3a';x.strokeStyle='#111';x.lineWidth=1.5;x.beginPath();x.moveTo(q[0],q[1]-k);x.lineTo(q[0]+k,q[1]);x.lineTo(q[0],q[1]+k);x.lineTo(q[0]-k,q[1]);x.closePath();x.fill();x.stroke();}
  for(const cc of (W.cores||[]))if(S.cores[cc.id]){const q=P(cc.x,cc.z);x.fillStyle='#c890ff';x.beginPath();x.arc(q[0],q[1],4,0,TAU);x.fill();}
  const label=(t,q,col,dy=-16)=>{x.font='800 13px system-ui';x.textAlign='center';const w=x.measureText(t).width+12;x.fillStyle='rgba(10,12,16,.82)';x.fillRect(q[0]-w/2,q[1]+dy-12,w,18);x.fillStyle=col;x.fillText(t,q[0],q[1]+dy+2);};
  if(S.landPod){const q=P(S.landPod.x,S.landPod.z);x.fillStyle='#ece6da';x.strokeStyle='#111';x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],6,0,TAU);x.fill();x.stroke();label('Drop pod',q,'#ece6da');}
@@ -2701,7 +2702,7 @@ GEAR.migrate=function(){S.equip=S.equip||{};if(S.tier>=1&&!S.gotJet){S.gotJet=1;
 GEAR.use=function(k){if(k==='berry'||k==='medkit'){if((S.inv[k]||0)<1)return;if((PL.hp??100)>=100){UI.toast('You are already at full health','info');return;}S.inv[k]--;if(!S.inv[k])delete S.inv[k];PL.hp=Math.min(100,(PL.hp??100)+(k==='medkit'?70:12));AUDIO.craft();UI.toast('Healed','good');}else if(ITEMS[k]?.eq)GEAR.equip(k);UI.refresh();};
 // ---------- hazard zones: toxic gas and radiation ----------
 function placeHazards(){const rnd=mulberry(WORLD.seed*577+9),W=WORLD,out=[];const ok=(x,z,r)=>{if(Math.abs(x)>W.half-60||Math.abs(z)>W.half-60||!dryLand(x,z))return false;if(Math.hypot(x,z)<120)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r+r)return false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<r+8)return false;for(const o of out)if(Math.hypot(o.x-x,o.z-z)<o.r+r+40)return false;return true;};
- for(const [kind,n,r] of (wv3()?[['gas',10,28],['rad',5,24]]:[['gas',4,26],['rad',2,22]]))for(let i=0;i<n;i++)for(let t=0;t<500;t++){const a=rnd()*TAU,d=wv3()?220+rnd()*(W.half-340):140+rnd()*120,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ok(x,z,r)){out.push({kind,x,z,r,y:ground(x,z)});break;}}W.hazards=out;
+ for(const [kind,n,r] of (wv5()?[['gas',36,28],['rad',16,24]]:wv3()?[['gas',10,28],['rad',5,24]]:[['gas',4,26],['rad',2,22]]))for(let i=0;i<n;i++)for(let t=0;t<500;t++){const a=rnd()*TAU,d=wv3()?220+rnd()*(W.half-340):140+rnd()*120,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ok(x,z,r)){out.push({kind,x,z,r,y:ground(x,z)});break;}}W.hazards=out;
  const g=new GB();for(let k=0;k<7;k++){const a=k/7*TAU;g.add(PRIM.lathe([[.1,0],[.6,.8],[.25,1.6],[.6,2]],8),T(Math.cos(a)*2.4,0,Math.sin(a)*2.4,0,0,0,.8+k%3*.2),'#5a7a4a');g.add(PRIM.sphere(.55,8,6),T(Math.cos(a)*2.4,1.9,Math.sin(a)*2.4),COL('#9aff6a',1.2));}g.add(PRIM.sphere(1.2,10,8),T(0,.8,0,0,0,0,1,.7,1),COL('#7ae04a',.9));const gasM=g.build();
  const h=new GB();for(let k=0;k<9;k++){const a=k/9*TAU+rnd(),r=k?1+rnd()*1.6:0,hh=k?1+rnd()*1.6:3;h.add(PRIM.lathe([[.001,0],[.3,.1],[.2,hh*.85],[.001,hh]],6,{flat:true}),T(Math.cos(a)*r,0,Math.sin(a)*r,rnd()*3,(rnd()-.5)*.6,(rnd()-.5)*.6),COL('#c8ff3a',1.6));}h.add(PRIM.cyl(3,3.4,.3,10),T(0,-.1,0),'#3a4a2a');const radM=h.build();
  for(const z of out)R.objects.push({mesh:z.kind==='gas'?gasM:radM,model:T(z.x,z.y,z.z)});
@@ -3333,7 +3334,7 @@ function rayCre2(o,d,maxT){let best=null;for(const c of CRE2.list){if(c.dead>0||
 {const _f=UI.frame;UI.frame=function(dt){_f(dt);const H=HAND.what;if(H&&H.kind==='sphere'&&!BUILD.mode){const act=$('#act');act.classList.remove('hide');act.firstElementChild.textContent='Take';act.querySelector('circle').style.strokeDashoffset=String(289*(1-clamp(HAND.t/1.5,0,1)));const lk=$('#look');const t='Vael Orb · an alien artifact';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
 // map: caves and spheres
 {const _dm=UI.drawMap;UI.drawMap=function(){_dm();const c=$('#mapc');if(!c)return;const x=c.getContext('2d'),N=c.width,M=UI.map,s=N/(WORLD.half*2)*M.z;const P=(wx,wz)=>[(wx-M.cx)*s+N/2,(wz-M.cz)*s+N/2];
- for(const cv of (WORLD.caves||[])){const q=P(cv.x,cv.z);x.fillStyle='#6a6070';x.strokeStyle='#111';x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],7,Math.PI,0);x.lineTo(q[0]+7,q[1]+4);x.lineTo(q[0]-7,q[1]+4);x.closePath();x.fill();x.stroke();}
+ const cr=wv5()&&M.z<3?3.5:7;for(const cv of (WORLD.caves||[])){const q=P(cv.x,cv.z);if(q[0]<-10||q[0]>N+10||q[1]<-10||q[1]>N+10)continue;x.fillStyle='#6a6070';x.strokeStyle='#111';x.lineWidth=cr>5?2:1;x.beginPath();x.arc(q[0],q[1],cr,Math.PI,0);x.lineTo(q[0]+cr,q[1]+cr*.57);x.lineTo(q[0]-cr,q[1]+cr*.57);x.closePath();x.fill();x.stroke();}
  if(M.z>=(wv3()?1:2)){x.font='800 12px system-ui';x.textAlign='center';for(const b of BIOMES){const q=P(b.x,b.z);if(q[0]<0||q[0]>N||q[1]<0||q[1]>N)continue;x.fillStyle='rgba(255,255,255,.55)';x.fillText(b.n.toUpperCase(),q[0],q[1]);}}};}
 // ===== Quick wheel: your favourite builds and tools on a radial menu =====
 const WHEEL={open:false};
@@ -3406,7 +3407,7 @@ PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():
   if(down(1))padBack();if(down(4))padTab(-1);if(down(5))padTab(1);
   if(Math.abs(ry)>.2){const sc=L.querySelector('.body')||L;const col=PAD.focus&&PAD.focus.closest('.col,.maps,.bdet,.bgrid,.nscroll');(col||sc).scrollTop+=ry*dt*700;}
   if(down(9)&&GAME.paused)MENU.resume();else if(down(9)&&UI.panel)UI.closePanel();
-  if(UI.panel&&UI.tab==='map'&&!UI.bld){UI.map.cx+=lx*dt*80/UI.map.z;UI.map.cz+=ly*dt*80/UI.map.z;if(lx||ly)UI.drawMap();if(down(2))UI.A.mapZ(1);if(down(3))UI.A.mapZ(-1);}
+  if(UI.panel&&UI.tab==='map'&&!UI.bld){UI.map.cx+=lx*dt*(wv5()?400:80)/UI.map.z;UI.map.cz+=ly*dt*(wv5()?400:80)/UI.map.z;if(lx||ly)UI.drawMap();if(down(2))UI.A.mapZ(1);if(down(3))UI.A.mapZ(-1);}
   PAD.prev=B;return;}
  if(PAD.focus){PAD.focus.classList.remove('padf');PAD.focus=null;}
  if(GAME.mode!=='play'||GAME.landing){if(down(0)||down(9)){const s=document.getElementById('skipcine');if(GAME.landing&&s)s.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));}PAD.prev=B;return;}
@@ -4271,8 +4272,8 @@ function sloopMesh(){const g=new GB();g.add(PRIM.cyl(.9,1.1,.3,10),null,'#3a2a2a
 function placeSloops(){const W=WORLD;W.sloops=[];const rnd=mulberry(W.seed*911+29);const add=(x,z,y)=>W.sloops.push({id:W.sloops.length,x,z,y:y??ground(x,z)});
  if(wv3()){for(const c of CAVE3.list){const p=c.ch?{x:c.ch.x-2.5,z:c.ch.z-2.5,f:c.ch.f}:c.pts.filter(q=>q.cov).slice(-2)[0];if(p)add(p.x,p.z,p.f);}
   // high points: mesa tops, the frozen plateau, volcano rims, crystal peaks
-  const cand=[];for(let t=0;t<2500;t++){const x=(rnd()*2-1)*(W.half-160),z=(rnd()*2-1)*(W.half-160);if(Math.hypot(x,z)<220||caveZone(x,z))continue;if(groundNormal(x,z)[1]<.85)continue;cand.push([ground(x,z),x,z]);}cand.sort((a,b)=>b[0]-a[0]);
-  for(const [,x,z] of cand){if(W.sloops.length>=44)break;if(W.sloops.some(s=>Math.hypot(s.x-x,s.z-z)<90))continue;add(x,z);}}
+  const cand=[];for(let t=0;t<(wv5()?12000:2500);t++){const x=(rnd()*2-1)*(W.half-160),z=(rnd()*2-1)*(W.half-160);if(Math.hypot(x,z)<220||caveZone(x,z))continue;if(groundNormal(x,z)[1]<.85)continue;cand.push([ground(x,z),x,z]);}cand.sort((a,b)=>b[0]-a[0]);
+  for(const [,x,z] of cand){if(W.sloops.length>=(wv5()?150:44))break;if(W.sloops.some(s=>Math.hypot(s.x-x,s.z-z)<90))continue;add(x,z);}}
  else{for(const h of (W.hazards||[]))add(h.x-3,h.z-3);const cand=[];for(let t=0;t<1500;t++){const x=(rnd()*2-1)*(W.half-70),z=(rnd()*2-1)*(W.half-70);if(Math.hypot(x,z)<120)continue;cand.push([ground(x,z),x,z]);}cand.sort((a,b)=>b[0]-a[0]);for(const [,x,z] of cand){if(W.sloops.length>=12)break;if(W.sloops.some(s=>Math.hypot(s.x-x,s.z-z)<60))continue;add(x,z);}}
  if(!SLOOPM)SLOOPM=sloopMesh();for(const s of W.sloops){s.obj={mesh:SLOOPM,model:T(s.x,s.y,s.z),hidden:!!(S.sloopsGot||{})[s.id]};R.objects.push(s.obj);}}
 function raySloops(o,d,maxT=7){let best=null;for(const s of (WORLD.sloops||[])){if((S.sloopsGot||{})[s.id])continue;const w=[s.x-o[0],s.y+1.4-o[1],s.z-o[2]];const t=v3.dot(w,d);if(t<0||t>maxT)continue;const q=[o[0]+d[0]*t-s.x,o[1]+d[1]*t-s.y-1.4,o[2]+d[2]*t-s.z];if(Math.hypot(...q)<1.3&&(!best||t<best.t))best={t,s};}return best;}
@@ -4860,7 +4861,7 @@ const SEA={x:0,z:0,r:1e9,level:0,sea:1};
 // caves stay on dry land
 {const _pc=planCaves3;planCaves3=function(H){_pc(H);if(wv4())CAVE3.list=CAVE3.list.filter(c=>c.pts.every(p=>p.f>2.5)&&(!c.ch||c.ch.f>2.5));CAVE3.list.forEach((c,i)=>c.id=i);};}
 // set up the new map before the terrain is built
-{const _iw=initWorld;initWorld=function(){if(wv4()){WORLD.half=900;WORLD.step=3.6;WORLD.k=2.8;for(const k in W4.pos){BIO3[k].x=W4.pos[k][0];BIO3[k].z=W4.pos[k][1];}}_iw();};}
+{const _iw=initWorld;initWorld=function(){if(wv4()&&!W5.on){WORLD.half=900;WORLD.step=3.6;WORLD.k=2.8;for(const k in W4.pos){BIO3[k].x=W4.pos[k][0];BIO3[k].z=W4.pos[k][1];}}_iw();};}
 {const _l3=lakes3;lakes3=function(){if(wv4())return lakes4();_l3();};}
 // the sea surface: one big sheet of water at sea level
 {const _iw=initWater;initWater=function(){_iw();if(!wv4())return;const g=new GB();const S2=WORLD.half*2+600;g.add(PRIM.plane(S2,S2,24,24),T(0,0,0),'#ffffff');WORLD.water.push({mesh:g.build(),L:SEA,lv:0});};}
@@ -5028,7 +5029,7 @@ let ECHOM=null;function echoCrystal(){if(ECHOM)return ECHOM;const g=new GB();g.a
 function placeRuins(){const W=WORLD;W.ruins=[];if(!wv4())return;const rnd=mulberry(W.seed*1777+9);
  const ok=(x,z)=>{if(Math.abs(x)>W.half-100||Math.abs(z)>W.half-100||!dryLand(x,z)||caveZone(x,z,12))return false;if(lakeAt(x,z)||LAKES.some(L=>Math.hypot(L.x-x,L.z-z)<L.r*1.3+14))return false;if(groundNormal(x,z)[1]<.88)return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<26)return false;for(const r of W.ruins)if(Math.hypot(r.x-x,r.z-z)<150)return false;return true;};
  ECHO.forEach((e,i)=>{let p=null;for(let t=0;t<4000&&!p;t++){let x,z;if(e.b>=0){const B=BIO3[e.b];const a=rnd()*TAU,r=e.b===0?120+rnd()*120:Math.sqrt(rnd())*230;x=B.x+Math.cos(a)*r;z=B.z+Math.sin(a)*r;if(e.b!==0&&biomeTop2(x,z)[0]!==e.b)continue;if(!ok(x,z))continue;}
-   else{x=(rnd()*2-1)*(W.half-120);z=(rnd()*2-1)*(W.half-120);const h=ground(x,z);if(e.b===-1?(h>-10||h<-22):(h>-90||trenchD(x,z)>140))continue;if(groundNormal(x,z)[1]<.8)continue;}p=[x,z];}
+   else{const RR=wv5()?2600:W.half-120;x=(rnd()*2-1)*RR;z=(rnd()*2-1)*RR;const h=ground(x,z);if(e.b===-1?(h>-10||h<-22):(h>-90||trenchD(x,z)>140))continue;if(groundNormal(x,z)[1]<.8)continue;}p=[x,z];}
   if(!p)return;const y=ground(p[0],p[1]);W.ruins.push({id:i,x:p[0],z:p[1],y,wet:e.b<0});});
  for(const r of W.ruins){r.obj={mesh:ruinMesh(r.id,r.wet),model:T(r.x,r.y,r.z,r.id*1.3)};r.obj.org=2;R.objects.push(r.obj);}}
 {const _ei=EXP.init;EXP.init=function(){_ei();placeRuins();placeWrecks();storySignal();};}
@@ -5057,7 +5058,7 @@ function wreckMesh(seed){const g=new GB(),rnd=mulberry(seed*131+7);const hull='#
  g.add(PRIM.box(2.6,.06,1.2),T(6.2,3.1,0,0,0,-.3),COL('#9ad8ff',-4));for(let k=0;k<14;k++){const a=rnd()*TAU,r=4+rnd()*9;g.add(PRIM.box(.4+rnd()*1.2,.1+rnd()*.3,.4+rnd(),{y0:true}),T(Math.cos(a)*r,0,Math.sin(a)*r,rnd()*6,(rnd()-.5)*.5),rnd()<.5?hull:dark);}
  g.add(PRIM.cyl(9,10,.3,20),T(0,-.15,0),COL('#3a2e28'));lamp(g,3,3.6,1.4,'#ff3a2a');return g.build();}
 const WRECK_LOOT=[['iron_plate',8,24],['iron_rod',8,18],['screw',40,16],['wire',16,14],['cable',6,12],['rotor',2,8],['reinforced_plate',2,6],['modular_frame',1,4],['circuit',2,3],['computer',1,1],['o2can',2,8],['tether',6,8]];
-function placeWrecks(){const W=WORLD;W.wrecks=[];if(!wv4())return;const rnd=mulberry(W.seed*2671+13);for(let i=0;i<16;i++){for(let t=0;t<800;t++){const x=(rnd()*2-1)*(W.half-120),z=(rnd()*2-1)*(W.half-120);const h=ground(x,z);const wet=i>=13;if(wet?(h>-6||h<-20):!dryLand(x,z))continue;if(Math.hypot(x,z)<140||groundNormal(x,z)[1]<.85||caveZone(x,z,14))continue;
+function placeWrecks(){const W=WORLD;W.wrecks=[];if(!wv4())return;const rnd=mulberry(W.seed*2671+13);const NW=wv5()?56:16;for(let i=0;i<NW;i++){for(let t=0;t<800;t++){const x=(rnd()*2-1)*(W.half-120),z=(rnd()*2-1)*(W.half-120);const h=ground(x,z);const wet=i>=NW-(wv5()?10:3);if(wet?(h>-6||h<-20):!dryLand(x,z))continue;if(Math.hypot(x,z)<140||groundNormal(x,z)[1]<.85||caveZone(x,z,14))continue;
   if(W.wrecks.some(w=>Math.hypot(w.x-x,w.z-z)<120)||ruins().some(r=>Math.hypot(r.x-x,r.z-z)<60))continue;W.wrecks.push({id:i,x,z,y:h,rot:rnd()*TAU});break;}}
  for(const w of W.wrecks){w.left=(S.wrecks||{})[w.id]??6;w.obj={mesh:wreckMesh(w.id),model:T(w.x,w.y,w.z,w.rot)};R.objects.push(w.obj);}}
 function rayWreck(o,d){let best=null;for(const w of (WORLD.wrecks||[])){const c=[w.x,w.y+1.8,w.z];const t=v3.dot(v3.sub(c,o),d);if(t<0||t>11)continue;const e=Math.hypot(o[0]+d[0]*t-c[0],o[1]+d[1]*t-c[1],o[2]+d[2]*t-c[2]);if(e<3.2&&(!best||t<best.t))best={t,w};}return best;}
@@ -5072,9 +5073,254 @@ ECHO.forEach((e,i)=>CODEX.push({k:'story:'+i,cat:'Story',n:e.t,d:e.x}));CODEX.pu
 // the first echo announces itself shortly after you land
 {const _eu=EXP.update;EXP.update=function(dt){_eu(dt);if(!wv4()||GAME.mode!=='play'||S.sigIntro||!S.landed)return;S.sigIntro=(S.sigIntro||0);EXP._sig=(EXP._sig||0)+dt;if(EXP._sig>25){S.sigIntro=1;UI.banner('A signal','Your suit picked up a faint, repeating signal. It is marked on your screen and map.');AUDIO.tone&&AUDIO.tone(660,.3,{type:'sine',vol:.06});storySignal();saveSoon();}};}
 
+// ---- 45-world5.js ----
+// ===== World v5: a 9 km planet streamed around you. Five continents, island chains, two trenches.
+// Heights, terrain meshes, plants, cave roofs and the map are made in small pieces near you as you travel, so there's no loading. =====
+function wv5(){return !!(S&&S.worldV>=5);}
+const W5={on:false,TC:32,NT:78,ready:null,tiles:new Map(),jobs:[],jobKeys:new Set(),cells:new Map(),stat:{tiles:0,meshes:0,cells:0},
+ last:null,lastQ:null,dirty:true,hc:{k:new Int32Array(8192).fill(-1),v:new Float32Array(8192)}};
+// [biome, x, z, radius]. The first nine are the home continent; their centres are where the story and early game happen.
+const REG5=[
+ [0,0,0,900],[1,60,-1300,640],[2,980,-980,540],[3,1300,150,620],[4,1000,1000,560],[5,150,1300,600],[6,-980,980,560],[7,-1300,80,640],[8,-980,-960,540],
+ // the north: frozen peaks and crystal ridges
+ [1,-600,-3300,650],[2,750,-3500,520],[8,-1900,-3150,520],[7,1800,-3200,440],
+ // the east: mesas and dunes
+ [3,3250,-700,620],[5,3350,850,640],[4,3450,2400,520],[2,3350,-2300,460],
+ // the south, across the trench: only reachable by sea or air
+ [4,-300,3400,560],[6,1250,3350,520],[7,-1700,3300,560],[8,2600,3500,380],
+ // the west: forests and marsh
+ [7,-3350,-650,600],[6,-3300,850,580],[0,-3450,-2150,480],[1,-3500,2350,460],
+ // islands
+ [0,-2250,-1700,220],[3,2200,-1850,230],[5,2300,1700,200],[6,-2350,1950,220],[2,1450,-2300,170],[8,-1450,2300,180],[4,500,2350,170]];
+const BR5=[[[1850,100],[2700,-500],170],[[60,-1900],[-450,-2750],160],[[-1900,0],[-2800,-500],170],[[-3400,-1700],[-2300,-2900],150]];
+const TRENCH5=[[[-2700,1350],[-2050,1850],[-1300,2100],[-500,2200],[300,2100]],[[1500,-2750],[2300,-2500],[2900,-1900]]];
+const ASH5=REG5.filter(r=>r[0]===4);
+const _RD5=new Float64Array(REG5.length);
+function contAt5(x,z){const wx=x+fbm(x*.0008+11,z*.0008-4,3)*300+fbm(x*.003+11,z*.003-4,3)*170,wz=z+fbm(x*.0008-30,z*.0008+8,3)*300+fbm(x*.003-30,z*.003+8,3)*170;let c=-1;
+ for(let i=0;i<REG5.length;i++){const R=REG5[i];const v=1-Math.hypot(wx-R[1],wz-R[2])/R[3];if(v>c)c=v;}
+ for(const [a,b,w] of BR5){const v=(1-segDist(wx,wz,a[0],a[1],b[0],b[1])/w)*.5;if(v>c)c=v;}
+ c+=fbm(x*.011+3,z*.011-7,3)*.16+fbm(x*.0035-9,z*.0035+2,3)*.12;const e=Math.max(Math.abs(x),Math.abs(z));c-=smooth(WORLD.half-700,WORLD.half-150,e)*1.6;return c;}
+function bioW5(x,z){const wx=x+fbm(x*.0021+7,z*.0021-3,3)*560,wz=z+fbm(x*.0021-41,z*.0021+19,3)*560;let dm=1e9;
+ for(let i=0;i<REG5.length;i++){const R=REG5[i];const d=Math.hypot(wx-R[1],wz-R[2])*(BIO3[R[0]].k||1)*620/R[3];_RD5[i]=d;if(d<dm)dm=d;}
+ const B=16+60*smooth(-.08,.22,fbm(x*.0035+99,z*.0035-50,2));let s=0,top=0;for(let i=0;i<BIO3.length;i++)BW[i]=0;
+ for(let i=0;i<REG5.length;i++){const q=_RD5[i]-dm;if(q<B*6){const w=Math.exp(-q/B);BW[REG5[i][0]]+=w;s+=w;}}
+ for(let i=0;i<BIO3.length;i++){BW[i]/=s;if(BW[i]>BW[top])top=i;}return top;}
+{const _c=contAt;contAt=function(x,z){return W5.on?contAt5(x,z):_c(x,z);};}
+{const _b=bioW;bioW=function(x,z){return W5.on?bioW5(x,z):_b(x,z);};}
+{const _t=trenchD;trenchD=function(x,z){if(!W5.on)return _t(x,z);let d=1e9;for(const P of TRENCH5)for(let i=0;i<P.length-1;i++)d=Math.min(d,segDist(x,z,P[i][0],P[i][1],P[i+1][0],P[i+1][1]));return d;};}
+// every ash plain has its own volcanoes
+// the home basin keeps a few ponds but isn't flooded
+{const _bh=bioH;bioH=function(i,x,z){if(i===0&&W5.on){const v=_bh(0,x,z);return v<5?5+(v-5)*.3:v;}if(i!==4||!W5.on)return _bh(i,x,z);let R=ASH5[0],dm=1e9;for(const q of ASH5){const d=(x-q[1])*(x-q[1])+(z-q[2])*(z-q[2]);if(d<dm){dm=d;R=q;}}const b=BIO3[4],ox=b.x,oz=b.z;b.x=R[1];b.z=R[2];const h=_bh(4,x,z);b.x=ox;b.z=oz;return h;};}
+// ---------- lakes, scattered through the wetter regions ----------
+function lakes5(){LAKES.length=0;const add=(x,z,r)=>LAKES.push({x,z,r});add(-160,95,40);add(150,175,30);add(95,-205,44);add(-60,-230,26);
+ const per={0:3,1:2,2:1,3:1,4:0,5:1,6:7,7:3,8:2},rnd=mulberry(WORLD.seed*4421+7);
+ REG5.forEach((R,ri)=>{const want=Math.round((per[R[0]]||0)*Math.min(1.4,R[3]/500));let made=0;for(let t=0;t<80&&made<want;t++){const a=rnd()*TAU,d=Math.sqrt(rnd())*R[3]*.65;const x=R[1]+Math.cos(a)*d,z=R[2]+Math.sin(a)*d,r=14+rnd()*26;
+  if(Math.hypot(x,z)<260)continue;if(LAKES.some(L=>Math.hypot(L.x-x,L.z-z)<L.r+r+50))continue;if(rawHeight0(x,z)<5)continue;let ok=true;for(let k=0;k<8;k++){const q=k/8*TAU;if(rawHeight0(x+Math.cos(q)*r*1.5,z+Math.sin(q)*r*1.5)<3.5){ok=false;break;}}if(!ok)continue;add(x,z,r);made++;}});}
+{const _l=lakes4;lakes4=function(){if(W5.on)return lakes5();_l();};}
+// ---------- caves: many more of them, all above the sea ----------
+function planCaves5(H){const rnd=mulberry(WORLD.seed*5531+3),W=WORLD,out=[];CAVE3.list=[];const lim=W.half-500;
+ const inMap=(x,z)=>Math.abs(x)<lim&&Math.abs(z)<lim;
+ for(let t=0;t<90000&&out.length<150;t++){const x=(rnd()*2-1)*lim,z=(rnd()*2-1)*lim;if(Math.hypot(x,z)<190)continue;const h0=H(x,z);if(h0<6)continue;
+  if(out.some(c=>Math.abs(c.mx-x)<150&&Math.abs(c.mz-z)<150&&Math.hypot(c.mx-x,c.mz-z)<150))continue;if(LAKES.some(L=>Math.hypot(x-L.x,z-L.z)<L.r*1.4+30))continue;
+  const thru=rnd()<.5;let th;if(thru)th=rnd()*TAU;else{const gx=H(x+4,z)-H(x-4,z),gz=H(x,z+4)-H(x,z-4);if(Math.hypot(gx,gz)<2.2)continue;th=Math.atan2(gz,gx)+(rnd()-.5)*.6;}
+  const L=thru?90+rnd()*140:55+rnd()*75,amp=(rnd()-.5)*L*.3,N=Math.ceil(L/4),w0=8+rnd()*3,a0=6.5+rnd()*2.5;const cx=Math.cos(th),cz=Math.sin(th);
+  const pts=[];let bad=false;for(let i=0;i<=N;i++){const s=i/N,px=x+cx*L*s-cz*Math.sin(s*Math.PI)*amp,pz=z+cz*L*s+cx*Math.sin(s*Math.PI)*amp;if(!inMap(px,pz)||LAKES.some(Lk=>Math.hypot(px-Lk.x,pz-Lk.z)<Lk.r*1.3+20)){bad=true;break;}
+   const wid=w0*(1+Math.max(0,fbm(px*.03,pz*.03,2))*1.6);pts.push({x:px,z:pz,w:wid,a:a0+Math.max(0,fbm(px*.04+5,pz*.04,2))*5,s});}
+  if(bad)continue;const hb=H(pts[N].x,pts[N].z);
+  if(thru){if(Math.abs(hb-h0)/L>.2)continue;for(const p of pts)p.f=lerp(h0,hb,p.s)-.4;}else for(const p of pts)p.f=h0-.4-p.s*5;
+  if(pts.some(p=>p.f<=2.5))continue;
+  let cov=0,mid=0,deep=0;for(const p of pts){const hh=H(p.x,p.z);p.cov=hh>=p.f+p.a+3;if(p.s>.15&&p.s<.85){mid++;if(p.cov)cov++;}if(hh-p.f>p.a+12)deep++;}
+  if(thru){if(cov<mid*.75||deep<2)continue;if(H(pts[0].x,pts[0].z)-pts[0].f>3||hb-pts[N].f>3)continue;}
+  else{if(pts.some(p=>p.s>.3&&!p.cov)||deep<2)continue;}
+  let ch=null;if(!thru){const e=pts[N],r=9+rnd()*6;ch={x:e.x,z:e.z,f:e.f,r,a:r*.8};if(ch.f<=2.5)continue;let ok=true;for(let k=0;k<8;k++){const q=k/8*TAU;if(H(e.x+Math.cos(q)*(r+5),e.z+Math.sin(q)*(r+5))<e.f+ch.a+4){ok=false;break;}}if(!ok)continue;}
+  let mx=0,mz=0;for(const p of pts){mx+=p.x;mz+=p.z;}mx/=pts.length;mz/=pts.length;const pad=CAVE3.M+10+(ch?ch.r:0);
+  const bb=[Math.min(...pts.map(p=>p.x-p.w))-pad,Math.min(...pts.map(p=>p.z-p.w))-pad,Math.max(...pts.map(p=>p.x+p.w))+pad,Math.max(...pts.map(p=>p.z+p.w))+pad];
+  out.push({id:out.length,thru,pts,ch,mx,mz,bb,biome:bioW(mx,mz)});}
+ CAVE3.list=out;hcClear();}
+{const _pc=planCaves3;planCaves3=function(H){if(W5.on)return planCaves5(H);_pc(H);};}
+// ---------- heights: one big grid, filled in 115 m tiles as they're needed ----------
+function hcClear(){W5.hc.k.fill(-1);}
+// heights straight from the generator for grid points whose tile isn't made yet (with a small cache)
+function hDirect(gi,gj){const c=W5.hc,k=gi*4096+gj,s=((gi*7919)^(gj*104729))&8191;if(c.k[s]===k)return c.v[s];const W=WORLD,v=rawHeight(-W.half+gi*W.step,-W.half+gj*W.step);c.k[s]=k;c.v[s]=v;return v;}
+const tileOf=(gi,gj)=>Math.min(gj>>5,W5.NT-1)*W5.NT+Math.min(gi>>5,W5.NT-1);
+function hGrid(gi,gj){const W=WORLD,n=W.n;gi=gi<0?0:gi>n-1?n-1:gi;gj=gj<0?0:gj>n-1?n-1:gj;return W5.ready[tileOf(gi,gj)]?W.h[gj*n+gi]:hDirect(gi,gj);}
+const late5=()=>performance.now()>W5.dl;
+function* genTileG(ti,tj){const W=WORLD,n=W.n,TC=W5.TC,t=tj*W5.NT+ti;if(W5.ready[t])return;
+ for(let gj=tj*TC;gj<=tj*TC+TC&&gj<n;gj++){for(let gi=ti*TC;gi<=ti*TC+TC&&gi<n;gi++){const x=-W.half+gi*W.step,z=-W.half+gj*W.step,k=gj*n+gi;W.h[k]=rawHeight(x,z);bioW(x,z);let a=0,b=-1;for(let q=1;q<BIO3.length;q++)if(BW[q]>BW[a])a=q;for(let q=0;q<BIO3.length;q++)if(q!==a&&(b<0||BW[q]>BW[b]))b=q;const s=BW[a]+BW[b];W.bA[k]=a;W.bB[k]=b;W.bT[k]=Math.round(BW[a]/s*255);}
+  if(late5())yield;if(W5.ready[t])return;}
+ W5.ready[t]=1;W5.stat.tiles++;}
+function genTile(ti,tj){const d=W5.dl;W5.dl=1e15;for(const _ of genTileG(ti,tj));W5.dl=d;}
+function bioTopAt(x,z){bioW(x,z);let a=0,b=-1;for(let q=1;q<BIO3.length;q++)if(BW[q]>BW[a])a=q;for(let q=0;q<BIO3.length;q++)if(q!==a&&(b<0||BW[q]>BW[b]))b=q;return [a,b,BW[a]/(BW[a]+BW[b])];}
+{const _bh=buildHeights;buildHeights=function(){if(!W5.on)return _bh();const W=WORLD,n=W.n=W5.NT*W5.TC+1;W.h=new Float32Array(n*n);W.bA=new Uint8Array(n*n);W.bB=new Uint8Array(n*n);W.bT=new Uint8Array(n*n);W5.ready=new Uint8Array(W5.NT*W5.NT);hcClear();for(const L of LAKES){L.level=null;lakeLevel(L);}};}
+{const _g=ground;ground=function(x,z){if(!W5.on)return _g(x,z);const W=WORLD,n=W.n;let fx=(x+W.half)/W.step,fz=(z+W.half)/W.step;fx=fx<0?0:fx>n-1.001?n-1.001:fx;fz=fz<0?0:fz>n-1.001?n-1.001:fz;const i=Math.floor(fx),j=Math.floor(fz),u=fx-i,v=fz-j;
+ if(W5.ready[tileOf(i,j)]){const H=W.h;const a=H[j*n+i],b=H[j*n+i+1],c=H[(j+1)*n+i],d=H[(j+1)*n+i+1];return u+v<1?a+(b-a)*u+(c-a)*v:d+(c-d)*(1-u)+(b-d)*(1-v);}
+ if(u+v<1){const a=hDirect(i,j),b=hDirect(i+1,j),c=hDirect(i,j+1);return a+(b-a)*u+(c-a)*v;}const d=hDirect(i+1,j+1),c=hDirect(i,j+1),b=hDirect(i+1,j);return d+(c-d)*(1-u)+(b-d)*(1-v);};}
+{const _bt=biomeTop2;biomeTop2=function(x,z){if(!W5.on)return _bt(x,z);const W=WORLD,n=W.n;const i=clamp(Math.round((x+W.half)/W.step),0,n-1),j=clamp(Math.round((z+W.half)/W.step),0,n-1);if(W5.ready[tileOf(i,j)]){const k=j*n+i;return [W.bA[k],W.bB[k],W.bT[k]/255];}return bioTopAt(-W.half+i*W.step,-W.half+j*W.step);};}
+// ---------- terrain meshes per tile, three levels of detail ----------
+function* chunkG(ti,tj,st){const W=WORLD,TC=W5.TC,ci=ti*TC,cj=tj*TC,cw=TC/st+1,e=st;const pos=[],nrm=[],col=[],idx=[],grid=[];
+ for(let j=0;j<cw;j++){if(j&&late5())yield;for(let i=0;i<cw;i++){const gi=ci+i*st,gj=cj+j*st,x=-W.half+gi*W.step,z=-W.half+gj*W.step,h=hGrid(gi,gj);const N=v3.norm([hGrid(gi-e,gj)-hGrid(gi+e,gj),2*e*W.step,hGrid(gi,gj-e)-hGrid(gi,gj+e)]);const c=terrainColor(x,z,h,N[1]);
+  const v=[x,h,z,N,c];grid.push(v);pos.push(x,h,z);nrm.push(N[0],N[1],N[2]);col.push(c[0],c[1],c[2],c[3]||0);}}
+ for(let j=0;j<cw-1;j++)for(let i=0;i<cw-1;i++){const a=j*cw+i,b=a+cw;idx.push(a,b,a+1,a+1,b,b+1);}
+ const sk=st>1?7:4;const edge=list=>{for(let q=0;q<list.length-1;q++){const A=grid[list[q]],B=grid[list[q+1]];const base=pos.length/3;for(const g of [A,B]){pos.push(g[0],g[1],g[2]);nrm.push(...g[3]);col.push(g[4][0],g[4][1],g[4][2],g[4][3]||0);}for(const g of [A,B]){pos.push(g[0],g[1]-sk,g[2]);nrm.push(...g[3]);col.push(g[4][0],g[4][1],g[4][2],g[4][3]||0);}idx.push(base,base+2,base+1,base+1,base+2,base+3,base,base+1,base+2,base+1,base+3,base+2);}};
+ const top=[],bot=[],lef=[],rig=[];for(let i=0;i<cw;i++){top.push(i);bot.push((cw-1)*cw+i);}for(let j=0;j<cw;j++){lef.push(j*cw);rig.push(j*cw+cw-1);}edge(top);edge(bot);edge(lef);edge(rig);
+ W5.stat.meshes++;return makeMesh({pos:new Float32Array(pos),nrm:new Float32Array(nrm),col:new Float32Array(col),idx});}
+function freeMesh(m){if(!m)return;const gl=GL.gl;gl.deleteVertexArray(m.vao);for(const k in m.bufs)gl.deleteBuffer(m.bufs[k]);if(m.ibo)gl.deleteBuffer(m.ibo);}
+{const _bt=buildTerrainMeshes;buildTerrainMeshes=function(){if(!W5.on)return _bt();TER3.chunks=[{stream:1}];CAVE3.shells=[];R.casters=[];R.terrain=[];};}
+{const _b=buildCaveShells;buildCaveShells=function(){if(!W5.on)return _b();CAVE3.shells=[];R.casters=[];};}
+function caveQ1(c,x,z){if(x<c.bb[0]||x>c.bb[2]||z<c.bb[1]||z>c.bb[3])return null;const P=c.pts;let best=null;
+ for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];const dx=b.x-a.x,dz=b.z-a.z,l2=dx*dx+dz*dz;let t=((x-a.x)*dx+(z-a.z)*dz)/l2;t=t<0?0:t>1?1:t;const d=Math.hypot(x-a.x-dx*t,z-a.z-dz*t);const hw=(a.w+(b.w-a.w)*t)/2;const e=d-hw;
+  if(!best||e<best.e)best={c,e,hw,d,f:a.f+(b.f-a.f)*t,a:a.a+(b.a-a.a)*t,cov:t<.5?a.cov:b.cov,i,t};}
+ if(c.ch){const h=c.ch,d=Math.hypot(x-h.x,z-h.z),e=d-h.r;if(!best||e<best.e)best={c,e,hw:h.r,d,f:h.f,a:h.a,cov:true,ch:1};}
+ return best&&best.e<CAVE3.M+5?best:null;}
+function* shellG(c){const M=CAVE3.M,H=CAVE3.pre,st=1.5,x0=c.bb[0],z0=c.bb[1],nx=Math.ceil((c.bb[2]-x0)/st)+1,nz=Math.ceil((c.bb[3]-z0)/st)+1;
+ const inn=new Float32Array(nx*nz),out=new Float32Array(nx*nz),on=new Uint8Array(nx*nz);
+ for(let j=0;j<nz;j++){for(let i=0;i<nx;i++){const x=x0+i*st,z=z0+j*st,k=j*nx+i;const q=caveQ1(c,x,z);if(!q||!q.cov||q.e>M+4.6)continue;on[k]=1;const iy=q.e<0?archY(q):q.f-.2;inn[k]=iy;out[k]=Math.max(H(x,z)+.15,(q.e<0?iy:q.f+q.a)+1.2);}if(late5())yield;}
+ const pos=[],nrm=[],col=[],idx=[];const P=(x,y,z,n,cc)=>{pos.push(x,y,z);nrm.push(n[0],n[1],n[2]);col.push(cc[0],cc[1],cc[2],.66);return pos.length/3-1;};
+ const tri=(a,b,cc,want)=>{const A=[pos[a*3],pos[a*3+1],pos[a*3+2]],B=[pos[b*3],pos[b*3+1],pos[b*3+2]],Cc=[pos[cc*3],pos[cc*3+1],pos[cc*3+2]];const N=v3.cross(v3.sub(B,A),v3.sub(Cc,A));if(v3.dot(N,want)<0)idx.push(a,cc,b);else idx.push(a,b,cc);};
+ const rockC=BIO3[c.biome].L.r,ink=.55;const ic=[rockC[0]*ink,rockC[1]*ink,rockC[2]*ink];
+ const vo=new Int32Array(nx*nz).fill(-1),vi=new Int32Array(nx*nz).fill(-1);
+ const nO=(i,j)=>{const k=j*nx+i,g=(a,b)=>{const kk=b*nx+a;return on[kk]?out[kk]:out[k];};return v3.norm([g(Math.max(0,i-1),j)-g(Math.min(nx-1,i+1),j),2*st,g(i,Math.max(0,j-1))-g(i,Math.min(nz-1,j+1))]);};
+ const nI=(i,j)=>{const k=j*nx+i,g=(a,b)=>{const kk=b*nx+a;return on[kk]?inn[kk]:inn[k];};const N=v3.norm([g(Math.max(0,i-1),j)-g(Math.min(nx-1,i+1),j),2*st,g(i,Math.max(0,j-1))-g(i,Math.min(nz-1,j+1))]);return [-N[0],-N[1],-N[2]];};
+ for(let j=0;j<nz;j++){for(let i=0;i<nx;i++){const k=j*nx+i;if(!on[k])continue;const x=x0+i*st,z=z0+j*st;const no=nO(i,j);vo[k]=P(x,out[k],z,no,terrainColor3(x,z,out[k],no[1]));
+   const ni=nI(i,j);const q1=caveQ1(c,x,z);const glow=fbm(x*.15,z*.15+inn[k]*.2,2)>.33&&inn[k]>(q1?q1.f:0)+1.5;const cc=glow?[[1.2,2.2,2],[1.9,1.1,2.6],[2.4,1.9,.7]][(i+j)%3]:mixc(ic,[ic[0]*1.3,ic[1]*1.2,ic[2]*1.3],hash2(i,j,c.id));vi[k]=P(x,inn[k],z,ni,cc);}if(late5())yield;}
+ const cell=(i,j)=>i>=0&&j>=0&&i<nx-1&&j<nz-1&&on[j*nx+i]&&on[j*nx+i+1]&&on[(j+1)*nx+i]&&on[(j+1)*nx+i+1];
+ for(let j=0;j<nz-1;j++)for(let i=0;i<nx-1;i++){if(!cell(i,j))continue;const a=j*nx+i,b=a+1,cq=a+nx,d=cq+1;tri(vo[a],vo[cq],vo[b],[0,1,0]);tri(vo[b],vo[cq],vo[d],[0,1,0]);tri(vi[a],vi[b],vi[cq],[0,-1,0]);tri(vi[b],vi[d],vi[cq],[0,-1,0]);
+  const side=(ok,p,q2,dir)=>{if(ok)return;const A=vo[p],B=vo[q2],Ci=vi[p],Di=vi[q2];const n=dir;const a2=P(pos[A*3],pos[A*3+1],pos[A*3+2],n,rockC),b2=P(pos[B*3],pos[B*3+1],pos[B*3+2],n,rockC),c2=P(pos[Ci*3],pos[Ci*3+1],pos[Ci*3+2],n,ic),d2=P(pos[Di*3],pos[Di*3+1],pos[Di*3+2],n,ic);tri(a2,b2,c2,n);tri(b2,d2,c2,n);};
+  side(cell(i,j-1),a,b,[0,0,-1]);side(cell(i,j+1),cq,d,[0,0,1]);side(cell(i-1,j),a,cq,[-1,0,0]);side(cell(i+1,j),b,d,[1,0,0]);}
+ if(!idx.length)return null;const m=makeMesh({pos:new Float32Array(pos),nrm:new Float32Array(nrm),col:new Float32Array(col),idx});m.cave=c;return m;}
+// ---------- plants, made per 230 m cell ----------
+const FC5=230.4;
+const DENS5=[{bulb:2804,spire:1122,bush:3020,rock:475,slug:30},{pine:3554,boulder:754,bush:592,slug:24},{crystal:2691,spire:399,rock:325,slug:22},{cactus:2114,boulder:1198,bush:1409,slug:35},
+ {deadtree:2314,ember:1973,rock:835,slug:38},{cactus:1056,bone:115,reed:2496,boulder:576,slug:38},{mushroom:2656,reed:7243,bush:1771,shroom:2414,slug:56},{titan:757,bulb:1942,fern:6150,slug:45},{mushroom:2906,shroom:5536,spire:969,slug:48}];
+const SEA5=[['kelp',3432,-38,-4,[['#5a8a3a'],['#7a9a3a'],['#4a7a5a']],.7,1.5],['coral',2487,-16,-2,[['#ff6a8a'],['#ffa04a'],['#9a6aff'],['#4ae0d0']],.6,1.6],['seaglow',791,-200,-55,[['#3affd8'],['#7aa8ff'],['#ff6af0']],.8,1.6,1]];
+const LANDMARK5={titan:1,bone:1};
+function nodeGrid5(){const W=WORLD;if(W5.ng&&W5.ngN===W.nodes.length)return W5.ng;const m=new Map();for(const nd of W.nodes){const k=Math.floor(nd.x/16)*4096+Math.floor(nd.z/16);let a=m.get(k);if(!a)m.set(k,a=[]);a.push(nd);}W5.ng=m;W5.ngN=W.nodes.length;return m;}
+function nodeNear5(x,z,r){const m=nodeGrid5();const i0=Math.floor((x-r)/16),i1=Math.floor((x+r)/16),j0=Math.floor((z-r)/16),j1=Math.floor((z+r)/16);for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const a=m.get(i*4096+j);if(a)for(const nd of a)if(Math.abs(nd.x-x)<r&&Math.abs(nd.z-z)<r)return true;}return false;}
+function chopSet5(){if(!W5.chop||W5.chopN!==S.chopped.length){W5.chop=new Set(S.chopped);W5.chopN=S.chopped.length;}return W5.chop;}
+// the list of work for one cell: one task per biome-and-plant, plus the sea life
+function cellTasks5(ci,cj,lvl){const W=WORLD,x0=-W.half+ci*FC5,z0=-W.half+cj*FC5;const pres=new Set();let wet=false;
+ for(let a=0;a<5;a++)for(let b=0;b<5;b++){const x=x0+(a+.5)/5*FC5,z=z0+(b+.5)/5*FC5;pres.add(biomeTop2(x,z)[0]);if(lvl>1&&ground(x,z)<-1)wet=true;}
+ const T=[];for(const bi of pres){const D=DENS5[bi];FLORA3[bi].forEach((e,ei)=>{if(lvl<2&&!LANDMARK5[e[0]])return;T.push({bi,ei,e,d:D[e[0]]||0});});}
+ if(wet)SEA5.forEach((e,ei)=>T.push({sea:1,ei,e,d:e[1]}));return T;}
+function* taskG(cell,t){const W=WORLD,ci=cell.ci,cj=cell.cj,x0=-W.half+ci*FC5,z0=-W.half+cj*FC5,A=FC5*FC5/1e6;const slot=t.sea?60+t.ei:t.bi*6+t.ei;
+ const rnd=mulberry(hash2(ci,cj,slot*7+3)*1e9|0),base=1e7+((ci*64+cj)*64+slot)*1024,chop=chopSet5();let k=0;const out=[];
+ const lakes=LAKES.filter(L=>L.x+L.r*1.3>x0&&L.x-L.r*1.3<x0+FC5&&L.z+L.r*1.3>z0&&L.z-L.r*1.3<z0+FC5);
+ if(t.sea){const [kind,,lo,hi,pals,s0,s1,deep]=t.e;const n=Math.round(t.d*A);for(let q=0;q<n&&k<1000;q++){if((q&15)===15&&late5())yield;const x=x0+rnd()*FC5,z=z0+rnd()*FC5,s=s0+rnd()*(s1-s0),r=rnd()*TAU,pal=pals[Math.floor(rnd()*pals.length)];const h=ground(x,z);if(h>hi||h<lo)continue;if(deep&&trenchD(x,z)>150)continue;if(groundNormal(x,z)[1]<.6)continue;
+   const id=base+k++;out.push({i:id,kind,x,z,y:h,s,r,pal,alive:!chop.has(id)});}}
+ else{const [kind,,pals,s0,s1]=t.e;const n=Math.round(t.d*A*1.25);const isT=FK[kind].t;
+  for(let q=0;q<n&&k<1000;q++){if((q&15)===15&&late5())yield;const x=x0+rnd()*FC5,z=z0+rnd()*FC5,s=s0+rnd()*(s1-s0),r=rnd()*TAU,pal=pals[Math.floor(rnd()*pals.length)];
+   const bt=biomeTop2(x,z);if(bt[0]!==t.bi||bt[2]<.55)continue;const dc=Math.hypot(x,z);if(dc<(isT==='bush'?18:kind==='slug'?90:34))continue;if(!dryLand(x,z))continue;
+   if(lakes.some(L=>Math.hypot(x-L.x,z-L.z)<L.r*1.25)||caveZone(x,z))continue;if(groundNormal(x,z)[1]<(kind==='crystal'||kind==='boulder'?.62:.8))continue;
+   if(kind!=='bush'&&kind!=='fern'&&kind!=='reed'&&kind!=='shroom'&&nodeNear5(x,z,8))continue;
+   if(kind==='titan'&&out.some(f=>Math.abs(f.x-x)<22&&Math.hypot(f.x-x,f.z-z)<22))continue;if(kind==='bone'&&out.some(f=>Math.hypot(f.x-x,f.z-z)<60))continue;
+   const id=base+k++;out.push({i:id,kind,x,z,y:ground(x,z),s,r,pal,alive:!chop.has(id)});}}
+ for(const f of out)cell.list.push(f);}
+function* cellG(c){c.busy=true;try{while(c.lvl<c.want){const want=c.want;
+  if(want>=2){const W=WORLD,x0=-W.half+c.ci*FC5,z0=-W.half+c.cj*FC5,TS=W5.TC*W.step;for(let a=0;a<2;a++)for(let b=0;b<2;b++){const ti=Math.floor((x0+a*TS+1+W.half)/TS),tj=Math.floor((z0+b*TS+1+W.half)/TS);if(ti<W5.NT&&tj<W5.NT)yield* genTileG(ti,tj);}}
+  c.done=c.done||new Set();const T=cellTasks5(c.ci,c.cj,want).filter(t=>!c.done.has((t.sea?'s':t.bi)+':'+t.ei));
+  for(const t of T){yield* taskG(c,t);c.done.add((t.sea?'s':t.bi)+':'+t.ei);if(late5())yield;}
+  c.lvl=want;W5.floraDirty=true;W5.stat.cells++;}}finally{c.busy=false;}}
+function cellOf5(ci,cj,lvl){const key=ci*64+cj;let c=W5.cells.get(key);if(!c){c={ci,cj,lvl:0,list:[],want:0};W5.cells.set(key,c);}c.want=Math.max(c.want,lvl);return c;}
+function rebuildFlora5(){const W=WORLD,out=W5.staticFlora.slice();for(const c of W5.cells.values())for(const f of c.list)out.push(f);W.flora=out;floraGrid();refreshFlora();if(typeof GRASS!=='undefined')GRASS.dirty=true;}
+{const _pf=placeFlora;placeFlora=function(){if(!W5.on)return _pf();const W=WORLD,out=[];
+ // glowing crystals and mushrooms inside every cave (always loaded)
+ for(const c of CAVE3.list){const r2=mulberry(c.id*97+5);const pts=c.pts.filter(p=>p.cov);let k=0;const id=()=>2e9+c.id*64+k++;for(let q=0;q<Math.min(16,pts.length);q++){const p=pts[Math.floor(r2()*pts.length)];const i=c.pts.indexOf(p),nb=c.pts[Math.min(c.pts.length-1,i+1)],pv=c.pts[Math.max(0,i-1)];const dx=nb.x-pv.x,dz=nb.z-pv.z,L=Math.hypot(dx,dz)||1;const side=r2()<.5?-1:1,off=(p.w/2-1.3)*side;
+   const x=p.x-dz/L*off,z=p.z+dx/L*off;const kind=c.biome===8||c.biome===6?(r2()<.5?'shroom':'crystal'):'crystal';out.push({i:id(),kind,x,z,y:p.f,s:.6+r2()*.8,r:r2()*TAU,pal:[['#c890ff'],['#7ad8ff'],['#ffd04a'],['#ff8ad8']][q%4],alive:true,cave:1});}
+  if(c.ch){for(let q=0;q<10;q++){const a=q/10*TAU+r2(),rr=c.ch.r-1.8;out.push({i:id(),kind:'crystal',x:c.ch.x+Math.cos(a)*rr,z:c.ch.z+Math.sin(a)*rr,y:c.ch.f,s:.8+r2()*1.2,r:r2()*TAU,pal:[['#c890ff'],['#7ad8ff'],['#ffd04a']][q%3],alive:true,cave:1});}}}
+ const chop=chopSet5();for(const f of out)if(chop.has(f.i))f.alive=false;W5.staticFlora=out;W.flora=out.slice();floraGrid();};}
+{const _fi=floraInstancers;floraInstancers=function(){if(!W5.on)return _fi();FLORA.inst={};const capH={reed:1600,fern:1600,shroom:1400,kelp:1400,coral:1200},capL={titan:3500,reed:5000,fern:5000,shroom:4500,kelp:4000,coral:3500,mushroom:3000};
+ for(const k of Object.keys(FLORA.kinds)){const I=instancer(FLORA.kinds[k],capH[k]||1000);FLORA.inst[k]=I;R.inst.push(I);}
+ FLORA.lo=floraLoMeshes();FLORA.instLo={};for(const k in FLORA.lo){const I=instancer(FLORA.lo[k],capL[k]||2500);I.noShadow=true;FLORA.instLo[k]=I;R.inst.push(I);}
+ for(const k in FLORA.inst)FLORA.inst[k].sway=k==='rock'||k==='boulder'||k==='ember'||k==='crystal'||k==='bone'||k==='slug'?0:k==='titan'?.25:k==='kelp'?2.4:k==='seaglow'?.6:1;refreshFlora();};}
+// chopped plants in a big world are remembered by id, not by list position
+{const _rw=restoreWorld;restoreWorld=function(){if(W5.on){W5.chop=null;for(const f of WORLD.flora)if(chopSet5().has(f.i))f.alive=false;}_rw();};}
+// ---------- the streamer: decides what's needed near the camera and works through it a few milliseconds per frame ----------
+function tileC5(ti,tj){const W=WORLD,TS=W5.TC*W.step;return [-W.half+(ti+.5)*TS,-W.half+(tj+.5)*TS];}
+function addJob5(key,d,make){if(W5.jobKeys.has(key))return;W5.jobKeys.add(key);W5.jobs.push({key,d,make});}
+function planJobs5(cx,cz){const W=WORLD,TS=W5.TC*W.step,D=drawDist(),NT=W5.NT;W5.jobs=[];W5.jobKeys=new Set();W5.gens=W5.gens||new Map();
+ const R0=D+80,i0=Math.max(0,Math.floor((cx-R0+W.half)/TS)),i1=Math.min(NT-1,Math.floor((cx+R0+W.half)/TS)),j0=Math.max(0,Math.floor((cz-R0+W.half)/TS)),j1=Math.min(NT-1,Math.floor((cz+R0+W.half)/TS));
+ for(let tj=j0;tj<=j1;tj++)for(let ti=i0;ti<=i1;ti++){const [x,z]=tileC5(ti,tj);const d=Math.hypot(x-cx,z-cz)-TS*.5;if(d>D)continue;const lv=d<TER3.lodD?0:d<TER3.lodD2?1:2;const key=tj*NT+ti;let T=W5.tiles.get(key);if(!T){T={ti,tj,m:[null,null,null]};W5.tiles.set(key,T);}
+  if(!T.m[lv])addJob5('m'+lv+':'+key,d*(lv?1:.5),function*(){if(lv===0)yield* genTileG(ti,tj);const m=yield* chunkG(ti,tj,[1,2,4][lv]);if(W5.tiles.get(key)!==T||T.m[lv]){freeMesh(m);return;}T.m[lv]=m;W5.dirty=true;});
+  if(d<150&&!W5.ready[key])addJob5('t:'+key,d*.4,()=>genTileG(ti,tj));}
+ // cave roofs
+ for(const c of CAVE3.list){if(c.shell!==undefined)continue;const d=Math.hypot(c.mx-cx,c.mz-cz)-120;if(d<D)addJob5('c:'+c.id,d,function*(){const m=yield* shellG(c);if(c.shell!==undefined){freeMesh(m);return;}c.shell=m;if(m)CAVE3.shells.push(m);W5.dirty=true;});}
+ // plants: everything within 300 m, landmark trees and bones out to the horizon
+ const FR=Math.min(D+250,900),NC=Math.ceil(W.half*2/FC5);const a0=Math.max(0,Math.floor((cx-FR+W.half)/FC5)),a1=Math.min(NC-1,Math.floor((cx+FR+W.half)/FC5)),b0=Math.max(0,Math.floor((cz-FR+W.half)/FC5)),b1=Math.min(NC-1,Math.floor((cz+FR+W.half)/FC5));
+ for(let cj=b0;cj<=b1;cj++)for(let ci=a0;ci<=a1;ci++){const x0=-W.half+ci*FC5,z0=-W.half+cj*FC5;const dx=Math.max(x0-cx,0,cx-x0-FC5),dz=Math.max(z0-cz,0,cz-z0-FC5),d=Math.hypot(dx,dz);if(d>FR)continue;const lvl=d<300?2:1;const c0=W5.cells.get(ci*64+cj);if(c0&&c0.lvl>=lvl)continue;const c=cellOf5(ci,cj,lvl);addJob5('f:'+ci+','+cj,d*(lvl===2?.7:1.3)+20,()=>cellG(c));}
+ for(const [k,g] of [...W5.gens])if(!W5.jobKeys.has(k)){try{g.return();}catch(e){}W5.gens.delete(k);}
+ W5.jobs.sort((a,b)=>a.d-b.d);}
+// unload what's far behind you
+function evict5(cx,cz){const W=WORLD,TS=W5.TC*W.step,D=drawDist();
+ for(const [key,T] of W5.tiles){const [x,z]=tileC5(T.ti,T.tj);const d=Math.hypot(x-cx,z-cz)-TS*.5;if(d>D+300){for(const m of T.m)freeMesh(m);W5.tiles.delete(key);W5.dirty=true;}else{if(d>TER3.lodD+160&&T.m[0]){freeMesh(T.m[0]);T.m[0]=null;W5.dirty=true;}if(d>TER3.lodD2+200&&T.m[1]){freeMesh(T.m[1]);T.m[1]=null;W5.dirty=true;}}}
+ for(const c of CAVE3.list)if(c.shell&&Math.hypot(c.mx-cx,c.mz-cz)>D+400){freeMesh(c.shell);CAVE3.shells.splice(CAVE3.shells.indexOf(c.shell),1);c.shell=undefined;W5.dirty=true;}
+ const FR=Math.min(D+250,900);let ch=false;for(const [key,c] of W5.cells){const x0=-W.half+c.ci*FC5,z0=-W.half+c.cj*FC5;const dx=Math.max(x0-cx,0,cx-x0-FC5),dz=Math.max(z0-cz,0,cz-z0-FC5),d=Math.hypot(dx,dz);
+  if(c.busy)continue;if(d>FR+250){W5.cells.delete(key);ch=true;}else if(c.lvl===2&&d>520){c.list=c.list.filter(f=>LANDMARK5[f.kind]);c.lvl=1;c.want=1;c.done=new Set([...c.done].filter(s=>{const [b,e]=s.split(':');return b!=='s'&&LANDMARK5[FLORA3[+b][+e][0]];}));ch=true;}}
+ if(ch)W5.floraDirty=true;}
+function runJobs5(ms){const t0=performance.now();W5.dl=t0+ms;let n=0;while(W5.jobs.length){const j=W5.jobs[0];let done=false;const tj=performance.now();
+ try{let g=W5.gens.get(j.key);if(!g){g=j.make();W5.gens.set(j.key,g);}done=g.next().done;while(!done&&!late5())done=g.next().done;}catch(e){console.error(e);done=true;}
+ const dj=performance.now()-tj;if(W5.prof&&dj>(W5.prof[j.key[0]]||0))W5.prof[j.key[0]]=dj;if(done){W5.jobs.shift();W5.jobKeys.delete(j.key);W5.gens.delete(j.key);}n++;if(performance.now()>W5.dl)break;}return n;}
+function pickTerrain5(cx,cz){const W=WORLD,TS=W5.TC*W.step,D=drawDist(),L=[];
+ for(const T of W5.tiles.values()){const [x,z]=tileC5(T.ti,T.tj);const d=Math.hypot(x-cx,z-cz)-TS*.5;if(d>D)continue;const lv=d<TER3.lodD?0:d<TER3.lodD2?1:2;const m=T.m[lv]||T.m[lv===0?1:lv===1?0:1]||T.m[lv===2?0:2];if(m)L.push(m);}
+ for(const s of CAVE3.shells)if(Math.hypot(s.center[0]-cx,s.center[2]-cz)-s.radius<D)L.push(s);R.terrain=L;R.casters=CAVE3.shells.filter(s=>Math.hypot(s.center[0]-cx,s.center[2]-cz)<260);}
+function stream5(force){const cx=R.cam[0],cz=R.cam[2];const jump=!W5.last||Math.hypot(W5.last[0]-cx,W5.last[1]-cz)>250;
+ if(force||jump||!W5.lastQ||Math.hypot(W5.lastQ[0]-cx,W5.lastQ[1]-cz)>12||W5.jobs.length===0&&R.time-(W5.qt||0)>1){W5.lastQ=[cx,cz];W5.qt=R.time;evict5(cx,cz);planJobs5(cx,cz);}
+ W5.last=[cx,cz];
+ // a big jump (new game, teleport) fills in everything near you before drawing; otherwise a few milliseconds a frame
+ if(jump||force){const t0=performance.now();while(W5.jobs.length&&performance.now()-t0<9000)runJobs5(50);}else runJobs5(GAME.mode==='title'?6:4);
+ if(W5.floraDirty){W5.floraDirty=false;rebuildFlora5();}
+ if(W5.dirty||!W5.lastP||Math.hypot(W5.lastP[0]-cx,W5.lastP[1]-cz)>6){W5.dirty=false;W5.lastP=[cx,cz];pickTerrain5(cx,cz);}}
+{const _st=selectTerrain;selectTerrain=function(force){if(!W5.on)return _st(force);stream5(force);};}
+// ---------- world set-up ----------
+{const _iw=initWorld;initWorld=function(){W5.on=wv5();if(!W5.on)return _iw();const W=WORLD;W.half=W5.NT/2*W5.TC*3.6;W.step=3.6;W.k=2.8;
+ for(let i=0;i<9;i++){const R=REG5[i];BIO3[R[0]].x=R[1];BIO3[R[0]].z=R[2];}
+ _iw();addNodes5();for(const b of BIOMES){if(b.n==='The Shallows'){b.x=-2300;b.z=1500;}if(b.n==='The Abyss'){b.x=-1300;b.z=2150;}}
+ const p=S.player||{};R.cam=[p.x??0,(p.y??20)+1.6,p.z??-11];W5.last=null;stream5(true);};}
+// more resources across the other continents and islands
+function addNodes5(){const W=WORLD,rnd=mulberry(W.seed*6047+11);const out=W.nodes;
+ const flat=(x,z)=>{if(Math.abs(x)>W.half-200||Math.abs(z)>W.half-200||!dryLand(x,z))return false;for(const L of LAKES)if(Math.abs(x-L.x)<L.r*1.4+8&&Math.hypot(x-L.x,z-L.z)<L.r*1.35+8)return false;if(caveZone(x,z,8))return false;return groundNormal(x,z)[1]>.9;};
+ const near=(x,z,r)=>{for(const q of out)if(Math.abs(q.x-x)<r&&Math.abs(q.z-z)<r&&Math.hypot(q.x-x,q.z-z)<r)return true;return false;};
+ const add=(type,purity,x,z,extra)=>{const nd=Object.assign({id:out.length,type,purity,x:Math.round(x),z:Math.round(z),y:0},extra||{});nd.y=ground(nd.x,nd.z);out.push(nd);return nd;};
+ const cluster=(type,purs,R)=>{for(let t=0;t<400;t++){const a=rnd()*TAU,r=Math.sqrt(rnd())*R[3]*.8,cx=R[1]+Math.cos(a)*r,cz=R[2]+Math.sin(a)*r;const bt=biomeTop2(cx,cz);if(bt[0]!==R[0]||bt[2]<.7||!flat(cx,cz)||near(cx,cz,70))continue;
+   const placed=[];for(const pu of purs){for(let k=0;k<60;k++){const a2=rnd()*TAU,r2=placed.length?11+rnd()*9:rnd()*4;const b=placed.length?placed[Math.floor(rnd()*placed.length)]:{x:cx,z:cz};const x=b.x+Math.cos(a2)*r2,z=b.z+Math.sin(a2)*r2;if(!flat(x,z)||Math.hypot(x-cx,z-cz)>26||placed.some(q=>Math.hypot(q.x-x,q.z-z)<11)||near(x,z,11))continue;placed.push({x,z,pu});break;}}
+   if(placed.length<Math.max(1,purs.length-1))continue;for(const q of placed)add(type,q.pu,q.x,q.z);return true;}return false;};
+ const extra={0:[['iron_ore',[2,1,1]],['copper_ore',[2,1]],['limestone',[2,1]],['coal',[1,1]]],1:[['well',0]],2:[['sulfur',[1,1]],['sam',[1,0]]],3:[['bauxite',[2,1]]],4:[['sulfur',[2,1]],['geyser',0]],5:[['bauxite',[1,1]],['well',1]],6:[['sam',[1,1]],['geyser',0]],7:[['limestone',[1,1]]],8:[['sam',[2,1]]]};
+ const spot=R=>{for(let t=0;t<300;t++){const a=rnd()*TAU,r=Math.sqrt(rnd())*R[3]*.8,x=R[1]+Math.cos(a)*r,z=R[2]+Math.sin(a)*r;if(biomeTop2(x,z)[0]===R[0]&&flat(x,z)&&!near(x,z,30))return [x,z];}return null;};
+ REG5.forEach((R,ri)=>{if(ri<9)return;const big=R[3]>=500?2:R[3]>=300?1:0;const list=(NODES3[R[0]]||[]).concat(extra[R[0]]||[]);const rounds=big===2?2:1;
+  for(let rd=0;rd<rounds;rd++)for(const [type,purs] of list){if(big===0&&rnd()<.5)continue;
+   if(type==='well'){const p=spot(R);if(p)add('well',1,p[0],p[1],{fluid:R[0]===1?'nitrogen':purs?'crude_oil':'water'});continue;}
+   if(type==='geyser'){const p=spot(R);if(p)add('geyser',rnd()<.4?2:1,p[0],p[1]);continue;}
+   cluster(type,purs,R);}});
+ for(const nd of out)if(!nd.obj){let m=W.nodeMesh[nd.type];if(!m&&typeof specialNodeMesh==='function')m=W.nodeMesh[nd.type]=specialNodeMesh(nd.type);if(!m)continue;nd.obj={mesh:m,model:T(nd.x,nd.y,nd.z,nd.id*1.7,0,0,PURITY[nd.purity]&&PURITY[nd.purity].k>1?1.2:PURITY[nd.purity]&&PURITY[nd.purity].k<1?.8:1)};R.objects.push(nd.obj);}}
+// ---------- creatures follow you around the big world: the ones far away quietly move somewhere near you ----------
+function nearSpot5(r0,r1,test){for(let t=0;t<12;t++){const a=Math.random()*TAU,r=r0+Math.random()*(r1-r0),x=PL.x+Math.cos(a)*r,z=PL.z+Math.sin(a)*r;if(Math.abs(x)>WORLD.half-60||Math.abs(z)>WORLD.half-60)continue;if(test(x,z))return [x,z];}return null;}
+const landOK5=(x,z)=>dryLand(x,z)&&!lakeAt(x,z)&&!caveZone(x,z,2)&&groundNormal(x,z)[1]>.75&&Math.hypot(x,z)>75;
+{const _f=BP.frame;BP.frame=function(){_f();if(!W5.on||GAME.mode!=='play')return;W5.ct=(W5.ct||0)+1;if(W5.ct%20)return;
+ for(const c of CRE.list){if(c.dead>0||Math.hypot(PL.x-c.x,PL.z-c.z)<700)continue;const p=nearSpot5(220,460,landOK5);if(p){Object.assign(c,{x:p[0],z:p[1],hx:p[0],hz:p[1],y:ground(p[0],p[1]),st:'idle',t:Math.random()*3});}break;}
+ for(const c of CRE2.list){if(c.dead>0||Math.hypot(PL.x-c.x,PL.z-c.z)<700)continue;let p=null;if(c.k==='stinger'){const cv=CAVE3.list.filter(q=>Math.hypot(q.mx-PL.x,q.mz-PL.z)<700);if(cv.length){const q=cv[Math.floor(Math.random()*cv.length)];const pt=q.pts[Math.floor(Math.random()*q.pts.length)];if(pt.cov)p=[pt.x,pt.z];}}else p=nearSpot5(220,460,landOK5);
+  if(p){Object.assign(c,{x:p[0],z:p[1],hx:p[0],hz:p[1],y:ground(p[0],p[1]),st:'idle',t:Math.random()*3});}break;}
+ for(const j of CRE.jelly){if(Math.hypot(PL.x-j.hx,PL.z-j.hz)<800)continue;const p=nearSpot5(150,600,()=>true);if(p){j.hx=j.x=p[0];j.hz=j.z=p[1];}break;}};}
+// ---------- the map: painted in the background, nearest parts first ----------
+{const _mi=UI.mapImg;UI.mapImg=function(){if(!W5.on)return _mi();if(!W5.map){const N=1024,cv=document.createElement('canvas');cv.width=cv.height=N;const x=cv.getContext('2d');x.fillStyle='#0d2a3a';x.fillRect(0,0,N,N);
+  const W=WORLD,mk=n=>{const B=64,order=[];for(let j=0;j<n/B;j++)for(let i=0;i<n/B;i++)order.push([i,j]);const sc=n/(W.half*2);const px=(PL.x+W.half)*sc/B,pz=(PL.z+W.half)*sc/B;order.sort((a,b)=>Math.hypot(a[0]+.5-px,a[1]+.5-pz)-Math.hypot(b[0]+.5-px,b[1]+.5-pz));return {N:n,B,order,bi:0};};
+  const tmp=document.createElement('canvas');tmp.width=tmp.height=64;W5.map={cv,x,N,ph:[mk(256),mk(1024)],pi:0,im:null,hs:null,tmp,tx:tmp.getContext('2d')};}return W5.map.cv;};}
+// a quick rough pass over the whole planet first, then the detailed one, nearest parts first
+function mapStep5(ms){const M=W5.map;if(!M)return;const t0=performance.now(),W=WORLD;
+ while(performance.now()-t0<ms){const P=M.ph[M.pi];if(!P)return;if(P.bi>=P.order.length){M.pi++;continue;}const B=P.B,ps=W.half*2/P.N,[bx,by]=P.order[P.bi];
+  if(!M.im){M.im=M.tx.createImageData(B,B);M.hs=new Float32Array((B+2)*(B+2));M.row=-1;M.hr=0;}
+  const hx=i=>-W.half+(bx*B+i+.5)*ps,hz=j=>-W.half+(by*B+j+.5)*ps;
+  if(M.row<0){for(;M.hr<B+2&&performance.now()-t0<ms;M.hr++)for(let i=0;i<B+2;i++)M.hs[M.hr*(B+2)+i]=rawHeight(hx(i-1),hz(M.hr-1));if(M.hr<B+2)return;M.row=0;}
+  for(;M.row<B&&performance.now()-t0<ms;M.row++){const j=M.row;for(let i=0;i<B;i++){const H=M.hs,s=B+2,k=(j+1)*s+i+1,h=H[k];const n=v3.norm([H[k-1]-H[k+1],2*ps,H[k-s]-H[k+s]]);const wx=hx(i),wz=hz(j);let col,sh;
+    if(h<-.05){col=mixc([.16,.5,.6],[.02,.1,.22],smooth(0,90,-h));sh=1;}else{let lk=null;for(const L of LAKES)if(Math.abs(wx-L.x)<L.r*1.2&&Math.hypot(wx-L.x,wz-L.z)<L.r*1.2&&h<lakeLevel(L)){lk=L;break;}if(lk){col=[.12,.42,.55];sh=1;}else{col=terrainColor(wx,wz,h,n[1]);sh=.75+n[0]*.5+(h-10)*.004;}}
+    const o=(j*B+i)*4,d=M.im.data;d[o]=Math.pow(col[0],1/2.2)*255*sh;d[o+1]=Math.pow(col[1],1/2.2)*255*sh;d[o+2]=Math.pow(col[2],1/2.2)*255*sh;d[o+3]=255;}}
+  if(M.row<B)return;const k=M.N/P.N;if(k===1)M.x.putImageData(M.im,bx*B,by*B);else{M.tx.putImageData(M.im,0,0);M.x.imageSmoothingEnabled=true;M.x.drawImage(M.tmp,0,0,B,B,bx*B*k,by*B*k,B*k,B*k);}M.im=null;P.bi++;M.fresh=true;}}
+{const _f=BP.frame;BP.frame=function(){_f();if(!W5.on)return;UI.mapImg();const open=UI.panel&&UI.tab==='map';mapStep5(open?12:GAME.mode==='title'?1:2);if(open&&W5.map.fresh&&R.time-(W5.mt||0)>.5){W5.map.fresh=false;W5.mt=R.time;UI.drawMap();}};}
+// names for every region on the map, not just the home continent
+{const _dm=UI.drawMap;UI.drawMap=function(){_dm();if(!W5.on)return;const c=$('#mapc');if(!c)return;const x=c.getContext('2d'),N=c.width,M=UI.map,s=N/(WORLD.half*2)*M.z;if(M.z<1.5)return;const P=(wx,wz)=>[(wx-M.cx)*s+N/2,(wz-M.cz)*s+N/2];
+ x.font='800 11px system-ui';x.textAlign='center';for(let i=9;i<REG5.length;i++){const R=REG5[i];if(R[3]<300&&M.z<4)continue;const q=P(R[1],R[2]);if(q[0]<0||q[0]>N||q[1]<0||q[1]>N)continue;x.fillStyle='rgba(255,255,255,.45)';x.fillText(BIO3[R[0]].n.toUpperCase(),q[0],q[1]);}};}
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.5.1',VERSION_MARK='FFVER@0.5.1@';
+const VERSION='0.6.0',VERSION_MARK='FFVER@0.6.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -5104,12 +5350,12 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  if(S.settings.quality==='auto'){perf.t+=dt;perf.n++;if(perf.t>4){const fps=perf.n/perf.t;perf.t=perf.n=0;if(fps<28&&R.scale>.6){R.scale=Math.max(.6,R.scale-.12);resize();}else if(fps>55&&R.scale<1){R.scale=Math.min(1,R.scale+.08);resize();}}}
  requestAnimationFrame(frame);}
 (async function boot(){try{
- nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
- initWorld();setLoad(.6,'Unpacking the HUB…');await sleep(20);initModels();FX.init();partMeshes();PFX.init();R.extra=()=>{const dt=Math.min(.05,R.time-(GEAR._t||R.time));GEAR._t=R.time;return animObjects2().concat(VEH.driving?[]:toolObjects(),GEAR.crateObjs(),GEAR.nobObjs(dt),TR.objects());};
+ const _bt0=performance.now();nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
+ initWorld();window.__wt=performance.now()-_bt0;setLoad(.6,'Unpacking the HUB…');await sleep(20);initModels();FX.init();partMeshes();PFX.init();R.extra=()=>{const dt=Math.min(.05,R.time-(GEAR._t||R.time));GEAR._t=R.time;return animObjects2().concat(VEH.driving?[]:toolObjects(),GEAR.crateObjs(),GEAR.nobObjs(dt),TR.objects());};
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,mapStep5,W5,REG5,stream5,biomeTop2:(x,z)=>biomeTop2(x,z),dryLand:(x,z)=>dryLand(x,z),trenchD:(x,z)=>trenchD(x,z),groundNormal:(x,z)=>groundNormal(x,z),rawHeight:(x,z)=>rawHeight(x,z),BOOTT:0,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
