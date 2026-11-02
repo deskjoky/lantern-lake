@@ -5350,6 +5350,8 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  if(S.settings.quality==='auto'){perf.t+=dt;perf.n++;if(perf.t>4){const fps=perf.n/perf.t;perf.t=perf.n=0;if(fps<28&&R.scale>.6){R.scale=Math.max(.6,R.scale-.12);resize();}else if(fps>55&&R.scale<1){R.scale=Math.min(1,R.scale+.08);resize();}}}
  requestAnimationFrame(frame);}
 (async function boot(){try{
+ // the showcase factory is added once to the last save slot if that slot is empty
+ try{const LK=SLOT_KEYS[SLOT_KEYS.length-1];if(!localStorage.getItem('nf_showcase_added')&&!localStorage.getItem(LK)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();JSON.parse(t);localStorage.setItem(LK,t);localStorage.setItem('nf_showcase_added','1');}}}catch(e){}
  // ?showcase replaces the current slot with the prebuilt showcase factory (asks first)
  try{if(/[?&]showcase\b/.test(location.search)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();if(confirm('Replace the save in slot '+(SLOT+1)+' with the Novaforge Showcase factory? Your current save in this slot will be deleted.')){localStorage.setItem(SAVE_KEY,t);}}history.replaceState(null,'',location.pathname);}}catch(e){}
  const _bt0=performance.now();nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
