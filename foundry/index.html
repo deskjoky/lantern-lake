@@ -1242,13 +1242,13 @@ function removeBelt(bl){const A=FAC.b.get(bl.from[0]),B=FAC.b.get(bl.to[0]);if(A
 // ---- what a building will take in ----
 function accepts(b,pi,item){const D=BUILDINGS[b.k];
  if(D.machine){const r=RECIPE[b.recipe];if(!r||!r.in[item])return false;return (b.inb[item]||0)<inCap(r.in[item]);}
- if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock'){let t=0;for(const v of Object.values(b.store))t+=v;return t<D.cap;}
+ if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock'||b.k==='hab_moonpool'){let t=0;for(const v of Object.values(b.store))t+=v;return t<D.cap;}
  if(D.pass==='fluid')return false;if(b.k==='splitter'||b.k==='merger'||D.pass||D.split)return b.buf.length<2;
  if(D.fuels){if(!D.fuels.includes(item))return false;let t=0;for(const v of Object.values(b.fuel))t+=v;return t<100;}
  if(b.k==='hub')return hubWants(item)>0;
  if(b.k==='skyhook')return skyWants(item)>0;
  return false;}
-function give(b,pi,item){const D=BUILDINGS[b.k];if(D.machine)b.inb[item]=(b.inb[item]||0)+1;else if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock')b.store[item]=(b.store[item]||0)+1;else if(D.pass&&D.pass!=='fluid'&&!b.buf.length&&pushOut(b,1,item)){}else if(b.k==='splitter'||b.k==='merger'||D.pass||D.split)b.buf.push(item);else if(D.fuels)b.fuel[item]=(b.fuel[item]||0)+1;else if(b.k==='hub')hubDeliver(item,1);else if(b.k==='skyhook')skyDeliver(item,1);
+function give(b,pi,item){const D=BUILDINGS[b.k];if(D.machine)b.inb[item]=(b.inb[item]||0)+1;else if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock'||b.k==='hab_moonpool')b.store[item]=(b.store[item]||0)+1;else if(D.pass&&D.pass!=='fluid'&&!b.buf.length&&pushOut(b,1,item)){}else if(b.k==='splitter'||b.k==='merger'||D.pass||D.split)b.buf.push(item);else if(D.fuels)b.fuel[item]=(b.fuel[item]||0)+1;else if(b.k==='hub')hubDeliver(item,1);else if(b.k==='skyhook')skyDeliver(item,1);
  FAC.rateIn[item]=(FAC.rateIn[item]||0)+0;}
 // ---- belts ----
 const beltCanTake=bl=>!bl.items.length||bl.items[bl.items.length-1].d>=1;
@@ -1268,7 +1268,7 @@ function updateBuilding(b,dt){const D=BUILDINGS[b.k];b.run=0;
  else if(BUILDINGS[b.k].makes)updateExtractor(b,dt);
  else if(b.k==='miner'||b.k==='miner2'){const nd=WORLD.nodes[b.node];if(nd&&b.pf>0){const rate=D.rate*PURITY[nd.purity].k;const tot=Object.values(b.out).reduce((a,c)=>a+c,0);if(tot<50){b.prog+=dt*b.pf*(b.clock||1);b.run=1;const iv=60/rate;while(b.prog>=iv){b.prog-=iv;b.out[nd.type]=(b.out[nd.type]||0)+1;stat('prod',nd.type,1);}}}
   for(const pi of outPorts(b))for(const [k,n] of Object.entries(b.out))if(n>0&&pushOut(b,pi,k)){b.out[k]--;break;}}
- else if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock'){const keys=Object.keys(b.store).filter(k=>b.store[k]>0);if(keys.length){const k=keys[b.rr++%keys.length];if(outPorts(b).some(pi=>pushOut(b,pi,k))){b.store[k]--;if(!b.store[k])delete b.store[k];}}}
+ else if(b.k==='storage'||b.k==='storage2'||b.k==='rigdock'||b.k==='hab_moonpool'){const keys=Object.keys(b.store).filter(k=>b.store[k]>0);if(keys.length){const k=keys[b.rr++%keys.length];if(outPorts(b).some(pi=>pushOut(b,pi,k))){b.store[k]--;if(!b.store[k])delete b.store[k];}}}
  else if(D.split)smartSplit(b);
  else if(b.k==='splitter'){if(b.buf.length){const outs=outPorts(b).filter(i=>b.conn[i]!=null);for(let n=0;n<outs.length&&b.buf.length;n++){const pi=outs[b.rr++%outs.length];if(pushOut(b,pi,b.buf[0])){b.buf.shift();break;}}}}
  else if(b.k==='merger'){if(b.buf.length&&pushOut(b,3,b.buf[0]))b.buf.shift();}
@@ -1509,7 +1509,7 @@ function placeTarget(){const k=BUILD.k,D=BUILDINGS[k],{o,d}=aimRay();const hb=ra
  if(hb&&(!hg||hb.t<hg.t)&&hb.face==='top'&&FBASE_K.has(hb.b.k)){base=hb.b;p=hb.p;}else if(hg)p=hg.p;else{const t=12;p=[o[0]+d[0]*t,o[1]+d[1]*t,o[2]+d[2]*t];}
  const [w,dd]=fp(k,BUILD.rot);let x,z,y,node=null,rot=BUILD.rot;
  if(k==='waterx'){x=Math.round(p[0]*2)/2;z=Math.round(p[2]*2)/2;const L=lakeAt(x,z);y=L?lakeLevel(L)-.4:ground(x,z);BUILD.lake=L;BUILD.slope=0;}
- else if(k==='miner'||k==='miner2'||k==='oilx'||k==='geo'||k==='wellx'){let best=null;for(const nd of WORLD.nodes){if(!nodeOK(k,nd))continue;const dist=Math.hypot(nd.x-p[0],nd.z-p[2]);if(dist<5&&(!best||dist<best.d))best={nd,d:dist};}
+ else if(k==='miner'||k==='miner2'||k==='oilx'||k==='geo'||k==='wellx'||k==='ventgen'){let best=null;for(const nd of WORLD.nodes){if(!nodeOK(k,nd))continue;const dist=Math.hypot(nd.x-p[0],nd.z-p[2]);if(dist<5&&(!best||dist<best.d))best={nd,d:dist};}
   if(best){node=best.nd;x=node.x;z=node.z;y=node.y+.2;}else{x=p[0];z=p[2];y=ground(x,z);}}
  else if(k==='wall'){// walls hug the nearest edge of the 4 m grid (or of the foundation you aim at)
   const ref=base||[...FAC.b.values()].find(b=>FBASE_K.has(b.k)&&b.k!=='catwalk'&&Math.hypot(b.x-p[0],b.z-p[2])<4);const bx=ref?ref.x:0,bz=ref?ref.z:0;const cx=bx+Math.round((p[0]-bx)/4)*4,cz=bz+Math.round((p[2]-bz)/4)*4;const fx=p[0]-cx,fz=p[2]-cz;
@@ -1923,6 +1923,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.8.0',t:'Stage 3: The deep',items:['New Underwater build menu: habitat corridors, rooms, glass domes, airlocks and moon pools. Join pieces so they touch; a complex with an airlock and power fills with air, so you can walk around inside with no suit.','Submarines: a rig becomes a sub underwater when it has a sealed cockpit, a propeller and a ballast tank. ▲ and ▼ rise and dive. Frames hold to 40 m and armour to 110 m; new pressure hull blocks and the deep cockpit go to 300 m. Moon pools dock subs to unload, charge and refill air.','Conveyors switch to a sealed tube on the stretch that runs under the water, with a sealed joint where they cross the waterline.','Ocean materials: kelp gives kelp fibre for sealant; abyssite lies on the deep sea floor and smelts into abyssal ingots for pressure hull plates; quartz and sealant make habitat glass.','Pressure: your suit is rated to 60 m. Dive deeper and it starts to hurt. Research stronger suits in the Analysis Lab (120 m, then 240 m).','Sea life: schools of fish, reef stalkers that guard the kelp and coral, and something enormous that patrols the trench. Don\'t get close.','Tidal generators (15 to 75 MW with the tide) and vent generators (180 MW, over thermal vents deep in the sea).','The vault in the trench can finally be opened: find every echo, research the Vael key, and dive down to it. Chapter two ends there.']},
  {v:'0.7.0',t:'Stage 2: Build your own rigs',items:['New: the Vehicle Bay. Build one, open it, and design a rig block by block. Tap a face to add a block, switch to Remove to take one off, and Undo any mistake. Parts come from your inventory and come back when you remove them.','Rig parts: frames, armour, a seat or sealed cockpit, wheels, big wheels, tracks, motors, batteries, solar panels, air tanks, cargo boxes, drills, headlights and dock connectors. Later: pistons, rotors and hinges for moving arms, and thrusters for flight.','Rigs really drive: weight, motor power, grip and ground clearance all matter. Too heavy for the hill? Add a motor or lose weight. Stuck on its belly? Big wheels lift it. Wheels slipping? Tracks grip. The designer shows top speed, climb, clearance and width before you build.','Rigs keep you alive out there: an air tank makes the rig a breathing bubble, and its battery runs the motors. Load Battery items and Oxygen Canisters from the rig\'s menu, and craft Repair Kits for crash damage.','New: the Rig Dock. Park a rig with a dock connector on it to unload its cargo onto a belt, charge its battery and refill its air.','Drills fill your cargo when you park over an ore node.','Vael relics can be researched in the Analysis Lab into hover pads (they float, even over water) and the Vael core, an engine that never runs dry.','Undo for building: a ↶ button appears while building, laying belts or dismantling. It takes back your last action and refunds or re-charges the parts.']},
  {v:'0.6.6',t:'The real jetpack fix',items:['You can now look around while holding jump (or the action button): just slide your thumb.','Found it, thanks to a crash report: holding jump in mid-air made the zipline check hit an error every frame, which froze the game until you let go. Fixed, and ziplines along power lines work again.']},
  {v:'0.6.4',t:'Crash reports',items:['If the game hits an error, freezes, or closes by itself, it now saves a crash report with a short error code (like NF-AB12CD) and sends it automatically so the problem can be fixed.','See your reports in Settings → Crash reports, with buttons to copy them, send them now, or clear them.']},
@@ -3099,7 +3100,7 @@ UI.A.vAutoGo=()=>{const v=VEH.driving;if(!v||v.route.length<3){UI.toast('Record 
 {const _f=UI.frame;UI.frame=function(dt){_f(dt);const act=$('#act');
  if(VEH.driving&&!VEH.driving.blocks){act.classList.add('hide');const key='drive'+VEH.rec;if(UI._mk!==key&&!UI._pressing){UI._mk=key;$('#modeBtns').innerHTML=`<button class="rb tier ${VEH.rec?'rec':''}" data-a="vRec">${VEH.rec?'■ Stop':'● Rec'}</button><button class="rb tier" data-a="vAutoGo">Auto</button><button class="rb tier" data-a="vExit">Exit</button>`;}const lk=$('#look');const v=VEH.driving;const t=`${BUILDINGS[v.k].n} · ${Math.round(Math.abs(v.spd)*3.6)} km/h · fuel ${Object.values(v.fuel).reduce((a,c)=>a+c,0)}${VEH.rec?' · recording '+v.route.length*3+' m':''}`;if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
  else if(BUILD.mode==='rail'){const lk=$('#look');const t=BUILD.railA?'Tap where the track goes ('+costText(RAIL.cost)+' per '+RAIL.per+' m)':'Tap a station end or track end';act.classList.remove('hide');act.firstElementChild.textContent=BUILD.railA?'Lay':'Start';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
- else if(HAND.what&&HAND.what.kind==='veh'){act.firstElementChild.textContent='Drive';const lk=$('#look');const t=BUILDINGS[HAND.what.v.k].n+(HAND.what.v.auto?' · autopilot':'')+' · tap the vehicle for its menu';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
+ else if(HAND.what&&HAND.what.kind==='veh'&&!VEH.driving){act.firstElementChild.textContent='Drive';const lk=$('#look');const t=BUILDINGS[HAND.what.v.k].n+(HAND.what.v.auto?' · autopilot':'')+' · tap the vehicle for its menu';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
 
 // ---- 21-late.js ----
 // ===== Progression and late game: Analysis Lab research, Recycler and Shop, packager, blender, particle accelerator, nuclear, geothermal, resource wells =====
@@ -3182,7 +3183,7 @@ function specialNodeMesh(type){const g=new GB(),rnd=mulberry(type.length*91+3);
  if(type==='well'){g.add(PRIM.cyl(2.6,3,.3,16),T(0,-.2,0),'#3a3a44');g.add(PRIM.cyl(2,2,.04,16),T(0,.08,0),COL('#1a2a4a',.3));for(let k=0;k<8;k++){const a=k/8*TAU;g.add(PRIM.ico(.4,1,{noise:.3,seed:k+9}),T(Math.cos(a)*2.4,.1,Math.sin(a)*2.4),'#5a5a66');}for(let k=0;k<4;k++)g.add(PRIM.sphere(.15,6,4),T((rnd()-.5)*2,.12,(rnd()-.5)*2),COL('#9ad8ff',.6));return g.build();}
  g.add(PRIM.cyl(2.5,2.9,.45,9),T(0,-.2,0),'#3a4a2a');for(let k=0;k<7;k++){const a=k/7*TAU,r=k?1+rnd()*.8:0,h=k?.8+rnd()*1.2:2;g.add(PRIM.lathe([[.001,0],[.25,.1],[.18,h*.85],[.001,h]],6,{flat:true}),T(Math.cos(a)*r,.1,Math.sin(a)*r,rnd()*3,(rnd()-.5)*.5,(rnd()-.5)*.5),COL('#8ad03a',1.5));}return g.build();}
 // hand mining never works on geysers or wells; miners only on solid ore
-const nodeOK=(k,nd)=>k==='oilx'?nd.type==='crude_oil':k==='geo'?nd.type==='geyser':k==='wellx'?nd.type==='well':!(nd.type==='crude_oil'||NODE_TYPES[nd.type].special);
+const nodeOK=(k,nd)=>k==='ventgen'?nd.type==='vent':k==='oilx'?nd.type==='crude_oil':k==='geo'?nd.type==='geyser':k==='wellx'?nd.type==='well':!(nd.type==='crude_oil'||NODE_TYPES[nd.type].special);
 {const _rn=rayNodes;rayNodes=function(o,d,maxT){const h=_rn(o,d,maxT);if(h&&(NODE_TYPES[h.nd.type].special))return null;return h;};}
 // generators: geothermal needs no fuel; nuclear leaves waste behind
 {const _g=genReady;genReady=b=>BUILDINGS[b.k].geo?(b.node!=null&&!b.off):_g(b);}
@@ -4947,7 +4948,7 @@ const SEA={x:0,z:0,r:1e9,level:0,sea:1};
 {const _iw=initWater;initWater=function(){_iw();if(!wv4())return;const g=new GB();const S2=WORLD.half*2+600;g.add(PRIM.plane(S2,S2,24,24),T(0,0,0),'#ffffff');WORLD.water.push({mesh:g.build(),L:SEA,lv:0});};}
 // ---------- swimming ----------
 const SWIM={};
-{const _up=updatePlayer;updatePlayer=function(dt){if(!wv4()||VEH.driving||PL.tube||(typeof TRN!=='undefined'&&TRN.ride)){PL.swim=false;return _up(dt);}
+{const _up=updatePlayer;updatePlayer=function(dt){if(!wv4()||VEH.driving||PL.tube||(typeof HAB!=='undefined'&&HAB.in)||(typeof TRN!=='undefined'&&TRN.ride)){PL.swim=false;return _up(dt);}
  const y0=PL.y,wasSwim=PL.swim;_up(dt);const g=ground(PL.x,PL.z);const deep=g<-1.6;const sw=deep&&(PL.y<-.9||wasSwim&&PL.y<-.4);
  if(!sw){if(wasSwim&&!deep){PL.swim=false;}else PL.swim=false;return;}
  PL.swim=true;PL.mv[0]*=.93;PL.mv[1]*=.93;PL.slide=0;PL.crouch=false;
@@ -5699,9 +5700,198 @@ addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.code==='KeyZ'&&GAME.
  const on=!!(BUILD.mode&&UNDO.stack.length&&!UI.panel&&GAME.mode==='play');if(el._on!==on){el._on=on;el.style.display=on?'grid':'none';}};}
 (function(){const st=document.createElement('style');st.textContent=`#undobtn{position:fixed;right:calc(14px + var(--safe-r));top:calc(66px + var(--safe-t));z-index:7;display:none;place-items:center;width:46px;height:46px;border-radius:50%;font:900 22px system-ui;color:#eef1f4;pointer-events:auto;border:1px solid rgba(255,255,255,.12);background:rgba(18,21,26,.78)}`;document.head.appendChild(st);})();
 
+// ---- 48-ocean.js ----
+// ===== Stage 3: the deep. Habitats you snap together, sealed conveyors below the waterline, ocean-only materials,
+// pressure, sea creatures (and something in the trench), tidal and vent power, submarines, and the vault. =====
+Object.assign(ITEMS,{abyssite:{n:'Abyssite',c:'#4a6ad0',s:'ore'},abyssal_ingot:{n:'Abyssal ingot',c:'#5a7ac8',s:'small'},pressure_hull:{n:'Pressure hull plate',c:'#2a3a60',s:'block'},
+ kelp_fiber:{n:'Kelp fibre',c:'#6a9a3a',s:'small'},sealant:{n:'Sealant',c:'#c8e070',s:'small'},hab_glass:{n:'Habitat glass',c:'#9ad8ff',s:'block'},vael_key:{n:'Vael key',c:'#5af0e0',s:'small'}});
+Object.assign(ITEM_MODEL,{
+ abyssite(g){for(let k=0;k<4;k++)g.add(PRIM.ico(.1+k*.02,1,{noise:.4,seed:k+3}),T((k%2-.5)*.14,.08,(k>>1)*.12-.06),COL('#4a6ad0',.6));},
+ abyssal_ingot(g){g.add(RB(.34,.12,.18,.03),null,'#5a7ac8');g.add(PRIM.box(.3,.02,.14),T(0,.12,0),COL('#8ab0ff',.6));},
+ pressure_hull(g){g.add(RB(.36,.12,.36,.04),null,'#2a3a60');for(const s of [-1,1])g.add(PRIM.box(.38,.04,.04),T(0,.13,s*.12),'#8a92a0');},
+ kelp_fiber(g){for(let k=0;k<5;k++)g.add(PRIM.box(.03,.3,.06),T((k-2)*.05,.15,0,0,0,(k-2)*.15),'#6a9a3a');},
+ sealant(g){g.add(PRIM.cyl(.1,.1,.24,12),null,'#c8e070');g.add(PRIM.cyl(.05,.03,.08,8),T(0,.24,0),'#3a3f48');},
+ hab_glass(g){g.add(RB(.36,.06,.36,.02),T(0,0,0),COL('#9ad8ff',-3));g.add(PRIM.box(.38,.02,.38),T(0,0,0),'#8a92a0');},
+ vael_key(g){g.add(PRIM.cyl(.03,.03,.32,8),T(0,0,0),'#2a2438');g.add(PRIM.sphere(.08,12,8),T(0,.36,0),COL('#5af0e0',2.4));for(let k=0;k<3;k++)g.add(PRIM.box(.08,.02,.02),T(.05,.06+k*.06,0),COL('#5af0e0',1.2));}});
+NODE_TYPES.abyssite={n:'Abyssite',c:'#4a6ad0'};NODE_TYPES.vent={n:'Thermal vent',c:'#ff6a2a',special:1};
+RECIPES.push({id:'abyssal_ingot',m:'smelter',in:{abyssite:2},out:{abyssal_ingot:1},t:4,tier:2},{id:'pressure_hull',m:'assembler',in:{abyssal_ingot:4,steel_beam:1},out:{pressure_hull:1},t:10,tier:4},
+ {id:'sealant',m:'constructor',in:{kelp_fiber:4},out:{sealant:2},t:4,tier:1},{id:'sealant_b',m:'bench',bench:1,in:{kelp_fiber:4},out:{sealant:1},t:3,tier:1},
+ {id:'hab_glass',m:'constructor',in:{quartz:4,sealant:1},out:{hab_glass:1},t:6,tier:2},{id:'hab_glass_b',m:'bench',bench:1,in:{quartz:5,sealant:1},out:{hab_glass:1},t:4,tier:2});
+for(const r of RECIPES.slice(-6))RECIPE[r.id]=r;
+if(FK.kelp)FK.kelp.y={kelp_fiber:4,leaves:2};
+MAMR.push({id:'suit_d1',tree:'Pressure Suit',n:'Reinforced suit',d:'Dive safely to 120 m',cost:{abyssal_ingot:20,sealant:20},t:90,fx:()=>{}},
+ {id:'suit_d2',tree:'Pressure Suit',n:'Abyssal suit',d:'Dive safely to 240 m',cost:{pressure_hull:10,hab_glass:6},t:180,req:'suit_d1',fx:()=>{}},
+ {id:'vael_keyr',tree:'Vael Relics',n:'The vault key',d:'Shape relics into the key to the vault in the trench',cost:{relic:6,pressure_hull:4},t:240,req:'vael_hover',fx:()=>{addInv('vael_key',1);UI.toast('You have the Vael key. The vault is in the trench.','good');}});
+const suitDepth=()=>S.mam&&S.mam.done.suit_d2?240:S.mam&&S.mam.done.suit_d1?120:60;
+// ---------- habitat modules, tidal and vent power ----------
+const C_GLASS=COL('#a8dcf0',-4);
+const doorWalls=(w,d,h)=>{const L=[],hw=w/2,hd=d/2,g=1;// a 2 m doorway in the middle of every side
+ for(const s of [-1,1]){const segX=(hw-g)/2,cx=g+segX;L.push([-cx,s*(hd-.1),segX,.1,h],[cx,s*(hd-.1),segX,.1,h]);const segZ=(hd-g)/2,cz=g+segZ;L.push([s*(hw-.1),-cz,.1,segZ,h],[s*(hw-.1),cz,.1,segZ,h]);}return L;};
+Object.assign(BUILDINGS,{
+ hab_corridor:{n:'Habitat Corridor',w:3,d:6,h:3.2,cost:{iron_plate:10,sealant:4,hab_glass:1},power:1,cat:'habitat',desc:'A sealed walkway. Join habitat pieces end to end; any complex with an airlock and power is full of air.',tier:2,hab:1,walls:[[-1.4,0,.1,3,3.2],[1.4,0,.1,3,3.2]],tops:[[-1.5,-3,1.5,3,.2]]},
+ hab_room:{n:'Habitat Room',w:6,d:6,h:3.6,cost:{reinforced_plate:6,sealant:8,hab_glass:2},power:2,cat:'habitat',desc:'A sealed room with a doorway on every side. Build machines inside.',tier:2,hab:1,walls:doorWalls(6,6,3.6),tops:[[-3,-3,3,3,.2]]},
+ hab_dome:{n:'Habitat Dome',w:8,d:8,h:5,cost:{reinforced_plate:8,sealant:12,hab_glass:10},power:3,cat:'habitat',desc:'A glass dome: the best view of the deep.',tier:3,hab:1,walls:doorWalls(8,8,4),tops:[[-4,-4,4,4,.2]]},
+ hab_airlock:{n:'Airlock',w:3,d:3,h:3.4,cost:{reinforced_plate:4,sealant:6,rotor:1},power:1,cat:'habitat',desc:'Every habitat needs one: it keeps the water out while you come and go.',tier:2,hab:1,airlock:1,walls:[[-1.4,0,.1,1.5,3.4],[1.4,0,.1,1.5,3.4]],tops:[[-1.5,-1.5,1.5,1.5,.2]]},
+ hab_moonpool:{n:'Moon Pool',w:8,d:8,h:4,cost:{reinforced_plate:12,sealant:16,pressure_hull:4},power:4,cat:'habitat',desc:'A dock for submarines with an open pool in the floor: subs below it unload, charge and refill their air.',tier:4,hab:1,cap:2000,ports:[[0,4,0,'out']],walls:doorWalls(8,8,4),tops:[[-4,-4,4,-2,.2],[-4,2,4,4,.2],[-4,-2,-2,2,.2],[2,-2,4,2,.2]]},
+ tidalgen:{n:'Tidal Generator',w:4,d:4,h:6,cost:{rotor:6,reinforced_plate:8,sealant:6},gen:45,fuels:[],cat:'power',desc:'Place it in the sea, 3 to 25 m deep. Its output rises and falls with the tide: 15 to 75 MW.',tier:3},
+ ventgen:{n:'Vent Generator',w:6,d:6,h:8,cost:{pressure_hull:6,motor:4,cable:40},gen:180,fuels:[],cat:'power',desc:'Built over a thermal vent deep in the sea: 180 MW, day and night.',tier:5}});
+const HABK=['hab_corridor','hab_room','hab_dome','hab_airlock','hab_moonpool'];
+{const i=BCATS.findIndex(c=>c[0]==='structure');BCATS.splice(i+1,0,['habitat','Underwater','hab_room']);}
+Object.assign(BUILD_MODEL,{
+ hab_corridor(g){g.add(RB(3,.2,6,.05),null,C_FRAME);for(const s of [-1,1]){g.add(PRIM.box(.12,3,6),T(s*1.44,.2,0),C_GLASS);g.add(PRIM.box(.2,.3,6),T(s*1.4,.2,0),C_PANEL);}g.add(PRIM.box(3,.15,6),T(0,3.05,0),C_PANEL);for(let k=-1;k<=1;k++){g.add(PRIM.box(3.1,3.2,.25),T(0,0,k*2.9),C_FRAME);}for(const z of [-2,0,2])g.add(PRIM.box(.5,.05,.3),T(0,3,z),COL('#e8f4ff',2.4));},
+ hab_room(g){g.add(RB(6,.2,6,.05),null,C_FRAME);for(const w of doorWalls(6,6,3.6)){g.add(PRIM.box(w[2]*2,1.2,w[3]*2),T(w[0],.2,w[1]),C_PANEL);g.add(PRIM.box(w[2]*2,1.6,w[3]*2),T(w[0],1.4,w[1]),C_GLASS);g.add(PRIM.box(w[2]*2+.05,.6,w[3]*2+.05),T(w[0],3,w[1]),C_FRAME);}g.add(RB(6.1,.25,6.1,.1),T(0,3.5,0),C_PANEL);for(const s of [-1,1])for(const t of [-1,1])g.add(PRIM.box(.3,3.6,.3),T(s*2.9,0,t*2.9),C_FRAME);g.add(PRIM.cyl(.8,.8,.05,16),T(0,3.48,0),COL('#e8f4ff',2.2));},
+ hab_dome(g){g.add(RB(8,.25,8,.05),null,C_FRAME);g.add(PRIM.sphere(4,22,12),T(0,.2,0,0,0,0,1,1.15,1),C_GLASS);for(let k=0;k<8;k++){const a=k/8*TAU;for(let i=0;i<6;i++){const t=i/6*Math.PI/2,t2=(i+1)/6*Math.PI/2;const r1=Math.cos(t)*4,r2=Math.cos(t2)*4,y1=Math.sin(t)*4.6,y2=Math.sin(t2)*4.6;const mx=(r1+r2)/2,my=(y1+y2)/2,L=Math.hypot(r1-r2,y1-y2);g.add(PRIM.box(.14,L,.14),T(Math.cos(a)*mx,.2+my-L/2,Math.sin(a)*mx,-a+Math.PI/2,0,Math.atan2(r2-r1,y2-y1)),C_FRAME);}}
+  for(const w of doorWalls(8,8,1))g.add(PRIM.box(w[2]*2,.8,w[3]*2),T(w[0],.2,w[1]),C_PANEL);g.add(PRIM.cyl(.5,.5,.1,14),T(0,.25,0),COL('#5af0e0',1.6));},
+ hab_airlock(g){g.add(RB(3,.2,3,.05),null,C_FRAME);for(const s of [-1,1]){g.add(PRIM.box(.2,3.4,3),T(s*1.4,0,0),C_PANEL);g.add(PRIM.box(3,3.4,.3),T(0,0,s*1.4),C_FRAME);g.add(PRIM.box(1.9,2.6,.32),T(0,.2,s*1.4),COL('#f2c232',.3));for(let k=0;k<5;k++)g.add(PRIM.box(.3,2.6,.34),T(-.8+k*.4,.2,s*1.4,0,0,.6),'#2a2c30');}g.add(PRIM.box(3.1,.3,3.1),T(0,3.2,0),C_PANEL);g.add(PRIM.sphere(.2,10,8),T(0,3.5,0),COL('#ff6a3a',2.2));},
+ hab_moonpool(g){for(const t of [[-4,-4,4,-2],[-4,2,4,4],[-4,-2,-2,2],[2,-2,4,2]]){g.add(RB(t[2]-t[0],.2,t[3]-t[1],.05),T((t[0]+t[2])/2,0,(t[1]+t[3])/2),C_FRAME);}g.add(PRIM.box(4,.05,4),T(0,-.2,0),COL('#3fc4ae',-2));
+  for(const w of doorWalls(8,8,4)){g.add(PRIM.box(w[2]*2,1.4,w[3]*2),T(w[0],.2,w[1]),C_PANEL);g.add(PRIM.box(w[2]*2,2,w[3]*2),T(w[0],1.6,w[1]),C_GLASS);}g.add(RB(8.1,.3,8.1,.1),T(0,3.8,0),C_PANEL);for(const s of [-1,1])g.add(PRIM.box(4.2,.12,.12),T(0,.22,s*2.05),COL('#f2c232',.5));},
+ tidalgen(g){g.add(PRIM.cyl(1.6,1.9,1,14),null,C_FRAME);g.add(PRIM.cyl(.5,.6,6,12),T(0,.8,0),C_PANEL);for(let k=0;k<3;k++){const a=k/3*TAU;g.add(PRIM.box(.3,.12,2.2),T(Math.cos(a)*1.2,4,Math.sin(a)*1.2,a),'#e8ecf0');}g.add(PRIM.sphere(.7,14,8),T(0,4,0),C_FRAME);g.add(PRIM.cyl(.25,.25,.4,10),T(0,6.6,0),COL('#3fc4ae',1.8));},
+ ventgen(g){g.add(PRIM.cyl(3,3.2,1.2,16),null,C_FRAME);g.add(PRIM.cyl(1.6,2.2,6,16),T(0,1.2,0),'#2a3a60');for(let k=0;k<6;k++){const a=k/6*TAU;g.add(PRIM.box(.4,5,.4),T(Math.cos(a)*2.4,1,Math.sin(a)*2.4),C_PANEL);}g.add(PRIM.cyl(1.7,1.7,.4,16),T(0,7.2,0),C_FRAME);for(let k=0;k<3;k++)g.add(PRIM.cyl(2.25,2.25,.15,16),T(0,2+k*1.6,0),COL('#ff6a2a',1.6));}});
+{const _wp=wantsPower;wantsPower=function(b){if(HABK.includes(b.k))return true;return _wp(b);};}
+// generators that need no fuel: the tide comes and goes over about four minutes
+{const _up=updatePower;updatePower=function(dt){for(const b of FAC.b.values())if(b.k==='tidalgen'||b.k==='ventgen')b.energy=1e9;const tide=.5+.5*Math.sin((S.playTime||0)*TAU/240);BUILDINGS.tidalgen.gen=15+60*tide;_up(dt);BUILDINGS.tidalgen.gen=45;};}
+{const _pv=placeValid;placeValid=function(t){const r=_pv(t);if(r)return r;const k=BUILD.k;if(k==='tidalgen'){const h=ground(t.x,t.z);if(h>-3||h<-25)return 'Tidal generators go in the sea, 3 to 25 m deep';}if(k==='ventgen'&&!t.node)return 'Vent generators go over a thermal vent';return '';};}
+// ---------- inside a habitat ----------
+const HAB={in:false,cx:new Map(),t:0};
+function habComplexes(){const L=[...FAC.b.values()].filter(b=>HABK.includes(b.k));const par=new Map(L.map(b=>[b.id,b.id]));const f=x=>{while(par.get(x)!==x)x=par.get(x);return x;};
+ for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++){const a=L[i],b=L[j];const [aw,ad]=fp(a.k,a.rot),[bw,bd]=fp(b.k,b.rot);if(Math.abs(a.x-b.x)<(aw+bw)/2+.6&&Math.abs(a.z-b.z)<(ad+bd)/2+.6&&Math.abs(a.y-b.y)<2)par.set(f(a.id),f(b.id));}
+ const G=new Map();for(const b of L){const r=f(b.id);if(!G.has(r))G.set(r,[]);G.get(r).push(b);}HAB.cx=new Map();for(const g of G.values()){const air=g.some(b=>BUILDINGS[b.k].airlock)&&g.every(b=>b.pf>0);for(const b of g)HAB.cx.set(b.id,air);}}
+function habAt(x,y,z){for(const b of FAC.b.values()){if(!HABK.includes(b.k))continue;if(Math.abs(b.x-x)>6||Math.abs(b.z-z)>6)continue;const D=BUILDINGS[b.k];const [lx,lz]=bLocal(b,x,z);if(Math.abs(lx)<D.w/2-.05&&Math.abs(lz)<D.d/2-.05&&y>b.y-.6&&y<b.y+D.h)return b;}return null;}
+{const _up=updatePlayer;updatePlayer=function(dt){HAB.t-=dt;if(HAB.t<=0){HAB.t=.5;habComplexes();}const b=habAt(PL.x,PL.y+.9,PL.z);HAB.in=!!(b&&HAB.cx.get(b.id));HAB.flood=!!(b&&!HAB.in);_up(dt);};}
+{const _s=o2Sources;o2Sources=function(){const L=_s();for(const b of FAC.b.values())if(HABK.includes(b.k)&&HAB.cx.get(b.id))L.push({x:b.x,y:b.y,z:b.z,r:Math.max(BUILDINGS[b.k].w,BUILDINGS[b.k].d)*.6});return L;};}
+// ---------- pressure on your suit ----------
+const DEEP={warned:0,t:0};
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);let el=document.getElementById('depthhud');if(!el){el=document.createElement('div');el.id='depthhud';document.body.appendChild(el);}
+ const under=GAME.mode==='play'&&PL.y<-1&&!VEH.driving&&!HAB.in;const depth=Math.max(0,-(PL.y+1.6)),lim=suitDepth();
+ if(under){const t=`↓ ${Math.round(depth)} m <span>/ ${lim} m</span>`;if(el._t!==t){el._t=t;el.innerHTML=t;}el.classList.toggle('bad',depth>lim*.9);}el.classList.toggle('on',under);
+ if(under&&depth>lim&&!PL.dead&&!GAME.paused){DEEP.t+=dt;if(DEEP.t>.5){DEEP.t=0;hurtPlayer(3*(1+(depth-lim)/20));}if(!DEEP.warned||R.time-DEEP.warned>12){DEEP.warned=R.time;UI.toast('Too deep for your suit! Research a stronger suit in the Analysis Lab, or use a submarine.','bad');}}};}
+// ---------- the sea itself ----------
+// abyssite on the deep floor, thermal vents in the trench and the basins
+function placeOcean(){if(!wv4())return;const W=WORLD,rnd=mulberry(W.seed*8111+5),big=typeof wv5==='function'&&wv5();const R0=big?2600:W.half-120;
+ const add=(type,purity,x,z)=>{const nd={id:W.nodes.length,type,purity,x:Math.round(x),z:Math.round(z),y:0};nd.y=ground(nd.x,nd.z);W.nodes.push(nd);return nd;};
+ const free=(x,z,r)=>!W.nodes.some(n=>Math.abs(n.x-x)<r&&Math.abs(n.z-z)<r);
+ for(let i=0,made=0;i<6000&&made<(big?34:12);i++){const x=(rnd()*2-1)*R0,z=(rnd()*2-1)*R0,h=ground(x,z);if(h>-45||h<-170||!free(x,z,60))continue;if(groundNormal(x,z)[1]<.8)continue;
+  const n=1+Math.floor(rnd()*3);for(let k=0;k<n;k++){const a=rnd()*TAU,r=k?10+rnd()*8:0,xx=x+Math.cos(a)*r,zz=z+Math.sin(a)*r;if(ground(xx,zz)<-40)add('abyssite',k?1:rnd()<.4?2:1,xx,zz);}made++;}
+ for(let i=0,made=0;i<8000&&made<(big?22:8);i++){const x=(rnd()*2-1)*R0,z=(rnd()*2-1)*R0,h=ground(x,z);if(h>-70||!free(x,z,90))continue;if(trenchD(x,z)>260&&rnd()<.6)continue;add('vent',1,x,z);made++;}
+ for(const nd of W.nodes)if(!nd.obj){let m=W.nodeMesh[nd.type];if(!m)m=W.nodeMesh[nd.type]=nd.type==='vent'?ventMesh():nodeMesh(nd.type);nd.obj={mesh:m,model:T(nd.x,nd.y,nd.z,nd.id*1.7,0,0,PURITY[nd.purity].k>1?1.2:PURITY[nd.purity].k<1?.8:1)};R.objects.push(nd.obj);}}
+function ventMesh(){const g=new GB(),rnd=mulberry(77);g.add(PRIM.cyl(3,3.6,.6,14),T(0,-.3,0),'#2a2428');for(let k=0;k<5;k++){const a=k/5*TAU+rnd(),r=.8+rnd()*1.4,h=1.5+rnd()*3;g.add(PRIM.cyl(.3,.6,h,8),T(Math.cos(a)*r,0,Math.sin(a)*r),'#3a3034');g.add(PRIM.cyl(.22,.22,.08,8),T(Math.cos(a)*r,h,Math.sin(a)*r),COL('#ff6a2a',2.6));}g.add(PRIM.cyl(1,1.3,1.4,10),T(0,0,0),'#3a3034');g.add(PRIM.cyl(.6,.6,.1,10),T(0,1.4,0),COL('#ffb84a',2.8));return g.build();}
+{const _ei=EXP.init;EXP.init=function(){_ei();placeOcean();};}
+// vents and abyssite take the right machines
+// ---------- conveyors switch to a sealed tube where they run under the water ----------
+const SEAL={m:new Map()};
+function sheathMesh(bl){const P=bl.c.pts;if(!P||P.length<2)return null;let any=false;const g=new GB();
+ for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];const under=(a[1]+b[1])/2<-.35;const wasUnder=i>0&&(P[i-1][1]+a[1])/2<-.35;
+  if(under){any=true;const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,mz=(a[2]+b[2])/2,L=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2])+.05;const yaw=Math.atan2(b[0]-a[0],b[2]-a[2]),pit=-Math.atan2(b[1]-a[1],Math.hypot(b[0]-a[0],b[2]-a[2]));
+   g.add(PRIM.box(1.5,1.1,L),T(mx,my+.25,mz,yaw,pit),C_GLASS);if(i%4===0)g.add(PRIM.box(1.62,1.22,.12),T(a[0],a[1]+.25,a[2],yaw,pit),C_FRAME);}
+  // a sealed joint where the belt crosses the waterline
+  if(under!==wasUnder&&i>0){const yaw=Math.atan2(b[0]-a[0],b[2]-a[2]);g.add(PRIM.box(1.9,1.5,.5),T(a[0],a[1]+.2,a[2],yaw),COL('#f2c232',.4));g.add(PRIM.box(1.95,.2,.55),T(a[0],a[1]+.95,a[2],yaw),C_FRAME);}}
+ return any?g.build():null;}
+{const _o=TR.objects;TR.objects=function(){const out=_o();if(!wv4())return out;const live=new Set();
+ for(const bl of FAC.belts.values()){live.add(bl.id);const P=bl.c.pts;if(!P)continue;let s=SEAL.m.get(bl.id);if(!s||s.len!==bl.c.len){if(s&&s.mesh)freeMesh(s.mesh);s={len:bl.c.len,mesh:P.some(p=>p[1]<-.35)?sheathMesh(bl):null};SEAL.m.set(bl.id,s);}
+  if(s.mesh&&Math.hypot(P[0][0]-R.cam[0],P[0][2]-R.cam[2])<(R.cullD||600))out.push({mesh:s.mesh,model:T()});}
+ for(const [id,s] of SEAL.m)if(!live.has(id)){if(s.mesh)freeMesh(s.mesh);SEAL.m.delete(id);}
+ return out.concat(OCEAN.objects());};}
+// ---------- sea life: fish schools, reef stalkers, and the leviathan in the trench ----------
+const OCEAN={fish:[],eels:[],lev:null,I:null,t:0};
+function fishMesh(){const g=new GB();g.add(PRIM.sphere(.18,8,6),T(0,0,0,0,0,0,.5,.6,1.4),'#ffffff');g.add(PRIM.box(.02,.2,.16),T(0,0,-.3),'#ffffff');return g.build();}
+function eelMesh(){const g=new GB();for(let k=0;k<8;k++){const r=.28-Math.abs(k-2)*.03;g.add(PRIM.sphere(Math.max(.1,r),10,8),T(0,0,-k*.45,0,0,0,1,.8,1.3),k%2?'#2a4a3a':'#355a46');}g.add(PRIM.sphere(.06,6,4),T(.14,.08,.2),COL('#ffd04a',3));g.add(PRIM.sphere(.06,6,4),T(-.14,.08,.2),COL('#ffd04a',3));for(let k=1;k<7;k++)g.add(PRIM.box(.02,.25,.3),T(0,.25,-k*.45),COL('#7affc8',.8));return g.build();}
+function levSegMesh(i,n){const g=new GB();const r=i===0?3.2:3.4*Math.sin(Math.PI*(i+1.5)/(n+1.5))+.6;g.add(PRIM.sphere(r,16,10),T(0,0,0,0,0,0,1,.85,1.25),'#2a3440');
+ for(let k=0;k<6;k++){const a=k/6*TAU;g.add(PRIM.sphere(r*.12,6,4),T(Math.cos(a)*r*.95,Math.sin(a)*r*.8,0),COL(k%2?'#5af0e0':'#c890ff',2.4));}
+ if(i===0){for(const s of [-1,1]){g.add(PRIM.sphere(.6,10,8),T(s*1.8,.9,2.2),COL('#ffb84a',3.2));g.add(PRIM.cone(.4,3.4,6),T(s*1.4,-1,2.4,0,Math.PI/2+.5),'#c8c0b0');}}
+ if(i>0&&i%2===0)for(const s of [-1,1])g.add(PRIM.box(.2,r*1.6,r*1.2),T(s*r*.9,0,0,0,0,s*.6),'#1e2830');return g.build();}
+OCEAN.init=function(){if(OCEAN.I)return;OCEAN.fm=fishMesh();OCEAN.I=instancer(OCEAN.fm,260);OCEAN.I.noShadow=true;OCEAN.I.sway=0;R.inst.push(OCEAN.I);OCEAN.em=eelMesh();OCEAN.ls=[];for(let i=0;i<10;i++)OCEAN.ls.push(levSegMesh(i,10));
+ const cols=['#ffb84a','#7ad8ff','#ff6a8a','#d8ff6a','#c890ff'];for(let s=0;s<8;s++){const sc={x:0,y:-10,z:0,c:COL(cols[s%5]),n:20+s%3*8,ph:Math.random()*9,set:false};OCEAN.fish.push(sc);}
+ for(let i=0;i<8;i++)OCEAN.eels.push({x:0,y:-20,z:0,hx:0,hz:0,hy:-20,yaw:0,st:'idle',t:0,cd:0,set:false});
+ const tr=typeof TRENCH5!=='undefined'&&wv5()?TRENCH5[0]:W4.trench;OCEAN.lev={path:tr,s:0,dir:1,x:tr[0][0],y:-110,z:tr[0][1],yaw:0,st:'patrol',cd:0,seg:[]};};
+const waterSpot=(cx,cz,r0,r1,lo,hi)=>{for(let t=0;t<12;t++){const a=Math.random()*TAU,r=r0+Math.random()*(r1-r0),x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r,g=ground(x,z);if(g<lo&&g>hi)return [x,g,z];}return null;};
+OCEAN.update=function(dt){if(!wv4()||GAME.mode!=='play')return;OCEAN.init();const cx=R.cam[0],cz=R.cam[2],near=R.cam[1]<6;
+ // fish schools near you when you're in or close to the water
+ const I=OCEAN.I;let n=0;if(near){for(const s of OCEAN.fish){if(!s.set||Math.hypot(s.x-cx,s.z-cz)>90){const p=waterSpot(cx,cz,15,70,-6,-80);if(!p)continue;s.x=p[0];s.z=p[2];s.y=clamp(p[1]+3+Math.random()*(-p[1]-6),p[1]+2,-2);s.set=true;}
+   s.ph+=dt*.6;const ax=s.x+Math.cos(s.ph)*6,az=s.z+Math.sin(s.ph*1.3)*6;for(let k=0;k<s.n&&n<I.max;k++){const q=k*2.399+s.ph*1.7,rr=1.5+(k%5)*.6;const x=ax+Math.cos(q)*rr,z=az+Math.sin(q)*rr,y=s.y+Math.sin(q*.7+k)*1.2;const o=n*8,d=I.data;d[o]=x;d[o+1]=y;d[o+2]=z;d[o+3]=.8+(k%3)*.25;d[o+4]=s.c[0];d[o+5]=s.c[1];d[o+6]=s.c[2];d[o+7]=Math.atan2(-Math.sin(q),Math.cos(q))+Math.PI/2*(k%2?1:-1);n++;}}}I.n=n;
+ // reef stalkers: they guard the kelp and coral and come for you if you swim too close
+ for(const e of OCEAN.eels){if(!e.set||Math.hypot(e.x-PL.x,e.z-PL.z)>220){const p=waterSpot(PL.x,PL.z,60,180,-6,-35);if(!p)continue;Object.assign(e,{x:p[0],y:p[1]+1.5,z:p[2],hx:p[0],hy:p[1]+1.5,hz:p[2],st:'idle',set:true});}
+  e.cd=Math.max(0,e.cd-dt);e.t+=dt;const dx=PL.x-e.x,dy=PL.y+1-e.y,dz=PL.z-e.z,dp=Math.hypot(dx,dy,dz);const prey=PL.y<-1.2&&!HAB.in&&!VEH.driving&&!PL.dead&&!S.settings.peaceful;
+  if(e.st==='idle'&&prey&&dp<14&&e.cd<=0)e.st='chase';if(e.st==='chase'&&(dp>30||!prey))e.st='idle';
+  let tx,ty,tz,sp;if(e.st==='chase'){tx=PL.x;ty=PL.y+1;tz=PL.z;sp=6.5;if(dp<1.8){hurtPlayer(12,e);AUDIO.hurt&&0;e.st='flee';e.t=0;e.cd=6;}}else if(e.st==='flee'){tx=e.x-dx;ty=e.y;tz=e.z-dz;sp=7;if(e.t>3)e.st='idle';}else{tx=e.hx+Math.cos(e.t*.4)*8;ty=e.hy+Math.sin(e.t*.3);tz=e.hz+Math.sin(e.t*.4)*8;sp=2.2;}
+  const ddx=tx-e.x,ddy=ty-e.y,ddz=tz-e.z,L=Math.hypot(ddx,ddy,ddz)||1;e.x+=ddx/L*sp*dt;e.y+=ddy/L*sp*dt;e.z+=ddz/L*sp*dt;e.y=Math.min(-1.2,Math.max(ground(e.x,e.z)+.6,e.y));e.yaw=Math.atan2(ddx,ddz);}
+ // the leviathan patrols the trench; get too close and it comes for you
+ const V=OCEAN.lev,P=V.path;if(P&&P.length>1){V.cd=Math.max(0,V.cd-dt);const tgt=VEH.driving&&VEH.driving.blocks?VEH.driving:null;const qx=tgt?tgt.x:PL.x,qy=tgt?tgt.y:PL.y,qz=tgt?tgt.z:PL.z;const dq=Math.hypot(qx-V.x,qy-V.y,qz-V.z);
+  if(V.st==='patrol'&&dq<34&&qy<-35&&V.cd<=0&&!HAB.in&&!S.settings.peaceful){V.st='hunt';AUDIO.tone&&AUDIO.tone(55,2.2,{type:'sawtooth',vol:.25,slide:.6});UI.toast('Something huge is coming','bad');}
+  let tx,ty,tz,sp;if(V.st==='hunt'){tx=qx;ty=qy;tz=qz;sp=15;if(dq<11){if(tgt)rigHurt(tgt,30,'The leviathan hit your sub!');else hurtPlayer(45,V);V.st='leave';V.cd=30;V.t=0;}if(dq>80)V.st='patrol';}
+  else if(V.st==='leave'){V.t+=dt;tx=V.x+(V.x-qx);ty=-130;tz=V.z+(V.z-qz);sp=12;if(V.t>6)V.st='patrol';}
+  else{V.s+=dt*5*V.dir;const segs=P.length-1;let L=0;const lens=[];for(let i=0;i<segs;i++){const l=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]);lens.push(l);L+=l;}if(V.s>L){V.s=L;V.dir=-1;}if(V.s<0){V.s=0;V.dir=1;}let s=V.s,i=0;while(i<segs-1&&s>lens[i]){s-=lens[i];i++;}const f=s/lens[i];tx=P[i][0]+(P[i+1][0]-P[i][0])*f;tz=P[i][1]+(P[i+1][1]-P[i][1])*f;ty=Math.max(ground(tx,tz)+10,-150)+Math.sin(R.time*.2)*8;sp=6;}
+  const ddx=tx-V.x,ddy=ty-V.y,ddz=tz-V.z,LL=Math.hypot(ddx,ddy,ddz)||1;const mv=Math.min(LL,sp*dt);V.x+=ddx/LL*mv;V.y+=ddy/LL*mv;V.z+=ddz/LL*mv;V.y=Math.min(-25,Math.max(ground(V.x,V.z)+4,V.y));V.yaw=lerpAng(V.yaw,Math.atan2(ddx,ddz),Math.min(1,dt*1.5));
+  // body segments follow the head
+  if(!V.seg.length)for(let k=0;k<10;k++)V.seg.push([V.x,V.y,V.z-k*5]);V.seg[0]=[V.x,V.y,V.z];for(let k=1;k<V.seg.length;k++){const a=V.seg[k-1],b=V.seg[k];const dx2=b[0]-a[0],dy2=b[1]-a[1],dz2=b[2]-a[2],l=Math.hypot(dx2,dy2,dz2)||1;const sl=4.6;V.seg[k]=[a[0]+dx2/l*sl,a[1]+dy2/l*sl,a[2]+dz2/l*sl];}}};
+const lerpAng=(a,b,t)=>{let d=((b-a+Math.PI)%TAU+TAU)%TAU-Math.PI;return a+d*t;};
+function rigHurt(r,n,msg){r.hp=Math.max(0,(r.hp??100)-n);if(VEH.driving===r)UI.toast(msg+' · '+Math.round(r.hp)+'%','bad');AUDIO.bad&&AUDIO.bad();}
+OCEAN.objects=function(){const out=[];if(!OCEAN.em)return out;for(const e of OCEAN.eels){if(!e.set||Math.hypot(e.x-R.cam[0],e.z-R.cam[2])>90)continue;out.push({mesh:OCEAN.em,model:T(e.x,e.y,e.z,e.yaw+Math.sin(R.time*6+e.hx)*.25)});}
+ const V=OCEAN.lev;if(V&&V.seg.length&&Math.hypot(V.x-R.cam[0],V.z-R.cam[2])<260){for(let k=0;k<V.seg.length;k++){const a=V.seg[k],b=V.seg[Math.max(0,k-1)];const yaw=k?Math.atan2(b[0]-a[0],b[2]-a[2]):V.yaw;out.push({mesh:OCEAN.ls[k],model:T(a[0],a[1],a[2],yaw+Math.sin(R.time*1.4-k*.6)*.12)});}}return out;};
+{const _u=TR.update;TR.update=function(dt){_u(dt);if(!GAME.paused)OCEAN.update(Math.min(dt,.05));};}
+// ---------- submarines: sealed rigs with propellers and ballast ----------
+Object.assign(RIGP,{
+ prop:{n:'Propeller',m:140,cost:{rotor:1,iron_plate:4},tier:3,c:'#5a606a',prop:5500,deep:1,d:'Drives a sealed rig through the water.'},
+ ballast:{n:'Ballast tank',m:200,cost:{iron_plate:6,sealant:4},tier:2,c:'#e8c040',ballast:1,deep:1,d:'Lets a sealed rig sink, hover or rise underwater (▲ ▼).'},
+ hullp:{n:'Pressure hull',m:380,cost:{pressure_hull:2},tier:4,c:'#2a3a60',hp:1,depth:300,d:'Hull block rated to 300 m deep.'},
+ pcockpit:{n:'Deep cockpit',m:320,cost:{pressure_hull:2,hab_glass:2},tier:4,c:'#5af0e0',seat:1,o2:120,depth:300,d:'A sealed seat rated to 300 m.'}});
+Object.assign(RIGP.frame,{depth:40});Object.assign(RIGP.plate,{depth:110});Object.assign(RIGP.cockpit,{depth:60});Object.assign(RIGP.seat,{depth:0});
+const rigSub=r=>{const D=rigDerive(r);if(D.sub)return D.sub;let prop=0,bal=0,sealed=false,depth=1e9;for(const b of D.B){const P=RIGP[b[3]];if(P.prop)prop+=P.prop;if(P.ballast)bal++;if(b[3]==='cockpit'||b[3]==='pcockpit')sealed=true;if(P.depth!=null)depth=Math.min(depth,P.depth);}if(!sealed)depth=0;return D.sub={prop,bal,sealed,ok:sealed&&prop>0&&bal>0,depth:depth===1e9?0:depth};};
+{const _g=rigBlockGeo;rigBlockGeo=function(g,b,o){const k=b[3],x=b[0]-o[0],y=b[1]-o[1],z=b[2]-o[2];
+ if(k==='prop'){g.add(RB(.6,.6,.6,.1),T(x,y-.3,z),'#5a606a');g.add(PRIM.cyl(.1,.1,.4,8),T(x,y,z-.3,0,Math.PI/2),'#3a3f48');for(let i=0;i<3;i++){const a=i/3*TAU;g.add(PRIM.box(.12,.42,.04),T(x+Math.cos(a)*.22,y+Math.sin(a)*.22,z-.5,0,0,a),'#e8c040');}g.add(PRIM.cyl(.5,.5,.12,16),T(x,y,z-.5,0,Math.PI/2),C_FRAME);return;}
+ if(k==='ballast'){g.add(PRIM.cyl(.45,.45,.9,14),T(x,y,z-.45,0,Math.PI/2),'#e8c040');g.add(RB(.98,.2,.98,.04),T(x,y-.49,z),'#5a606a');for(const s of [-1,1])g.add(PRIM.cyl(.47,.47,.08,14),T(x,y,z+s*.3,0,Math.PI/2),'#3a3f48');return;}
+ if(k==='hullp'){g.add(RB(1,1,1,.14),T(x,y-.5,z),'#2a3a60');for(const s of [-1,1])g.add(PRIM.box(1.02,.06,.06),T(x,y+s*.3,z),'#8a92a0');return;}
+ if(k==='pcockpit'){g.add(RB(.98,.35,.98,.05),T(x,y-.49,z),'#2a3a60');g.add(PRIM.sphere(.5,16,10),T(x,y-.1,z,0,0,0,1,.95,1),COL('#5af0e0',-4));g.add(PRIM.cyl(.52,.52,.08,16),T(x,y-.12,z),'#8a92a0');return;}
+ _g(g,b,o);};}
+{const _u=rigUpdate;rigUpdate=function(rig,dt){if(rig.edit)return _u(rig,dt);const D=rigDerive(rig),st=D.st,sub=rigSub(rig);const wet=rig.y<-1.2&&!st.hover;
+ if(!wet){rig.flood=false;return _u(rig,dt);}
+ if(!sub.ok){// a land rig drowns its motors
+  if(!rig.flood&&VEH.driving===rig&&rig.y<-2)UI.toast(sub.sealed?'Needs propellers and a ballast tank to work as a sub':'Motors flooded: a sub needs a sealed cockpit, propellers and ballast','warn');rig.flood=rig.y<-2;
+  if(rig.flood){const jx=INPUT.jx,jy=INPUT.jy,kw=INPUT.keys.KeyW;INPUT.jx=INPUT.jy=0;INPUT.keys.KeyW=false;_u(rig,dt);INPUT.jx=jx;INPUT.jy=jy;INPUT.keys.KeyW=kw;rig.y=Math.max(rig.y-dt*1.5,rig.y);return;}return _u(rig,dt);}
+ // submarine
+ const drv=VEH.driving===rig;let thr=0,steer=0;if(drv&&rig.hp>0){thr=INPUT.jy||(INPUT.keys.KeyW?1:INPUT.keys.KeyS?-1:0);steer=-(INPUT.jx||(INPUT.keys.KeyA?-1:INPUT.keys.KeyD?1:0));}
+ const m=st.mass+rigCargoN(rig)*1.5,hasPw=st.free>0||rig.energy>0;if(Math.abs(thr)>.01&&hasPw&&st.pw-st.free>0)rig.energy=Math.max(0,rig.energy-sub.prop/250*Math.abs(thr)*dt);
+ const F=hasPw?thr*sub.prop:0;const a=(F-180*rig.spd*Math.abs(rig.spd))/m*4;rig.spd=clamp(rig.spd+a*dt,-5,14);rig.yaw+=steer*dt*.9*clamp(Math.abs(rig.spd)/3+.35,0,1);
+ const want=drv?(RIG.up?3:RIG.down?-3:0):0;rig.vy=lerp(rig.vy||0,want,Math.min(1,dt*1.5));
+ const G=rigPose(rig);const sp=rigSupport(rig,D,G);const floor=Math.max(sp.need,sp.hull);
+ let nx=rig.x+Math.sin(rig.yaw)*rig.spd*dt,nz=rig.z+Math.cos(rig.yaw)*rig.spd*dt,ny=rig.y+rig.vy*dt;let hit=false;{const c=Math.cos(rig.yaw),s=Math.sin(rig.yaw),dir=Math.sign(rig.spd)||1,L=st.len*.5;for(const off of [-st.width*.4,0,st.width*.4]){const px=nx+s*dir*L+c*off,pz=nz+c*dir*L-s*off;if(ground(px,pz)>ny+st.height*.3){hit=true;break;}}}
+ if(hit){if(Math.abs(rig.spd)>5)rigHurt(rig,(Math.abs(rig.spd)-5)*4,'Hull scraped');rig.spd*=-.2;}else{rig.x=nx;rig.z=nz;}
+ rig.y=clamp(ny,floor,-.6);if(rig.y<=floor+.01)rig.vy=Math.max(0,rig.vy);
+ rig.pitch=lerp(rig.pitch||0,-rig.vy*.06,Math.min(1,dt*2));rig.roll=lerp(rig.roll||0,-steer*.12*clamp(rig.spd/6,-1,1),Math.min(1,dt*2));rig.wspin=(rig.wspin||0)+rig.spd*dt;
+ if(Math.abs(rig.spd)>1&&Math.random()<dt*10)PFX.emit('steam',[rig.x-Math.sin(rig.yaw)*st.len*.55,rig.y,rig.z-Math.cos(rig.yaw)*st.len*.55],.4);
+ // pressure on the hull
+ const depth=-rig.y;if(depth>sub.depth){rig.pt=(rig.pt||0)+dt;if(rig.pt>.5){rig.pt=0;rig.hp=Math.max(0,(rig.hp??100)-2*(1+(depth-sub.depth)/15));if(drv&&(!rig.ptw||R.time-rig.ptw>8)){rig.ptw=R.time;UI.toast('Hull creaking: rated to '+sub.depth+' m · use pressure hull blocks to go deeper','bad');}}}
+ // moon pools dock subs
+ if(Math.abs(rig.spd)<.6)for(const b of FAC.b.values()){if(b.k!=='hab_moonpool'||Math.abs(b.x-rig.x)>4.5||Math.abs(b.z-rig.z)>4.5||rig.y>b.y+1||rig.y<b.y-8)continue;const cap=BUILDINGS.hab_moonpool.cap;let tot=Object.values(b.store).reduce((x,c)=>x+c,0);
+  for(const [k,n] of Object.entries(rig.cargo)){const q=Math.min(n,cap-tot,Math.ceil(60*dt)+1);if(q>0){b.store[k]=(b.store[k]||0)+q;rig.cargo[k]-=q;tot+=q;}if(!rig.cargo[k])delete rig.cargo[k];}
+  if(b.pf>0){rig.energy=Math.min(st.cap,(rig.energy||0)+4000*dt);rig.o2=Math.min(st.o2,(rig.o2||0)+60*dt);rig.hp=Math.min(100,(rig.hp??100)+2*dt);}if(!rig.dockT||R.time-rig.dockT>20){rig.dockT=R.time;if(drv)UI.toast('Docked at the moon pool','good');}break;}
+ rigAfter(rig,D,dt,drv);};}
+// the sub's own buttons: rise and dive
+{const _f=UI.frame;UI.frame=function(dt){const v=VEH.driving;const subMode=!!(v&&v.blocks&&v.y<-1.2&&rigSub(v).ok);if(v&&v.blocks&&v._sub!==subMode){v._sub=subMode;UI._mk='';}
+ _f(dt);if(subMode){const key='sub'+(v.lights?1:0);if(UI._mk!==key&&!UI._pressing){UI._mk=key;const st=rigDerive(v).st;$('#modeBtns').innerHTML=`<button class="rb" id="rigUp">▲</button><button class="rb" id="rigDn">▼</button>`+(st.lights?`<button class="rb ${v.lights?'on':''}" data-a="rigLight">💡</button>`:'')+`<button class="rb tier" data-a="vExit">Exit</button>`;
+  for(const [id,f] of [['rigUp','up'],['rigDn','down']]){const el=document.getElementById(id);if(!el)continue;el.addEventListener('pointerdown',e=>{e.preventDefault();RIG[f]=1;});const up=()=>{RIG[f]=0;};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('pointerleave',up);}}
+  const el=document.getElementById('righud');if(el){const t=el.innerHTML;const d=` · ↓ ${Math.round(-v.y)} m / ${rigSub(v).depth} m`;if(!t.includes('↓')){el.insertAdjacentHTML('afterbegin','');}}}};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const v=VEH.driving;if(!(v&&v.blocks&&v.y<-1.2))return;const el=document.getElementById('righud');if(!el)return;let d=el.querySelector('.dep');if(!d){d=document.createElement('span');d.className='dep';el.appendChild(d);}const t='↓ '+Math.round(-v.y)+' / '+rigSub(v).depth+' m';if(d.textContent!==t)d.textContent=t;};}
+// leaving a sub underwater puts you in the water, not inside the hull
+// ---------- the vault in the trench ----------
+const VAULT={obj:null,door:null,open:0};
+function vaultSpot(){const r=(WORLD.ruins||[]).find(q=>q.id===ECHO.length-1);return r||null;}
+function vaultMeshes(){const g=new GB();g.add(PRIM.cyl(14,16,3,24),T(0,-1,0),'#22202a');for(let k=0;k<10;k++){const a=k/10*TAU;g.add(PRIM.box(1.6,18,1.6),T(Math.cos(a)*12,1,Math.sin(a)*12,a),'#2e2a38');g.add(PRIM.box(.5,14,.3),T(Math.cos(a)*12.9,3,Math.sin(a)*12.9,a),COL('#5af0e0',1.6));}
+ g.add(PRIM.cyl(13,13,1.2,24),T(0,19,0),'#2e2a38');g.add(RB(10,12,2.4,.4),T(0,1,-9),'#2a2438');const door=new GB();door.add(RB(7.4,10,1,.3),T(0,0,0),'#3a3448');for(let i=0;i<5;i++)door.add(PRIM.box(6.6,.2,1.05),T(0,1.4+i*1.8,0),COL('#c890ff',2));door.add(PRIM.sphere(1,14,10),T(0,5,.5),COL('#5af0e0',3));return [g.build(),door.build()];}
+{const _ei=EXP.init;EXP.init=function(){_ei();if(!wv4())return;const r=vaultSpot();if(!r)return;const [m,d]=vaultMeshes();const x=r.x+18,z=r.z;VAULT.x=x;VAULT.z=z;VAULT.y=ground(x,z);VAULT.obj={mesh:m,model:T(x,VAULT.y,z)};VAULT.door={mesh:d,model:T(x,VAULT.y+1,z-9.7)};R.objects.push(VAULT.obj,VAULT.door);VAULT.open=S.vaultOpen?1:0;};}
+{const _u=TR.update;TR.update=function(dt){_u(dt);if(!VAULT.door)return;const want=S.vaultOpen?1:0;VAULT.open=lerp(VAULT.open,want,Math.min(1,dt*.3));VAULT.door.model=T(VAULT.x,VAULT.y+1-VAULT.open*9.5,VAULT.z-9.7);
+ if(!S.vaultOpen&&GAME.mode==='play'){const dd=Math.hypot(PL.x-VAULT.x,PL.z-(VAULT.z-11)),dv=VEH.driving&&VEH.driving.blocks?Math.hypot(VEH.driving.x-VAULT.x,VEH.driving.z-(VAULT.z-11)):1e9;
+  if(Math.min(dd,dv)<9){if(!VAULT.t||R.time-VAULT.t>10){VAULT.t=R.time;const read=S.echoes||{},need=ECHO.length-1,got=ECHO.slice(0,need).filter((e,i)=>read[i]).length;
+    if(got<need)UI.toast('The vault door is dark. Find every echo first ('+got+' of '+need+').','info');else if(!(S.inv.vael_key>0))UI.toast('The door hums. It wants a Vael key: research one in the Analysis Lab.','info');
+    else{addInv('vael_key',-1);S.vaultOpen=1;AUDIO.fanfare&&AUDIO.fanfare();UI.banner&&UI.banner('The vault opens','Echo 12 · The Sleeper');setTimeout(()=>{UI.modal(`<h3>Echo 12 · The Sleeper</h3><p>${VAULT_TEXT}</p>`);},2500);addInv('relic',6);codexAdd&&codexAdd('story:vault');saveSoon();}}}}};}
+const VAULT_TEXT='You found it. Then you know what the forests are for, and why they fail. We planted the air, and something under this water drinks it. We built the Sleeper to hold it still, and the Sleeper needs the breath of a whole world to keep holding. That is why you cannot breathe here. It is not broken. It is working. The machine that can wake it gently is on the moon, in the station we built last. Take what is in this vault. Build a ship. Look up. (End of chapter two.)';
+CODEX.push({k:'story:vault',cat:'Story',n:'Echo 12 · The Sleeper',d:VAULT_TEXT},{k:'sea:hab',cat:'Underwater',n:'Habitats',d:'Join habitat pieces so they touch. A complex with an airlock and power is full of air: walk inside without your suit. Corridors, rooms, glass domes and moon pools for docking subs.'},
+ {k:'sea:sub',cat:'Underwater',n:'Submarines',d:'A rig becomes a sub underwater when it has a sealed cockpit, at least one propeller and a ballast tank. ▲ and ▼ rise and dive. Frames hold to 40 m, armour to 110 m; pressure hull blocks and a deep cockpit go to 300 m.'},
+ {k:'sea:deep',cat:'Underwater',n:'Pressure',d:'Your suit is rated to 60 m. Research stronger suits in the Analysis Lab (120 m, then 240 m) using abyssite from the deep floor.'});
+(function(){const st=document.createElement('style');st.textContent=`#depthhud{position:fixed;left:50%;bottom:calc(64px + var(--safe-b));transform:translateX(-50%);display:none;background:rgba(10,30,44,.78);color:#bfefff;border-radius:12px;padding:5px 12px;font:800 13px system-ui;z-index:6}#depthhud span{opacity:.6;font-weight:600}#depthhud.on{display:block}#depthhud.bad{background:rgba(120,24,18,.85);color:#fff}`;document.head.appendChild(st);})();
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.7.0',VERSION_MARK='FFVER@0.7.0@';
+const VERSION='0.8.0',VERSION_MARK='FFVER@0.8.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -5740,7 +5930,7 @@ function frame(now){CRASH.tick(now);let dt=Math.min(.1,(now-lastT)/1000);lastT=n
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,UNDO,dismantle,NODE_TYPES,RIG,CRASH,RIGED,RIGP,rigDerive,rigEdOpen,rigEdClose,rigNew,rigUpdate,VEH,MAMR,saveKey:()=>SAVE_KEY,mapStep5,W5,REG5,stream5,biomeTop2:(x,z)=>biomeTop2(x,z),dryLand:(x,z)=>dryLand(x,z),trenchD:(x,z)=>trenchD(x,z),groundNormal:(x,z)=>groundNormal(x,z),rawHeight:(x,z)=>rawHeight(x,z),BOOTT:0,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,SEAL,HAB,OCEAN,VAULT,rigSub,suitDepth,UNDO,dismantle,NODE_TYPES,RIG,CRASH,RIGED,RIGP,rigDerive,rigEdOpen,rigEdClose,rigNew,rigUpdate,VEH,MAMR,saveKey:()=>SAVE_KEY,mapStep5,W5,REG5,stream5,biomeTop2:(x,z)=>biomeTop2(x,z),dryLand:(x,z)=>dryLand(x,z),trenchD:(x,z)=>trenchD(x,z),groundNormal:(x,z)=>groundNormal(x,z),rawHeight:(x,z)=>rawHeight(x,z),BOOTT:0,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;CRASH.start();
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);try{CRASH.add('boot',e.message,e.stack,'the game could not start');}catch(_){}const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
