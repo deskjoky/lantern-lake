@@ -346,7 +346,7 @@ const M4={
  xform(m,x,y,z){return [m[0]*x+m[4]*y+m[8]*z+m[12],m[1]*x+m[5]*y+m[9]*z+m[13],m[2]*x+m[6]*y+m[10]*z+m[14]];},
  xformDir(m,x,y,z){return [m[0]*x+m[4]*y+m[8]*z,m[1]*x+m[5]*y+m[9]*z,m[2]*x+m[6]*y+m[10]*z];},
 };
-const v3={norm(a){const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];},cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2]};
+const v3={len(a){return Math.hypot(a[0],a[1],a[2]);},norm(a){const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];},cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2]};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 // ---- 00-crash.js ----
@@ -1449,7 +1449,7 @@ function initInput(){const cv=GL.canvas;
  document.addEventListener('mousemove',e=>{if(!INPUT.locked)return;const s=.0024*(S.settings.sens||1);PL.yaw-=e.movementX*s;PL.pitch=clamp(PL.pitch-e.movementY*s,-1.45,1.45);});
  cv.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){if(!INPUT.locked&&!UI.panel){cv.requestPointerLock&&cv.requestPointerLock();return;}if(e.button===0){INPUT.act=true;INPUT.actT=0;GAME.primary(true);}if(e.button===2)GAME.secondary();return;}
   try{cv.setPointerCapture(e.pointerId);}catch(_){}const w=innerWidth;
-  if(e.clientX<w*.42&&INPUT.joyId===null){INPUT.joyId=e.pointerId;INPUT.joyO=[e.clientX,e.clientY];UI.joy(true,e.clientX,e.clientY,0,0);}
+  if(e.clientX<w*.42&&INPUT.joyId===null&&!(typeof RIGED!=='undefined'&&RIGED.on)){INPUT.joyId=e.pointerId;INPUT.joyO=[e.clientX,e.clientY];UI.joy(true,e.clientX,e.clientY,0,0);}
   else if(INPUT.lookId===null){INPUT.lookId=e.pointerId;INPUT.last=[e.clientX,e.clientY];INPUT.tap={x:e.clientX,y:e.clientY,t:performance.now(),m:0};}});
  cv.addEventListener('pointermove',e=>{if(e.pointerId===INPUT.joyId){let dx=e.clientX-INPUT.joyO[0],dy=e.clientY-INPUT.joyO[1];const L=Math.hypot(dx,dy),M=58;if(L>M){dx*=M/L;dy*=M/L;}INPUT.jx=dx/M;INPUT.jy=-dy/M;UI.joy(true,INPUT.joyO[0],INPUT.joyO[1],dx,dy);}
   else if(e.pointerId===INPUT.lookId){const dx=e.clientX-INPUT.last[0],dy=e.clientY-INPUT.last[1];INPUT.last=[e.clientX,e.clientY];const s=.0055*(S.settings.sens||1);PL.yaw-=dx*s;PL.pitch=clamp(PL.pitch-dy*s,-1.45,1.45);if(INPUT.tap)INPUT.tap.m+=Math.hypot(dx,dy);}});
@@ -1921,6 +1921,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.6.5',t:'The real jetpack fix',items:['Found it, thanks to a crash report: holding jump in mid-air made the zipline check hit an error every frame, which froze the game until you let go. Fixed, and ziplines along power lines work again.']},
  {v:'0.6.4',t:'Crash reports',items:['If the game hits an error, freezes, or closes by itself, it now saves a crash report with a short error code (like NF-AB12CD) and sends it automatically so the problem can be fixed.','See your reports in Settings → Crash reports, with buttons to copy them, send them now, or clear them.']},
  {v:'0.6.3',t:'Jetpack fix',items:['Fixed the game seeming to freeze when you press jump a second time in mid-air. You were grabbing a nearby power line as a zipline. Now you only catch ziplines when your jetpack is empty (or you have none), and only on real power lines between poles, not the short cables to machines.','Stopped iPhone from treating quick repeated presses on the game screen as zoom gestures.']},
  {v:'0.6.2',t:'Fixes',items:['Floors, walls, ramps, beams and other plain structures no longer show an Open button when you look at them.','Fixed a hitch when letting go of the jump button after using the jetpack on iPhone.']},
@@ -3093,7 +3094,7 @@ UI.A.vAutoGo=()=>{const v=VEH.driving;if(!v||v.route.length<3){UI.toast('Record 
 {const _bv=UI.views.build;UI.views.build=function(){return _bv().replace('data-a="pick" data-v="railTool"','data-a="railTool" data-v="railTool"');};}
 // HUD while driving / laying track
 {const _f=UI.frame;UI.frame=function(dt){_f(dt);const act=$('#act');
- if(VEH.driving){act.classList.add('hide');const key='drive'+VEH.rec;if(UI._mk!==key&&!UI._pressing){UI._mk=key;$('#modeBtns').innerHTML=`<button class="rb tier ${VEH.rec?'rec':''}" data-a="vRec">${VEH.rec?'■ Stop':'● Rec'}</button><button class="rb tier" data-a="vAutoGo">Auto</button><button class="rb tier" data-a="vExit">Exit</button>`;}const lk=$('#look');const v=VEH.driving;const t=`${BUILDINGS[v.k].n} · ${Math.round(Math.abs(v.spd)*3.6)} km/h · fuel ${Object.values(v.fuel).reduce((a,c)=>a+c,0)}${VEH.rec?' · recording '+v.route.length*3+' m':''}`;if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
+ if(VEH.driving&&!VEH.driving.blocks){act.classList.add('hide');const key='drive'+VEH.rec;if(UI._mk!==key&&!UI._pressing){UI._mk=key;$('#modeBtns').innerHTML=`<button class="rb tier ${VEH.rec?'rec':''}" data-a="vRec">${VEH.rec?'■ Stop':'● Rec'}</button><button class="rb tier" data-a="vAutoGo">Auto</button><button class="rb tier" data-a="vExit">Exit</button>`;}const lk=$('#look');const v=VEH.driving;const t=`${BUILDINGS[v.k].n} · ${Math.round(Math.abs(v.spd)*3.6)} km/h · fuel ${Object.values(v.fuel).reduce((a,c)=>a+c,0)}${VEH.rec?' · recording '+v.route.length*3+' m':''}`;if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
  else if(BUILD.mode==='rail'){const lk=$('#look');const t=BUILD.railA?'Tap where the track goes ('+costText(RAIL.cost)+' per '+RAIL.per+' m)':'Tap a station end or track end';act.classList.remove('hide');act.firstElementChild.textContent=BUILD.railA?'Lay':'Start';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}
  else if(HAND.what&&HAND.what.kind==='veh'){act.firstElementChild.textContent='Drive';const lk=$('#look');const t=BUILDINGS[HAND.what.v.k].n+(HAND.what.v.auto?' · autopilot':'')+' · tap the vehicle for its menu';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
 
@@ -5396,7 +5397,7 @@ function mapStep5(ms){const M=W5.map;if(!M)return;const t0=performance.now(),W=W
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.6.4',VERSION_MARK='FFVER@0.6.4@';
+const VERSION='0.6.5',VERSION_MARK='FFVER@0.6.5@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -5445,5 +5446,6 @@ function frame(now){CRASH.tick(now);let dt=Math.min(.1,(now-lastT)/1000);lastT=n
 {const _gp=GAME.primary;GAME.primary=function(down){if(down&&BUILD.mode==='signal'){BUILD.signalAction();return;}if(down&&BUILD.mode==='massdel'){BUILD.massAction();return;}return _gp(down);};}
 // tapping your Moss Pup opens its menu
 {const _ta=GAME.tapAt;GAME.tapAt=function(sx,sy){if(!UI.panel&&!BUILD.mode&&!VEH.driving){const r=screenRay(sx/innerWidth,sy/innerHeight);const q=rayDog(r.o,r.d);if(q&&q.pet){const i=pets().indexOf(q.d);if(i>=0){UI.A.dogMenu(i);return;}}}return _ta(sx,sy);};}
+
 
 })();</script></body></html>
