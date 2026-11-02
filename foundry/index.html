@@ -1765,6 +1765,8 @@ UI.init=function(){const u=$('#ui');u.innerHTML=`
  {const j=$('#jump');j.addEventListener('pointerdown',e=>{e.preventDefault();try{j.setPointerCapture(e.pointerId);}catch(_){}INPUT.jump=true;INPUT.jumpHeld=true;});const ju=()=>{INPUT.jumpHeld=false;};j.addEventListener('pointerup',ju);j.addEventListener('pointercancel',ju);j.addEventListener('lostpointercapture',ju);}
  $('#slidebtn').addEventListener('pointerdown',e=>{e.preventDefault();INPUT.crouch=true;});
  for(const id of ['#jump','#act','#slidebtn'])$(id).addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+ // slide your thumb while holding jump (or the action button) to look around, like the rest of the right side
+ for(const id of ['#jump','#act']){const el=$(id);let pid=null,last=null;el.addEventListener('pointerdown',e=>{pid=e.pointerId;last=[e.clientX,e.clientY];});el.addEventListener('pointermove',e=>{if(e.pointerId!==pid||!last)return;const dx=e.clientX-last[0],dy=e.clientY-last[1];last=[e.clientX,e.clientY];const s=.0055*(S.settings.sens||1);PL.yaw-=dx*s;PL.pitch=clamp(PL.pitch-dy*s,-1.45,1.45);});const end=e=>{if(e.pointerId===pid){pid=null;last=null;}};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);el.addEventListener('lostpointercapture',end);}
  {const cv=document.getElementById('gl');if(cv){cv.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});cv.addEventListener('touchmove',e=>{if(e.cancelable)e.preventDefault();},{passive:false});}addEventListener('gesturestart',e=>e.preventDefault());addEventListener('dblclick',e=>e.preventDefault());}
  for(const id of ['#ms','#tr','#pad','#sheet'])$(id).addEventListener('pointerdown',e=>e.stopPropagation());};
 const ICO={hammer:'<svg viewBox="0 0 24 24"><path d="M3 21l9-9M12 12l2-2M14 6l4-4 4 4-4 4-4-4zM10 8l6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
@@ -1921,7 +1923,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
- {v:'0.6.5',t:'The real jetpack fix',items:['Found it, thanks to a crash report: holding jump in mid-air made the zipline check hit an error every frame, which froze the game until you let go. Fixed, and ziplines along power lines work again.']},
+ {v:'0.6.6',t:'The real jetpack fix',items:['You can now look around while holding jump (or the action button): just slide your thumb.','Found it, thanks to a crash report: holding jump in mid-air made the zipline check hit an error every frame, which froze the game until you let go. Fixed, and ziplines along power lines work again.']},
  {v:'0.6.4',t:'Crash reports',items:['If the game hits an error, freezes, or closes by itself, it now saves a crash report with a short error code (like NF-AB12CD) and sends it automatically so the problem can be fixed.','See your reports in Settings → Crash reports, with buttons to copy them, send them now, or clear them.']},
  {v:'0.6.3',t:'Jetpack fix',items:['Fixed the game seeming to freeze when you press jump a second time in mid-air. You were grabbing a nearby power line as a zipline. Now you only catch ziplines when your jetpack is empty (or you have none), and only on real power lines between poles, not the short cables to machines.','Stopped iPhone from treating quick repeated presses on the game screen as zoom gestures.']},
  {v:'0.6.2',t:'Fixes',items:['Floors, walls, ramps, beams and other plain structures no longer show an Open button when you look at them.','Fixed a hitch when letting go of the jump button after using the jetpack on iPhone.']},
@@ -5397,7 +5399,7 @@ function mapStep5(ms){const M=W5.map;if(!M)return;const t0=performance.now(),W=W
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.6.5',VERSION_MARK='FFVER@0.6.5@';
+const VERSION='0.6.6',VERSION_MARK='FFVER@0.6.6@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
