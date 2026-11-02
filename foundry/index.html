@@ -287,6 +287,7 @@ body.padmode #pad,body.padmode #joy,body.padmode #joyHint,body.padmode #tr .rb,b
 #pad>#slidebtn svg{width:20px;height:20px}
 /* stop iOS from treating a held button as a long-press (that caused hitches when letting go of jump) */
 html,body,#ui,#ui button{-webkit-touch-callout:none}
+#gl,#pad,#pad button,#joy{touch-action:none}
 </style></head><body>
 <canvas id="gl"></canvas>
 <div id="ui"></div>
@@ -1720,6 +1721,7 @@ UI.init=function(){const u=$('#ui');u.innerHTML=`
  {const j=$('#jump');j.addEventListener('pointerdown',e=>{e.preventDefault();try{j.setPointerCapture(e.pointerId);}catch(_){}INPUT.jump=true;INPUT.jumpHeld=true;});const ju=()=>{INPUT.jumpHeld=false;};j.addEventListener('pointerup',ju);j.addEventListener('pointercancel',ju);j.addEventListener('lostpointercapture',ju);}
  $('#slidebtn').addEventListener('pointerdown',e=>{e.preventDefault();INPUT.crouch=true;});
  for(const id of ['#jump','#act','#slidebtn'])$(id).addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+ {const cv=document.getElementById('gl');if(cv){cv.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});cv.addEventListener('touchmove',e=>{if(e.cancelable)e.preventDefault();},{passive:false});}addEventListener('gesturestart',e=>e.preventDefault());addEventListener('dblclick',e=>e.preventDefault());}
  for(const id of ['#ms','#tr','#pad','#sheet'])$(id).addEventListener('pointerdown',e=>e.stopPropagation());};
 const ICO={hammer:'<svg viewBox="0 0 24 24"><path d="M3 21l9-9M12 12l2-2M14 6l4-4 4 4-4 4-4-4zM10 8l6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
  bag:'<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6L5 8zM9 8V6a3 3 0 016 0v2" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linejoin="round"/></svg>',
@@ -1875,6 +1877,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.6.3',t:'Jetpack fix',items:['Fixed the game seeming to freeze when you press jump a second time in mid-air. You were grabbing a nearby power line as a zipline. Now you only catch ziplines when your jetpack is empty (or you have none), and only on real power lines between poles, not the short cables to machines.','Stopped iPhone from treating quick repeated presses on the game screen as zoom gestures.']},
  {v:'0.6.2',t:'Fixes',items:['Floors, walls, ramps, beams and other plain structures no longer show an Open button when you look at them.','Fixed a hitch when letting go of the jump button after using the jetpack on iPhone.']},
  {v:'0.6.1',t:'Comfier touch controls',items:['The touch buttons sit further into the bottom-right corner, away from the middle of the screen.','Buttons no longer shift around when the action button appears and disappears: jump always stays in the same place, right above the action button.','Crouch is smaller and sits low beside the action button, so you won\'t hit it by accident while looking around.']},
  {v:'0.6.0',t:'A planet 25 times bigger',items:['New games start on a brand-new planet about 9 km across, 25 times the area of the last one. Your home continent is surrounded by four more: frozen peaks and crystal ridges to the north, mesas and dunes to the east, forests and marsh to the west, and a southern continent across the trench that you can only reach by sea or air. Islands sit in between.','Land bridges link the home continent to the north, east and west, so you can travel a long way on foot (and later by rover).','There are no loading screens. The ground, plants, caves and creatures are made around you as you travel, a little at a time, so the game stays smooth.','150 caves, more than 600 resource nodes spread across every region, 110 drop pods, 56 crash sites and 150 Echo Cores to find.','The map paints itself in the background, nearest places first, and you can zoom in much further. When zoomed out it shows a cleaner overview.','Creatures follow you around the bigger world, so the wilds never feel empty.','Saves made before this update keep their old planet. Start a new game to land on the new one.']},
@@ -2064,8 +2067,8 @@ function playerExtras(dt){if(PL.hp==null)PL.hp=100;if(PL.jet==null)PL.jet=1;PL.z
 const jetUnlocked=()=>(S.equip||{}).back==='jetpack';
 function jetStep(dt,hold){if(!jetUnlocked())return;if(PL.ground){PL.jet=Math.min(1,PL.jet+dt*.6);PL.jetOn=false;return;}
  if(hold&&PL.jet>0&&PL.vy<3.5){PL.vy=Math.min(PL.vy+38*dt,4.2);PL.jet=Math.max(0,PL.jet-dt/2.2);PL.jetOn=true;if(Math.random()<.5)FX.burst(PL.x,PL.y+.6,PL.z,COL('#ffb84a',1.5),1,1);}else PL.jetOn=false;}
-function zipFind(){const hy=PL.y+1.9;let best=null;for(const [a,b] of S.wires){const A=FAC.b.get(a),B=FAC.b.get(b);if(!A||!B)continue;const p=wirePoint(A),q=wirePoint(B);const d=v3.sub(q,p),L=v3.len(d);if(L<1)continue;let t=clamp(v3.dot(v3.sub([PL.x,hy,PL.z],p),d)/(L*L),0,1);const c=[p[0]+d[0]*t,p[1]+d[1]*t,p[2]+d[2]*t];const sag=Math.sin(t*Math.PI)*Math.min(1.2,L*.03);c[1]-=sag;const dd=Math.hypot(c[0]-PL.x,c[1]-hy,c[2]-PL.z);if(dd<1.5&&(!best||dd<best.dd))best={dd,a:A,b:B,t,L};}return best;}
-function zipStep(dt){const z=PL.zip;if(!z){if(!PL.ground&&PL.vy<1&&(INPUT.jumpHeld||INPUT.keys.Space)&&!PL.dead){const f=zipFind();if(f){const cd=camDir(),p=wirePoint(f.a),q=wirePoint(f.b);const dir=(q[0]-p[0])*cd[0]+(q[2]-p[2])*cd[2]>=0?1:-1;PL.zip={a:f.a,b:f.b,t:f.t,dir,L:f.L,v:4};AUDIO.zip();UI.hint('Ziplining · jump to let go');}}return false;}
+function zipFind(){const hy=PL.y+1.9;let best=null;for(const [a,b] of S.wires){const A=FAC.b.get(a),B=FAC.b.get(b);if(!A||!B)continue;if(!BUILDINGS[A.k].range||!BUILDINGS[B.k].range)continue;const p=wirePoint(A),q=wirePoint(B);const d=v3.sub(q,p),L=v3.len(d);if(L<10)continue;let t=clamp(v3.dot(v3.sub([PL.x,hy,PL.z],p),d)/(L*L),0,1);const c=[p[0]+d[0]*t,p[1]+d[1]*t,p[2]+d[2]*t];const sag=Math.sin(t*Math.PI)*Math.min(1.2,L*.03);c[1]-=sag;const dd=Math.hypot(c[0]-PL.x,c[1]-hy,c[2]-PL.z);if(dd<1.5&&(!best||dd<best.dd))best={dd,a:A,b:B,t,L};}return best;}
+function zipStep(dt){const z=PL.zip;if(!z){if(!PL.ground&&PL.vy<1&&(INPUT.jumpHeld||INPUT.keys.Space)&&!PL.dead&&!(jetUnlocked()&&PL.jet>.05)){const f=zipFind();if(f){const cd=camDir(),p=wirePoint(f.a),q=wirePoint(f.b);const dir=(q[0]-p[0])*cd[0]+(q[2]-p[2])*cd[2]>=0?1:-1;PL.zip={a:f.a,b:f.b,t:f.t,dir,L:f.L,v:4};AUDIO.zip();UI.hint('Ziplining · jump to let go');}}return false;}
  const A=z.a,B=z.b;if(!FAC.b.has(A.id)||!FAC.b.has(B.id)){PL.zip=null;return false;}
  const fwd=INPUT.jy>.2||INPUT.keys.KeyW;z.v=Math.min(16,z.v+dt*(fwd?14:6));z.t+=z.dir*z.v*dt/z.L;
  if(z.t>1||z.t<0){const end=z.dir>0?B:A,from=z.dir>0?A:B;const cd=camDir();let nb=null,bs=-.2;for(const [a,b] of S.wires){const o=a===end.id?b:b===end.id?a:null;if(o==null||o===from.id)continue;const O=FAC.b.get(o);if(!O)continue;const e=wirePoint(end),w=wirePoint(O);const dx=w[0]-e[0],dz=w[2]-e[2],L=Math.hypot(dx,dz)||1;const s=(dx*cd[0]+dz*cd[2])/L;if(s>bs){bs=s;nb=O;}}
@@ -5337,7 +5340,7 @@ function mapStep5(ms){const M=W5.map;if(!M)return;const t0=performance.now(),W=W
 
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.6.2',VERSION_MARK='FFVER@0.6.2@';
+const VERSION='0.6.3',VERSION_MARK='FFVER@0.6.3@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
