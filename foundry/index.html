@@ -5922,7 +5922,7 @@ function frame(now){CRASH.tick(now);let dt=Math.min(.1,(now-lastT)/1000);lastT=n
  requestAnimationFrame(frame);}
 (async function boot(){try{
  // the showcase factory is added once to the last save slot if that slot is empty
- try{const LK=SLOT_KEYS[SLOT_KEYS.length-1];if(!localStorage.getItem('nf_showcase_added')&&!localStorage.getItem(LK)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();JSON.parse(t);localStorage.setItem(LK,t);localStorage.setItem('nf_showcase_added','1');}}}catch(e){}
+ try{const LK=SLOT_KEYS[SLOT_KEYS.length-1];let old=null;try{old=JSON.parse(localStorage.getItem(LK)||'null');}catch(_){}const upg=old&&old.name==='Novaforge Showcase'&&!(old.showV>=2)&&!localStorage.getItem('nf_showcase_v2');if(upg||(!localStorage.getItem('nf_showcase_added')&&!old)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();JSON.parse(t);localStorage.setItem(LK,t);localStorage.setItem('nf_showcase_added','1');localStorage.setItem('nf_showcase_v2','1');}}}catch(e){}
  // ?showcase replaces the current slot with the prebuilt showcase factory (asks first)
  try{if(/[?&]showcase\b/.test(location.search)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();if(confirm('Replace the save in slot '+(SLOT+1)+' with the Novaforge Showcase factory? Your current save in this slot will be deleted.')){localStorage.setItem(SAVE_KEY,t);}}history.replaceState(null,'',location.pathname);}}catch(e){}
  const _bt0=performance.now();nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
