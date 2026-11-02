@@ -1353,7 +1353,7 @@ const touchMode=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window
 function bLocal(b,x,z){const c=Math.cos(b.rot),s=Math.sin(b.rot),dx=x-b.x,dz=z-b.z;return [c*dx-s*dz,s*dx+c*dz];}
 // height of a building's walkable top at a local point (null = you can't stand there)
 function bTop(b,lx,lz){const D=BUILDINGS[b.k];if(D.surf==='ramp')return b.y+D.rise*clamp(lz/D.d+.5,0,1);if(D.surf==='deck')return b.y+(D.top||D.h);if(b.k==='hub')return b.y+.5;if(b.k==='pole'||b.k==='cpole'||b.k==='cpoleT')return null;return b.y+D.h;}
-function solidAt(x,z,y){let top=ground(x,z);{const L=lakeAt(x,z);if(L)top=Math.max(top,lakeLevel(L)-1.2);}for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(Math.abs(b.x-x)>10||Math.abs(b.z-z)>10)continue;const [lx,lz]=bLocal(b,x,z);const mg=D.tops?3.4:0;if(Math.abs(lx)>D.w/2+mg||Math.abs(lz)>D.d/2+mg)continue;if(D.tops){for(const t of D.tops)if(lx>=t[0]&&lx<=t[2]&&lz>=t[1]&&lz<=t[3]){const h=b.y+t[4];if(h<=y+(t[4]<=1?1.15:.6)&&h>top)top=h;}continue;}const h=bTop(b,lx,lz);if(h!=null&&h<=y+.6&&h>top)top=h;}return top;}
+function solidAt(x,z,y){let top=ground(x,z);{const L=lakeAt(x,z);if(L&&!L.sea)top=Math.max(top,lakeLevel(L)-1.2);}for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(Math.abs(b.x-x)>10||Math.abs(b.z-z)>10)continue;const [lx,lz]=bLocal(b,x,z);const mg=D.tops?3.4:0;if(Math.abs(lx)>D.w/2+mg||Math.abs(lz)>D.d/2+mg)continue;if(D.tops){for(const t of D.tops)if(lx>=t[0]&&lx<=t[2]&&lz>=t[1]&&lz<=t[3]){const h=b.y+t[4];if(h<=y+(t[4]<=1?1.15:.6)&&h>top)top=h;}continue;}const h=bTop(b,lx,lz);if(h!=null&&h<=y+.6&&h>top)top=h;}return top;}
 function blockedAt(x,z,y){for(const b of FAC.b.values()){const D=BUILDINGS[b.k];if(Math.abs(b.x-x)>10||Math.abs(b.z-z)>10)continue;const [lx,lz]=bLocal(b,x,z);if(D.walls){if(Math.abs(lx)>D.w/2+3.6||Math.abs(lz)>D.d/2+3.6)continue;for(const w of D.walls)if(Math.abs(lx-w[0])<w[2]+.3&&Math.abs(lz-w[1])<w[3]+.3&&y<b.y+w[4]-.5&&y+1.8>b.y+.4)return true;for(const t of D.tops)if(t[4]<=1&&lx>=t[0]-.3&&lx<=t[2]+.3&&lz>=t[1]-.3&&lz<=t[3]+.3&&b.y+t[4]>y+1.15&&y+1.8>b.y-4)return true;continue;}let hw=D.w/2+.3,hd=D.d/2+.3;if(b.k==='pole'||b.k==='cpole'||b.k==='cpoleT'){hw=hd=.45;}
   if(Math.abs(lx)>hw||Math.abs(lz)>hd)continue;
   if(D.surf==='ramp'||D.surf==='deck'){const h=bTop(b,clamp(lx,-D.w/2,D.w/2),clamp(lz,-D.d/2,D.d/2));const under=D.surf==='deck'&&D.top>2?b.y+D.top-.4:b.y;if(y<h-.6&&y+1.8>under)return true;continue;}
@@ -1623,7 +1623,7 @@ function slotInfo(i){let d=null;try{d=JSON.parse(localStorage.getItem(SLOT_KEYS[
 function gotoSlot(i,fresh,name){if(fresh){GAME.wiping=true;clearTimeout(_saveT);}else saveGame();try{localStorage.setItem('nf_slot',String(i));if(fresh){localStorage.removeItem(SLOT_KEYS[i]);sessionStorage.setItem('ff_new','1');sessionStorage.setItem('nf_name',name||'');}else sessionStorage.setItem('nf_cont','1');}catch(e){}location.reload();}
 function deleteSlot(i){try{localStorage.removeItem(SLOT_KEYS[i]);}catch(e){}if(i===SLOT){GAME.wiping=true;location.reload();}}
 let S=null;
-function newState(){return {v:2,worldV:3,landed:false,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true,autoWire:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
+function newState(){return {v:2,worldV:4,landed:false,tier:0,inv:{},hub:{},sky:{phase:0,got:{}},nextId:1,wires:[],chopped:[],player:{x:0,z:-11,yaw:0,pitch:-.08},settings:{sens:1,quality:'auto',sound:true,autoWire:true},b:[],belts:[],time:Date.now(),won:false,seenTips:{}};}
 // ---- milestones ----
 const curMilestone=()=>MILESTONES[S.tier]||null;
 function hubWants(item){const M=curMilestone();if(!M||!M.need[item])return 0;return M.need[item]-(S.hub[item]||0);}
@@ -1860,6 +1860,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.5.0',t:'Stage 1: An ocean planet with no air',items:['A brand-new ocean planet for new games: continents and islands, beaches and sea cliffs, a shallow shelf full of kelp and coral, deep basins and a glowing trench almost 150 m down. You can swim anywhere: look down and move forward to dive, jump to swim up.','There\'s no air on this planet. Your suit tank lasts about a minute and a half away from the drop pod or the HUB. Drop tethers as you explore (📍 button, Y, or tap RB on a controller); connected tethers keep you breathing. A new Oxygenator building makes a 32 m bubble of air while it has power.','Air runs out faster at night, in storms, underwater and on the Frost Highlands. Oxygen Canisters (workbench: leaves and an iron plate) give you a quick refill. Run out completely and you pass out: your suit brings you home and your backpack waits where you fell, marked on the map.','Your tank gets bigger as you reach new milestones. Settings → Survival lets you pick Relaxed (three times the air) or turn oxygen off.','Storms: strong winds push you around, lightning strikes nearby and thunder rolls in.','The story begins. Shortly after you land, your suit picks up a signal. It leads you to the ruins of the Vael, the ancient race who made this world. Each ruin plays an Echo with part of their story and gives you Vael Relics for alien tech later. Eleven Echoes are spread across every biome, two of them under the sea; the Codex keeps them under Story.','Sixteen crashed ships are scattered around the planet, a few in shallow water. Hold to strip them for plates, wire, rotors, frames, the odd computer, canisters and tethers.','Old saves are no longer supported going forward; start a new game to play on the new planet.']},
  {v:'0.4.0',t:'A whole new look',items:['A new graphics engine. Every surface now has real textures with depth and detail, all painted by your device when the game starts: grass blades, layered cliff rock, sand ripples, sparkling snow, pebbles, moss, metal panels with rivets, tiled concrete, chipped paint, rubber and bark.','Buildings get proper materials: brushed metal, painted plating with worn edges, concrete floors with seams, and glass. Corners catch the light.','New lighting: softer shadows, realistic shine and reflections, sky and ground light, and darker crevices.','Screen effects: anti-aliasing (smooth edges), ambient occlusion (soft contact shadows), bloom on lights, lava and crystals, sun shafts at sunrise and sunset, and colour grading that changes with each biome and the time of day.','A new sky: glowing sunsets along the horizon, two layers of sunlit clouds, brighter stars, the Milky Way, and auroras over the Frost Highlands at night.','New water with layered ripples, reflections and sun glints.','The world feels alive: flocks of birds by day, fireflies at night, spores drifting through the forests and hollows, and dust kicked up by your feet.','The pioneer is remodelled with a smoother suit, joints, gear pouches, a reflective visor and a better jetpack. They breathe and look around while standing still.','Trees and bushes have more detail up close. The HUD has a sleeker, glassier look.','Settings → Graphics: Fast turns all effects off for older phones. Auto keeps phones smooth by skipping ambient occlusion. Sharp turns everything on, and Ultra runs at full resolution with longer shadows.']},
  {v:'0.3.0',t:'Power, aluminum and friends',items:['Solar Panel Arrays (up to 24 MW in sunlight, less under clouds, nothing at night) and Wind Turbines (up to 40 MW, stronger in storms). Neither needs fuel.','New resources: Bauxite (Red Mesas, Dune Sea), Sulfur (Ashlands), SAM (Fungal Hollows, Crystal Spires) and Nitrogen Gas from resource wells on the Frost Highlands. Older maps get a few far-off nodes of each too.','Aluminum chain: Silica, Alumina Solution, Aluminum Scrap, Aluminum Ingots, Alclad Sheets and Aluminum Casings. Heat sinks, cooling systems, radio control units and fused frames now use them, plus nitrogen.','Explosives and acid: Black Powder, a faster Nobelisk recipe, Sulfuric Acid and a new Battery recipe.','New late-game machines: the Converter (turns one ore into another with Reanimated SAM, and makes Ficsite) and the Quantum Encoder (Superposition Oscillators and AI Expansion Servers, needed for the last Skyhook phase).','Somersloops: 44 hidden in caves and on the highest ground (fewer on older maps). Slot one into a machine to double its output at four times the power, or build an Alien Power Augmenter: +500 MW and +10% to the rest of its grid.','Personnel Elevator from 8 to 64 m: step in and press ▲ / ▼ (or E). Portals: build two or more, link them, and walk through.','Vehicles: the Explorer, a fast buggy that climbs steep slopes, and the Factory Cart, a little runabout that needs no fuel.','Trains: timetables with a condition at each stop (wait 6 s, wait 30 s, until full, until empty), and you can climb aboard a locomotive and drive it yourself.','Map stamps: tap the map and drop one of 12 stamps. Conveyor Wall Mounts snap to walls; Conveyor Ceiling Mounts hang under floors and roofs.','Lizard Doggos roam the land. Feed one a Glowberry and it follows you around, digging up useful things every few minutes. Tap it to rename it or tell it to stay.']},
  {v:'0.2.0',t:'The Big Planet Update',items:['A brand-new planet for new games: about 1.6 km across (six times bigger) with nine biomes: Verdant Basin, Frost Highlands, Crystal Spires, Red Mesas, Ashlands, Dune Sea, Glowmire Marsh, Titan Forest and Fungal Hollows. Each has its own ground, plants, fog, sky and resources.','Lots of verticality: plateaus, mesas, sinkholes and volcanoes. Steep cliffs can\'t be walked up, so find a ramp, use your jetpack or build your way up.','24 caves: tunnels through ridges and deep caverns lit by glowing crystals, each with a rich resource node inside. It gets dark in there, so your headlamp switches on.','Your existing saves keep the map they were made on. Start a new game to explore the new planet.','New graphics everywhere: textured ground for every biome (grass, moss, pebbles, sand ripples, sparkling snow, layered cliff rock, glowing lava and crystal veins), metal and painted surfaces on buildings, tiled foundations, shine and reflections, wet ground in the rain, moving clouds, better fog and colour, and plants and grass that sway in the wind.','Third-person camera with an animated pioneer who walks, sprints, crouches, slides, jumps and flies the jetpack. Switch with P, the new 👤 button, by holding View on a controller, or in Settings.','Hypertubes: build a Hypertube Entrance, then lay tube like a pipe (supports drop on open ground). Jump into the glowing ring and fly. Crouch to bail out.','Emotes (J, or the quick wheel) and Photo Mode (K or F2, or the quick wheel) with zoom, time of day and a Take Photo button.','Power switches now have a priority from 1 to 8. When a grid is overloaded the highest number turns off instead of the fuse blowing. Aim at any pole, switch, generator or battery to see that grid\'s power at a glance.','New Lights Control Panel: wire it to a grid to turn its lights on and off and pick their colour and brightness. Lamps can now be wired to the grid.','Codex tab: biomes, resources, plants, creatures and artifacts you\'ve discovered.','New gear: the Xeno-Zapper (longer reach) and Xeno-Basher (hits hard up close). Portable Miner: drop it on an ore node and come back later; it keeps filling while you\'re away.','New resources: Raw Quartz from crystals and Mycelia from mushrooms.','Trains: block signals (from the train station panel) so trains wait for each other, fluid cars and the new Fluid Freight Platform. Trucks on autopilot now steer around obstacles.','Blueprints: rename, delete, share as a code and import codes. New Blueprint Designer platform: build on it and save everything on it in one tap.','Area dismantle: in dismantle mode tap Area dismantle (or Shift+X), mark two corners, confirm.','Building: area zoop for foundations (2×2 up to 8×8), hologram lock with nudging (N, the 🔒 button, or L3 on a controller), and yellow guide lines that snap to nearby buildings.','New shapes: 2 m and 4 m foundations, glass and frame foundations, steep and double ramps, a quarter pipe, 8 m walls, gate walls and sloped walls.','Late game: Quartz Crystal, Crystal Oscillator, AI Limiter, High-Speed Connector, Supercomputer, Heat Sink, Cooling System, Radio Control Unit, Turbo Motor and Fused Modular Frame. The Skyhook now has four phases.','Saves: rename, export to a file, import, and an automatic daily backup for each slot. A small Saved badge shows when the game saves.','Settings: draw distance, belt item detail, grass and shadows. New Planner tab: pick a part and a rate to see every machine, raw resource and the power you need.']},
@@ -1979,7 +1980,7 @@ const AMB={on:false,
 // ---- crash sites (drop pods) with hard drives ----
 const POD_COSTS=[{iron_plate:30,iron_rod:20},{reinforced_plate:6,cable:30},{rotor:8,concrete:60},{modular_frame:4,cable:60},{steel_beam:20,encased_beam:6},{steel_pipe:40,rotor:12},{plastic:30,rubber:30},{motor:4,circuit:10}];
 const POD_LOOT=[{screw:120,wire:60},{reinforced_plate:6,rotor:4},{modular_frame:4,power_shard:1},{steel_beam:30,cable:80},{encased_beam:10,power_shard:1},{rubber:40,plastic:40},{motor:3,circuit:12},{computer:2,power_shard:2}];
-function placeExplore(){const rnd=mulberry(WORLD.seed*331+17),W=WORLD;const taken=[];const clear=(x,z,d)=>{if(Math.abs(x)>W.half-60||Math.abs(z)>W.half-60)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.4+5)return false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<14)return false;for(const o of taken)if(Math.hypot(o[0]-x,o[1]-z)<d)return false;return true;};
+function placeExplore(){const rnd=mulberry(WORLD.seed*331+17),W=WORLD;const taken=[];const clear=(x,z,d)=>{if(Math.abs(x)>W.half-60||Math.abs(z)>W.half-60||!dryLand(x,z))return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.4+5)return false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<14)return false;for(const o of taken)if(Math.hypot(o[0]-x,o[1]-z)<d)return false;return true;};
  const NP=wv3()?34:12;W.pods=[];for(let i=0;i<NP;i++){for(let t=0;t<600;t++){const a=rnd()*TAU,r=NP===12?70+i*16+rnd()*30:80+i/NP*(W.half-190)+rnd()*40,x=Math.cos(a)*r,z=Math.sin(a)*r;if(!clear(x,z,40)||groundNormal(x,z)[1]<.88)continue;taken.push([x,z]);const lv=Math.min(POD_COSTS.length-1,Math.floor(i*POD_COSTS.length/NP));W.pods.push({id:i,x,z,y:ground(x,z),rot:rnd()*TAU,cost:POD_COSTS[lv],loot:POD_LOOT[lv]});break;}}
  // resonance cores sit on high ground and in odd corners
  const cand=[];for(let t=0;t<3000;t++){const x=(rnd()*2-1)*(W.half-70),z=(rnd()*2-1)*(W.half-70);if(Math.hypot(x,z)<90||!clear(x,z,30))continue;const n=groundNormal(x,z);if(n[1]<.8)continue;cand.push([ground(x,z)+rnd()*8,x,z]);}
@@ -2437,7 +2438,7 @@ UI.A.wpAdd=()=>{const p=UI.map.pend;if(!p)return;const n=($('#wpn')&&$('#wpn').v
 UI.A.wpCancel=()=>{UI.map.pend=null;UI.refresh();};UI.A.wpRm=v=>{WPT.list().splice(+v,1);UI.refresh();saveSoon();};UI.A.wpOn=v=>{const w=WPT.list()[+v];w.on=w.on===false;UI.refresh();saveSoon();};
 UI.A.hubMark=()=>{S.settings.hubMark=S.settings.hubMark===false;UI.refresh();saveSoon();};
 UI.mapImg=function(){if(UI._mapCv)return UI._mapCv;const W=WORLD,N=512,sc=N/(W.half*2);const cv=document.createElement('canvas');cv.width=cv.height=N;const x=cv.getContext('2d');const im=x.createImageData(N,N);
- for(let j=0;j<N;j++)for(let i=0;i<N;i++){const wx=-W.half+(i+.5)/sc,wz=-W.half+(j+.5)/sc,h=ground(wx,wz),n=groundNormal(wx,wz);let col=terrainColor(wx,wz,h,n[1]);let sh=.75+n[0]*.5+(h-10)*.004;const L=lakeAt(wx,wz);if(L){col=[.12,.42,.55];sh=1;}const o=(j*N+i)*4;
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){const wx=-W.half+(i+.5)/sc,wz=-W.half+(j+.5)/sc,h=ground(wx,wz),n=groundNormal(wx,wz);let col=terrainColor(wx,wz,h,n[1]);let sh=.75+n[0]*.5+(h-10)*.004;const L=lakeAt(wx,wz);if(L){col=L.sea?mixc([.16,.5,.6],[.02,.1,.22],smooth(0,90,-h)):[.12,.42,.55];sh=1;}const o=(j*N+i)*4;
   im.data[o]=Math.pow(col[0],1/2.2)*255*sh;im.data[o+1]=Math.pow(col[1],1/2.2)*255*sh;im.data[o+2]=Math.pow(col[2],1/2.2)*255*sh;im.data[o+3]=255;}x.putImageData(im,0,0);
  // faint 50 m grid
  x.strokeStyle='rgba(255,255,255,.06)';x.lineWidth=1;for(let g=-W.half;g<=W.half;g+=50){const p=(g+W.half)*sc;x.beginPath();x.moveTo(p,0);x.lineTo(p,N);x.moveTo(0,p);x.lineTo(N,p);x.stroke();}UI._mapCv=cv;return cv;};
@@ -2698,7 +2699,7 @@ GEAR.migrate=function(){S.equip=S.equip||{};if(S.tier>=1&&!S.gotJet){S.gotJet=1;
 // ---------- consumables ----------
 GEAR.use=function(k){if(k==='berry'||k==='medkit'){if((S.inv[k]||0)<1)return;if((PL.hp??100)>=100){UI.toast('You are already at full health','info');return;}S.inv[k]--;if(!S.inv[k])delete S.inv[k];PL.hp=Math.min(100,(PL.hp??100)+(k==='medkit'?70:12));AUDIO.craft();UI.toast('Healed','good');}else if(ITEMS[k]?.eq)GEAR.equip(k);UI.refresh();};
 // ---------- hazard zones: toxic gas and radiation ----------
-function placeHazards(){const rnd=mulberry(WORLD.seed*577+9),W=WORLD,out=[];const ok=(x,z,r)=>{if(Math.abs(x)>W.half-60||Math.abs(z)>W.half-60)return false;if(Math.hypot(x,z)<120)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r+r)return false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<r+8)return false;for(const o of out)if(Math.hypot(o.x-x,o.z-z)<o.r+r+40)return false;return true;};
+function placeHazards(){const rnd=mulberry(WORLD.seed*577+9),W=WORLD,out=[];const ok=(x,z,r)=>{if(Math.abs(x)>W.half-60||Math.abs(z)>W.half-60||!dryLand(x,z))return false;if(Math.hypot(x,z)<120)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r+r)return false;for(const nd of W.nodes)if(Math.hypot(nd.x-x,nd.z-z)<r+8)return false;for(const o of out)if(Math.hypot(o.x-x,o.z-z)<o.r+r+40)return false;return true;};
  for(const [kind,n,r] of (wv3()?[['gas',10,28],['rad',5,24]]:[['gas',4,26],['rad',2,22]]))for(let i=0;i<n;i++)for(let t=0;t<500;t++){const a=rnd()*TAU,d=wv3()?220+rnd()*(W.half-340):140+rnd()*120,x=Math.cos(a)*d,z=Math.sin(a)*d;if(ok(x,z,r)){out.push({kind,x,z,r,y:ground(x,z)});break;}}W.hazards=out;
  const g=new GB();for(let k=0;k<7;k++){const a=k/7*TAU;g.add(PRIM.lathe([[.1,0],[.6,.8],[.25,1.6],[.6,2]],8),T(Math.cos(a)*2.4,0,Math.sin(a)*2.4,0,0,0,.8+k%3*.2),'#5a7a4a');g.add(PRIM.sphere(.55,8,6),T(Math.cos(a)*2.4,1.9,Math.sin(a)*2.4),COL('#9aff6a',1.2));}g.add(PRIM.sphere(1.2,10,8),T(0,.8,0,0,0,0,1,.7,1),COL('#7ae04a',.9));const gasM=g.build();
  const h=new GB();for(let k=0;k<9;k++){const a=k/9*TAU+rnd(),r=k?1+rnd()*1.6:0,hh=k?1+rnd()*1.6:3;h.add(PRIM.lathe([[.001,0],[.3,.1],[.2,hh*.85],[.001,hh]],6,{flat:true}),T(Math.cos(a)*r,0,Math.sin(a)*r,rnd()*3,(rnd()-.5)*.6,(rnd()-.5)*.6),COL('#c8ff3a',1.6));}h.add(PRIM.cyl(3,3.4,.3,10),T(0,-.1,0),'#3a4a2a');const radM=h.build();
@@ -3099,7 +3100,7 @@ Object.assign(BUILD_MODEL,{
 });
 // geysers, resource wells and uranium (at the radiation zones)
 function placeSpecialNodes(){const rnd=mulberry(WORLD.seed*733+5),W=WORLD;const add=(type,purity,x,z,extra)=>{const nd=Object.assign({id:W.nodes.length,type,purity,x:Math.round(x),z:Math.round(z),y:ground(x,z)},extra||{});W.nodes.push(nd);return nd;};
- const free=(x,z)=>{if(Math.abs(x)>W.half-50||Math.abs(z)>W.half-50)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.3+8)return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<30)return false;for(const h of (W.hazards||[]))if(Math.hypot(h.x-x,h.z-z)<h.r+10)return false;return groundNormal(x,z)[1]>.88;};
+ const free=(x,z)=>{if(Math.abs(x)>W.half-50||Math.abs(z)>W.half-50||!dryLand(x,z))return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.3+8)return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<30)return false;for(const h of (W.hazards||[]))if(Math.hypot(h.x-x,h.z-z)<h.r+10)return false;return groundNormal(x,z)[1]>.88;};
  const spot=(r0,r1)=>{for(let t=0;t<500;t++){const a=rnd()*TAU,r=r0+rnd()*(r1-r0),x=Math.cos(a)*r,z=Math.sin(a)*r;if(free(x,z))return [x,z];}return null;};
  const K=WORLD.k||1;for(let i=0;i<(K>1?14:6);i++){const p=spot(100*K,250*K);if(p)add('geyser',i%3===0?2:1,p[0],p[1]);}
  for(let i=0;i<(K>1?10:4);i++){const p=spot(120*K,250*K);if(p)add('well',1,p[0],p[1],{fluid:i%2?'crude_oil':'water'});}
@@ -3420,7 +3421,7 @@ PAD.update=function(dt){const gps=navigator.getGamepads?navigator.getGamepads():
  if(down(3))UI.A.tab('inv');                                                                                                            // Y: inventory
  if(down(4))UI.A.tab('build');                                                                                                          // LB: build menu
  if(down(6)){if(BUILD.mode==='dismantle')BUILD.cancel();else BUILD.dismantle();}                                                       // LT: dismantle mode
- if(B[5]){PAD.rbT=(PAD.rbT||0)+dt;if(PAD.rbT>.45&&!PAD.rbH){PAD.rbH=1;GEAR.cycleHand();}}else{if(P[5]&&!PAD.rbH&&BUILD.mode==='place')BUILD.cycleZoop();PAD.rbT=0;PAD.rbH=0;} // RB: hold = switch tools · tap = build a row
+ if(B[5]){PAD.rbT=(PAD.rbT||0)+dt;if(PAD.rbT>.45&&!PAD.rbH){PAD.rbH=1;GEAR.cycleHand();}}else{if(P[5]&&!PAD.rbH){if(BUILD.mode==='place')BUILD.cycleZoop();else if(!BUILD.mode&&wv4())tetherDrop();}PAD.rbT=0;PAD.rbH=0;} // RB: hold = switch tools · tap = build a row
  if(BUILD.mode&&BUILD.locked){if(down(14))BUILD.nudgeXZ(-1,0);if(down(15))BUILD.nudgeXZ(1,0);if(down(12))BUILD.nudgeXZ(0,1);if(down(13))BUILD.nudgeXZ(0,-1);}                // locked hologram: D-pad nudges
  else if(BUILD.mode){if(down(14))BUILD.rotate(-1);if(down(15))BUILD.rotate(1);                                                               // D-pad ◀ ▶: rotate
   if(down(12))UI.A.wheel();if(down(13)){if(BUILD.mode==='place')BUILD.nudge(B[11]?1:-1);}}                                               // ▲ quick switch wheel · ▼ lower (R3+▼ raise)
@@ -3595,7 +3596,7 @@ function groundRay(x,z,y){const g=ground(x,z);const q=caveHere(x,z,y);if(q&&!q.i
 {const _eu=ENV.update;ENV.update=function(dt,play){_eu(dt,play);if(!wv3())return;bioW(R.cam[0],R.cam[2]);let f=[0,0,0],t=[0,0,0],d=0;for(let i=0;i<BIO3.length;i++){const w=BW[i];if(w<.001)continue;const b=BIO3[i];for(let k=0;k<3;k++){f[k]+=b.fog[k]*w;t[k]+=b.top[k]*w;}d+=b.fd*w;}
  const dk=ENV.dayK,mix=.8*dk,lum=(R.fog[0]+R.fog[1]+R.fog[2])/2.32;for(let k=0;k<3;k++){R.fog[k]=lerp(R.fog[k],f[k]*lum,mix);R.top[k]=lerp(R.top[k],t[k],mix*.6);}R.fog[3]*=lerp(1,d,.55)*.72;
  const ck=CAVE3.k||0;if(ck>.01){R.sky=R.sky.map(c=>c*(1-.82*ck));R.gnd=R.gnd.map(c=>c*(1-.82*ck));R.sunCol=R.sunCol.map(c=>c*(1-.6*ck));R.lamp=Math.max(R.lamp||0,ck*.95);R.fog[3]*=1-ck*.6;}};}
-{const _iw=initWorld;initWorld=function(){if(wv3()){WORLD.half=800;WORLD.step=3.2;WORLD.k=2.5;lakes3();CAVE3.list=[];planCaves3(CAVE3.pre);}else WORLD.k=1;_iw();};}
+{const _iw=initWorld;initWorld=function(){if(wv3()){if(!wv4()){WORLD.half=800;WORLD.step=3.2;WORLD.k=2.5;}lakes3();CAVE3.list=[];planCaves3(CAVE3.pre);}else WORLD.k=1;_iw();};}
 
 // ---- 26-flora3.js ----
 // ===== World v3 content: biome flora, grass, resource nodes, caves' treasures, fast lookups =====
@@ -3676,7 +3677,7 @@ function caveZone(x,z,pad=6){if(!CAVE3.list.length)return false;const q=caveQ(x,
  const titans=[];const lakeNear=(x,z)=>LAKES.some(L=>Math.hypot(x-L.x,z-L.z)<L.r*1.25);
  for(let bi=0;bi<FLORA3.length;bi++){const B=BIO3[bi];for(const [kind,n,pals,s0,s1] of FLORA3[bi]){let made=0;for(let t=0;t<n*8&&made<n;t++){const a=rnd()*TAU,r=Math.sqrt(rnd())*(bi?430:330);const x=B.x+Math.cos(a)*r,z=B.z+Math.sin(a)*r;
   if(Math.abs(x)>W.half-130||Math.abs(z)>W.half-130)continue;const bt=biomeTop2(x,z);if(bt[0]!==bi||bt[2]<.55)continue;const dc=Math.hypot(x,z);if(dc<(FK[kind].t==='bush'?18:kind==='slug'?90:34))continue;
-  if(groundNormal(x,z)[1]<(kind==='crystal'||kind==='boulder'?.62:.8)||lakeNear(x,z)||caveZone(x,z))continue;
+  if(groundNormal(x,z)[1]<(kind==='crystal'||kind==='boulder'?.62:.8)||lakeNear(x,z)||caveZone(x,z)||!dryLand(x,z))continue;
   if(kind!=='bush'&&kind!=='fern'&&kind!=='reed'&&kind!=='shroom'){let near=false;for(const nd of W.nodes)if(Math.abs(nd.x-x)<8&&Math.abs(nd.z-z)<8){near=true;break;}if(near)continue;}
   if(kind==='titan'){if(titans.some(q=>Math.hypot(q[0]-x,q[1]-z)<22))continue;titans.push([x,z]);}
   if(kind==='bone'&&out.some(f=>f.kind==='bone'&&Math.hypot(f.x-x,f.z-z)<60))continue;
@@ -3689,7 +3690,7 @@ function caveZone(x,z,pad=6){if(!CAVE3.list.length)return false;const q=caveQ(x,
 // instancing only what's near you (titans are landmarks and draw further)
 {const _fi=floraInstancers;floraInstancers=function(){_fi();if(wv3()){FLORA.lo=floraLoMeshes();FLORA.instLo={};for(const k in FLORA.lo){const n=WORLD.flora.filter(f=>f.kind===k).length;if(!n)continue;const I=instancer(FLORA.lo[k],n+4);I.noShadow=true;FLORA.instLo[k]=I;R.inst.push(I);}}for(const k in FLORA.inst)FLORA.inst[k].sway=k==='rock'||k==='boulder'||k==='ember'||k==='crystal'||k==='bone'||k==='slug'?0:k==='titan'?.25:1;};}
 {const _rf=refreshFlora;refreshFlora=function(){if(!wv3())return _rf();const cx=R.cam[0],cz=R.cam[2],D=drawDist();FLORA._p=[cx,cz];
- const rad={bush:150,fern:140,reed:150,shroom:120,slug:260,rock:260,ember:260,crystal:320,titan:D+250,bone:D};const hiR={bush:70,fern:60,reed:60,shroom:50,titan:160,bone:999,slug:999};
+ const rad={kelp:110,coral:100,seaglow:160,bush:150,fern:140,reed:150,shroom:120,slug:260,rock:260,ember:260,crystal:320,titan:D+250,bone:D};const hiR={kelp:45,coral:40,seaglow:60,bush:70,fern:60,reed:60,shroom:50,titan:160,bone:999,slug:999};
  for(const k of Object.keys(FLORA.inst)){const I=FLORA.inst[k],IL=(FLORA.instLo||{})[k];const rk=Math.min(rad[k]||Math.min(D,460),D+250),r2=rk*rk,h=IL?(hiR[k]||95):1e9,h2=h*h;let n=0,m=0;for(const f of WORLD.flora){if(f.kind!==k||!f.alive)continue;const dx=f.x-cx,dz=f.z-cz,d2=dx*dx+dz*dz;if(d2>r2)continue;const c=COL(f.pal[f.pal.length-1]);let J,o;if(d2<h2){if(n>=I.max)continue;J=I;o=n*8;n++;}else{if(m>=IL.max)continue;J=IL;o=m*8;m++;}const a=J.data;a[o]=f.x;a[o+1]=f.y-.1;a[o+2]=f.z;a[o+3]=f.s;a[o+4]=c[0];a[o+5]=c[1];a[o+6]=c[2];a[o+7]=f.r;}I.n=n;if(IL)IL.n=m;}};}
 // ---- grass and moss tufts around you ----
 const GRASS={I:null,p:null};
@@ -3710,7 +3711,7 @@ const NODES3=[null,[['iron_ore',[2,1,1]],['coal',[2,1]],['limestone',[1,1]],['ir
  [['crude_oil',[2,1]],['crude_oil',[1,1,0]],['limestone',[2,1]],['iron_ore',[1,1]]],[['crude_oil',[2,1]],['coal',[1,1]],['copper_ore',[1,1,0]],['iron_ore',[1,0]]],
  [['iron_ore',[2,2]],['limestone',[2,1,1]],['copper_ore',[1,1]],['coal',[1,1]]],[['aurite_ore',[2,1]],['coal',[2,1]],['iron_ore',[1,1,0]],['copper_ore',[1,0]]]];
 {const _pn=placeNodes;placeNodes=function(){if(!wv3())return _pn();const rnd=mulberry(WORLD.seed*1913+7),W=WORLD,out=[],centers=[];
- const flat=(x,z)=>{if(Math.abs(x)>W.half-140||Math.abs(z)>W.half-140)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.35+8)return false;if(caveZone(x,z,8))return false;return groundNormal(x,z)[1]>.9;};
+ const flat=(x,z)=>{if(Math.abs(x)>W.half-140||Math.abs(z)>W.half-140||!dryLand(x,z))return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.35+8)return false;if(caveZone(x,z,8))return false;return groundNormal(x,z)[1]>.9;};
  const cluster=(type,purs,pick,gap)=>{for(let t=0;t<900;t++){const p=pick();if(!p)continue;const [cx,cz]=p;if(!flat(cx,cz))continue;
    let bad=false;for(const c of centers){const d=Math.hypot(c.x-cx,c.z-cz);if(d<(c.type===type?gap*.7:gap)){bad=true;break;}}if(bad)continue;
    const placed=[];for(const pu of purs){for(let k=0;k<80;k++){const a2=rnd()*TAU,r2=placed.length?11+rnd()*9:rnd()*4;const base=placed.length?placed[Math.floor(rnd()*placed.length)]:{x:cx,z:cz};const x=base.x+Math.cos(a2)*r2,z=base.z+Math.sin(a2)*r2;
@@ -3831,7 +3832,7 @@ PHOTO.snap=function(){const bar=document.getElementById('photobar');renderFrame(
 // keys, HUD button and quick-wheel shortcuts
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||GAME.mode!=='play'||GAME.paused)return;if(e.code==='KeyP')UI.A.camToggle();else if(e.code==='KeyJ')UI.A.emotes();else if(e.code==='F2'||(e.code==='KeyK'&&!UI.panel))PION.photo?PHOTO.stop():PHOTO.start();else if(e.code==='Escape'&&PION.photo){PHOTO.stop();}});
 {const _i=UI.init;UI.init=function(){_i();const tr=$('#tr');const b=document.createElement('button');b.className='rb';b.dataset.a='camToggle';b.title='Camera (P)';b.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2" fill="currentColor"/><path d="M6 21v-4.5a6 6 0 0 1 12 0V21" fill="currentColor"/><path d="M2 12h3M19 12h3" stroke="currentColor" stroke-width="2"/></svg>';tr.insertBefore(b,tr.children[2]||null);};}
-{const _s=WHEEL.show;WHEEL.show=function(){_s();const el=document.getElementById('wheel');if(!el)return;const row=document.createElement('div');row.className='whrow';row.innerHTML='<button data-a="camToggle">🎥 Camera</button><button data-a="emotes">🕺 Emotes</button><button data-a="photoMode">📸 Photo</button>';el.appendChild(row);};}
+{const _s=WHEEL.show;WHEEL.show=function(){_s();const el=document.getElementById('wheel');if(!el)return;const row=document.createElement('div');row.className='whrow';row.innerHTML=(wv4()?'<button data-a="tether">📍 Tether</button>':'')+'<button data-a="camToggle">🎥 Camera</button><button data-a="emotes">🕺 Emotes</button><button data-a="photoMode">📸 Photo</button>';el.appendChild(row);};}
 UI.A.photoMode=()=>{WHEEL.hide();PHOTO.start();};
 (function(){const st=document.createElement('style');st.textContent=`
 #emw{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(6,8,12,.45)}#emw.on{display:flex}
@@ -4349,7 +4350,7 @@ Object.assign(ITEM_MODEL,{
  return g.build();};}
 // new nodes are added after everything else so existing saves keep their node numbers
 function placeNewRes(){const W=WORLD,rnd=mulberry(W.seed*1301+41);const start=W.nodes.length;
- const free=(x,z)=>{if(Math.abs(x)>W.half-140||Math.abs(z)>W.half-140)return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.3+8)return false;if(caveZone(x,z,8))return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<14)return false;return groundNormal(x,z)[1]>.9;};
+ const free=(x,z)=>{if(Math.abs(x)>W.half-140||Math.abs(z)>W.half-140||!dryLand(x,z))return false;for(const L of LAKES)if(Math.hypot(x-L.x,z-L.z)<L.r*1.3+8)return false;if(caveZone(x,z,8))return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<14)return false;return groundNormal(x,z)[1]>.9;};
  const add=(type,purity,x,z,extra)=>{const nd=Object.assign({id:W.nodes.length,type,purity,x:Math.round(x),z:Math.round(z),y:ground(Math.round(x),Math.round(z))},extra||{});W.nodes.push(nd);return nd;};
  const cluster=(type,purs,pick)=>{for(let t=0;t<600;t++){const p=pick();if(!p||!free(p[0],p[1]))continue;let n=0;for(const pu of purs){for(let k=0;k<60;k++){const a=rnd()*TAU,r=n?11+rnd()*8:0;const x=p[0]+Math.cos(a)*r,z=p[1]+Math.sin(a)*r;if(!free(x,z))continue;add(type,pu,x,z);n++;break;}}if(n)return true;}return false;};
  if(wv3()){const inB=bi=>()=>{const B=BIO3[bi],a=rnd()*TAU,r=Math.sqrt(rnd())*400;const x=B.x+Math.cos(a)*r,z=B.z+Math.sin(a)*r;const t=biomeTop2(x,z);return t[0]===bi&&t[2]>.8?[x,z]:null;};
@@ -4803,10 +4804,10 @@ pioneerMeshes=function(){const suit='#ece8df',suit2='#d8d3c8',orange='#f0892f',d
 // ---------- richer plants: rebuilt close-up meshes for the common trees and bushes ----------
 {const _fm=floraMeshes;floraMeshes=function(){_fm();const K=FLORA.kinds;
  {const g=new GB();g.add(PRIM.lathe([[.55,0],[.38,.4],[.3,1.6],[.24,3.1],[.3,3.6]],10),null,'#8c7c8e');for(let k=0;k<5;k++){const a=k/5*TAU;g.add(PRIM.cone(.18,.9,6),T(Math.cos(a)*.35,.05,Math.sin(a)*.35,0,Math.cos(a)*1.2,-Math.sin(a)*1.2),'#7a6a7c');}
-  g.add(PRIM.sphere(1.55,18,12),T(0,4.25,0,0,0,0,1,.6,1),COL('#ffffff',.22));g.add(PRIM.sphere(1.35,16,8),T(0,4.05,0,0,0,0,1,.38,1),COL('#ffffff',.55));
-  for(let k=0;k<9;k++){const a=k/9*TAU;g.add(PRIM.sphere(.17,8,6),T(Math.cos(a)*1.15,3.65,Math.sin(a)*1.15),COL('#fff4c0',1.4));g.add(PRIM.cyl(.012,.012,.5+(k%3)*.3,4),T(Math.cos(a)*.8,3.2-(k%3)*.3,Math.sin(a)*.8),'#c8b8c8');g.add(PRIM.sphere(.06,6,4),T(Math.cos(a)*.8,3.2-(k%3)*.3,Math.sin(a)*.8),COL('#fff4c0',1.8));}
-  for(let k=0;k<12;k++){const a=k*2.4,r=.4+(k%4)*.3;g.add(PRIM.sphere(.12,6,4),T(Math.cos(a)*r,4.9+(k%3)*.05,Math.sin(a)*r,0,0,0,1,.5,1),COL('#ffffff',.6));}K.bulb=g.build();}
- {const g=new GB();for(let k=0;k<6;k++){const a=k/6*TAU+k*.4,r=k?.35+(k%3)*.15:0;g.add(PRIM.sphere(.5+(k%2)*.12,12,8),T(Math.cos(a)*r,.42+(k%3)*.12,Math.sin(a)*r,0,0,0,1,.85,1),'#ffffff');}for(let k=0;k<10;k++){const a=k*2.1,r=.55+(k%3)*.1;g.add(PRIM.cone(.07,.35,5),T(Math.cos(a)*r,.55+(k%2)*.3,Math.sin(a)*r,0,Math.cos(a)*.5,-Math.sin(a)*.5),'#ffffff');}
+  g.add(PRIM.sphere(1.55,12,8),T(0,4.25,0,0,0,0,1,.6,1),COL('#ffffff',.22));g.add(PRIM.sphere(1.35,10,5),T(0,4.05,0,0,0,0,1,.38,1),COL('#ffffff',.55));
+  for(let k=0;k<7;k++){const a=k/7*TAU;g.add(PRIM.sphere(.17,5,4),T(Math.cos(a)*1.15,3.65,Math.sin(a)*1.15),COL('#fff4c0',1.4));g.add(PRIM.cyl(.012,.012,.5+(k%3)*.3,3),T(Math.cos(a)*.8,3.2-(k%3)*.3,Math.sin(a)*.8),'#c8b8c8');g.add(PRIM.sphere(.06,4,3),T(Math.cos(a)*.8,3.2-(k%3)*.3,Math.sin(a)*.8),COL('#fff4c0',1.8));}
+  for(let k=0;k<8;k++){const a=k*2.4,r=.4+(k%4)*.3;g.add(PRIM.sphere(.12,4,3),T(Math.cos(a)*r,4.9+(k%3)*.05,Math.sin(a)*r,0,0,0,1,.5,1),COL('#ffffff',.6));}K.bulb=g.build();}
+ {const g=new GB();for(let k=0;k<5;k++){const a=k/5*TAU+k*.4,r=k?.35+(k%3)*.15:0;g.add(PRIM.sphere(.5+(k%2)*.12,8,6),T(Math.cos(a)*r,.42+(k%3)*.12,Math.sin(a)*r,0,0,0,1,.85,1),'#ffffff');}for(let k=0;k<10;k++){const a=k*2.1,r=.55+(k%3)*.1;g.add(PRIM.cone(.07,.35,5),T(Math.cos(a)*r,.55+(k%2)*.3,Math.sin(a)*r,0,Math.cos(a)*.5,-Math.sin(a)*.5),'#ffffff');}
   for(let k=0;k<5;k++){const a=k*1.3;g.add(PRIM.sphere(.07,6,4),T(Math.cos(a)*.6,.85,Math.sin(a)*.6),COL('#ff9ad0',1.3));}K.bush=g.build();}
  {const g=new GB();g.add(PRIM.lathe([[.32,0],[.25,1.8],[.16,4.5],[.05,6.6],[.01,7.2]],9),null,'#8a7a90');for(let k=0;k<5;k++)g.add(PRIM.cone(.95-k*.15,1.3,10),T(0,2+k*1.1,0,k*.6),COL('#ffffff',.12));for(let k=0;k<5;k++)g.add(PRIM.sphere(.09,6,4),T(Math.cos(k*1.26)*.8,2.3+k*.9,Math.sin(k*1.26)*.8),COL('#c8f0ff',1.6));K.spire=g.build();}};}
 // ---------- the HUD gets a sleeker look ----------
@@ -4821,9 +4822,258 @@ pioneerMeshes=function(){const suit='#ece8df',suit2='#d8d3c8',orange='#f0892f',d
 #look{background:rgba(12,14,20,.62)!important;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #cross i{box-shadow:0 0 0 1.5px rgba(0,0,0,.45),0 0 8px rgba(255,255,255,.6)!important}`;document.head.appendChild(st);})();
 
+// ---- 42-world4.js ----
+// ===== World v4: an ocean planet. Continents and islands, beaches and sea cliffs, a continental shelf, deep basins and a trench.
+// Swim anywhere; the sea is a real place. New games only (S.worldV>=4); older saves keep their maps. =====
+const wv4=()=>!!(S&&S.worldV>=4);
+const W4={blobs:[],bridges:[[[150,30],[420,95],70],[[-260,380],[-120,250],60]],islands:[[-720,620,70],[-640,760,45],[60,-820,60],[760,-660,90],[300,330,55],[-830,-200,60],[820,-120,55]],
+ trench:[[-860,380],[-640,560],[-450,720],[-260,860]],pos:{0:[0,0,310],1:[-60,-565,265],2:[450,-480,215],3:[610,110,250],4:[590,560,215],5:[150,610,200],6:[-330,335,215],7:[-505,-60,265],8:[-480,-470,205]}};
+function contAt(x,z){const wx=x+fbm(x*.003+11,z*.003-4,3)*170,wz=z+fbm(x*.003-30,z*.003+8,3)*170;let c=-1;
+ for(const k in W4.pos){const [bx,bz,r]=W4.pos[k];const v=1-Math.hypot(wx-bx,wz-bz)/r;if(v>c)c=v;}
+ for(const [bx,bz,r] of W4.islands){const v=(1-Math.hypot(wx-bx,wz-bz)/r)*.7;if(v>c)c=v;}
+ for(const [a,b,w] of W4.bridges){const v=(1-segDist(wx,wz,a[0],a[1],b[0],b[1])/w)*.5;if(v>c)c=v;}
+ c+=fbm(x*.011+3,z*.011-7,3)*.16;const e=Math.max(Math.abs(x),Math.abs(z));c-=smooth(WORLD.half-230,WORLD.half-30,e)*1.6;return c;}
+function trenchD(x,z){let d=1e9;const P=W4.trench;for(let i=0;i<P.length-1;i++)d=Math.min(d,segDist(x,z,P[i][0],P[i][1],P[i+1][0],P[i+1][1]));return d;}
+function h4(x,z){const c=contAt(x,z);let land=0,sea=0;
+ if(c>-.09){bioW(x,z);let h=0;for(let i=0;i<BIO3.length;i++)if(BW[i]>.002)h+=BW[i]*bioH(i,x,z);const r=Math.hypot(x,z);h=lerp(10+fbm(x*.02,z*.02,2)*1.2,h,smooth(55,140,r));land=lerp(1.3+fbm(x*.04,z*.04,2)*1.5,h,smooth(.03,.34,c));}
+ if(c<.06){const oc=-c;sea=-2.5-52*smooth(.0,.5,oc)+fbm(x*.008,z*.008,3)*9+ridged(x*.02,z*.02,3)*3;const td=trenchD(x,z);if(td<150)sea-=78*smooth(150,25,td)+ridged(x*.03,z*.03,3)*10;
+  // sea mounts and rocky reefs
+  sea+=Math.max(0,ridged(x*.006+7,z*.006,3)-.72)*120*smooth(.1,.35,oc);}
+ const t=smooth(-.08,.05,c);return lerp(sea,land,t);}
+{const _r0=rawHeight0;rawHeight0=function(x,z){return wv4()?h4(x,z):_r0(x,z);};}
+// lakes stay inland and above the sea
+function lakes4(){LAKES.length=0;const add=(x,z,r)=>LAKES.push({x,z,r});add(-160,95,40);add(150,175,30);add(95,-205,44);add(-60,-230,26);
+ {const rnd=mulberry(91);const p=W4.pos[6];for(let i=0;i<8;i++){const a=i/8*TAU+rnd(),d=40+rnd()*130;add(p[0]+Math.cos(a)*d,p[1]+Math.sin(a)*d,14+rnd()*18);}}
+ add(-30,-560,40);add(-150,-610,26);add(-520,-150,32);add(410,-420,26);add(170,590,20);}
+// the sea pretends to be a lake everywhere the ground is below sea level, so every "avoid water" check also avoids the sea
+const SEA={x:0,z:0,r:1e9,level:0,sea:1};
+{const _la=lakeAt;lakeAt=function(x,z){const L=_la(x,z);if(L)return L;if(wv4()&&ground(x,z)<-.05)return SEA;return null;};}
+// terrain colours: beaches, sea grass, deep rock and glowing vents in the trench
+{const _tc=terrainColor;terrainColor=function(x,z,h,ny){const c=_tc(x,z,h,ny);if(!wv4()||h>1.8)return c;const d=-h;
+ const sand=COL('#e2d2a4'),shelf=COL('#9aa67c'),deep=COL('#4a6670'),abyss=COL('#1a2a36');let s;let pat=1;
+ if(d<0){s=mixc(sand,[c[0],c[1],c[2]],smooth(.5,1.8,h));}else if(d<7){s=mixc(sand,shelf,smooth(1,7,d));pat=lerp(1,.33,smooth(2,7,d));}else if(d<40){s=mixc(shelf,deep,smooth(7,40,d));pat=.33;}else{s=mixc(deep,abyss,smooth(40,110,d));pat=.66;}
+ s=mixc(s,COL('#5a5a5e'),smooth(.8,.6,ny)*.8);
+ if(d>60){const td=trenchD(x,z);if(td<120&&fbm(x*.05,z*.05,2)>.25){s=mixc(s,[.5,2.2,2],.7);}}
+ if(d>3&&d<18&&fbm(x*.03+5,z*.03,2)>.2)s=mixc(s,COL(['#e86a8a','#f0a050','#8a6ae0'][Math.floor(hash2(Math.floor(x/6),Math.floor(z/6),3)*3)]),.35);
+ return [s[0],s[1],s[2],pat];};}
+// caves stay on dry land
+{const _pc=planCaves3;planCaves3=function(H){_pc(H);if(wv4())CAVE3.list=CAVE3.list.filter(c=>c.pts.every(p=>p.f>2.5)&&(!c.ch||c.ch.f>2.5));CAVE3.list.forEach((c,i)=>c.id=i);};}
+// set up the new map before the terrain is built
+{const _iw=initWorld;initWorld=function(){if(wv4()){WORLD.half=900;WORLD.step=3.6;WORLD.k=2.8;for(const k in W4.pos){BIO3[k].x=W4.pos[k][0];BIO3[k].z=W4.pos[k][1];}}_iw();};}
+{const _l3=lakes3;lakes3=function(){if(wv4())return lakes4();_l3();};}
+// the sea surface: one big sheet of water at sea level
+{const _iw=initWater;initWater=function(){_iw();if(!wv4())return;const g=new GB();const S2=WORLD.half*2+600;g.add(PRIM.plane(S2,S2,24,24),T(0,0,0),'#ffffff');WORLD.water.push({mesh:g.build(),L:SEA,lv:0});};}
+// ---------- swimming ----------
+const SWIM={};
+{const _up=updatePlayer;updatePlayer=function(dt){if(!wv4()||VEH.driving||PL.tube||(typeof TRN!=='undefined'&&TRN.ride)){PL.swim=false;return _up(dt);}
+ const y0=PL.y,wasSwim=PL.swim;_up(dt);const g=ground(PL.x,PL.z);const deep=g<-1.6;const sw=deep&&(PL.y<-.9||wasSwim&&PL.y<-.4);
+ if(!sw){if(wasSwim&&!deep){PL.swim=false;}else PL.swim=false;return;}
+ PL.swim=true;PL.mv[0]*=.93;PL.mv[1]*=.93;PL.slide=0;PL.crouch=false;
+ const k=INPUT.keys;const fwd=(k.KeyW||k.ArrowUp)?1:(k.KeyS||k.ArrowDown)?-1:INPUT.jy||0;const up=INPUT.jumpHeld||k.Space,down=k.KeyC||k.ControlLeft||PAD.diveHeld;
+ let vyT=(up?3.4:0)-(down?3.4:0)+fwd*Math.sin(PL.pitch)*4.6;const surface=-1.35;
+ if(!up&&!down&&Math.abs(fwd*Math.sin(PL.pitch))<.22&&y0>-3.2)vyT=1.1;// float up near the top
+ SWIM.vy=lerp(SWIM.vy||0,vyT,Math.min(1,dt*3));let y=y0+SWIM.vy*dt;if(y>surface&&!(up&&g>-3)){y=surface;SWIM.vy=Math.min(0,SWIM.vy);}y=Math.max(y,g);
+ PL.y=y;PL.vy=0;PL.ground=y<=g+.05;
+ // climbing out onto a shore
+ if(up&&y>=surface-.05){const fx=PL.x+Math.sin(PL.yaw)*1.2,fz=PL.z+Math.cos(PL.yaw)*1.2;const gf=solidAt(fx,fz,y+1.6);if(gf>-1&&gf<y+1.7){PL.x=fx;PL.z=fz;PL.y=gf;PL.vy=3;PL.swim=false;}}
+ PL.camY=PL.y+PL.eye;if(!tp())R.cam=[R.cam[0],PL.camY,R.cam[2]];
+ if(PL.y<-1.6&&Math.random()<dt*3)PFX.glows.push({x:PL.x+Math.sin(PL.yaw)*.4,y:PL.y+1.7,z:PL.z+Math.cos(PL.yaw)*.4,vx:(Math.random()-.5)*.2,vy:1.2,vz:(Math.random()-.5)*.2,life:1.4,t:0,s0:.05,s1:.03,c:[.8,.95,1],g:1});};}
+// ---------- under the surface: blue-green fog, dimming with depth ----------
+{const _eu=ENV.update;ENV.update=function(dt,play){_eu(dt,play);if(!wv4())return;const cy=R.cam[1];SWIM.under=cy<-.05;if(!SWIM.under)return;const d=-cy,k=Math.exp(-d*.025);
+ const day=ENV.dayK??1;const fc=[.03*k+.01,.2*k+.02,.26*k+.03].map(c=>c*(.35+.65*day));R.fog=[fc[0],fc[1],fc[2],.014+d*.00018];R.top=fc;R.sky=R.sky.map((c,i)=>c*.6*k+[.0,.04,.05][i]*k);R.gnd=R.gnd.map(c=>c*.5*k);R.sunCol=R.sunCol.map((c,i)=>c*k*[.55,.85,.9][i]);R.lamp=Math.max(R.lamp||0,clamp(d/40,0,1)*.9);};}
+{const _gr=GFX.grade;GFX.grade=function(){const g=_gr();if(SWIM.under){g.tint=[g.tint[0]*.8,g.tint[1]*1.02,g.tint[2]*1.08];g.sat*=.9;g.bloom+=.15;}return g;};}
+// ---------- the ocean has its own life: kelp forests, coral and glowing trench tubes ----------
+Object.assign(FK,{kelp:{t:'bush',br:0,cy:3,rr:.9,rh:4,y:{leaves:6}},coral:{t:'rock',br:.8,cy:.5,rr:1,rh:1,y:{limestone:4}},seaglow:{t:'deco',br:0,cy:2,rr:0,rh:0}});
+{const _fm=floraMeshes;floraMeshes=function(){_fm();const K=FLORA.kinds;
+ {const g=new GB();const leaf=PRIM.plane(.32,1,1,1);for(let k=0;k<5;k++){const a=k/5*TAU+k,r=k?.4:0,h=5+(k%3)*2.5;for(let s=0;s<5;s++){const y=s/5*h;g.add(PRIM.box(.06,h/5+.05,.3),T(Math.cos(a)*r+Math.sin(y*.6+k)*.25,y+h/10,Math.sin(a)*r,a+s*.5),'#ffffff');}g.add(PRIM.sphere(.1,4,3),T(Math.cos(a)*r,h,Math.sin(a)*r),COL('#e8f070',.5));}K.kelp=g.build();}
+ {const g=new GB(),rnd=mulberry(201);for(let k=0;k<9;k++){const a=rnd()*TAU,r=rnd()*.9;const t=k%3;if(t===0){g.add(PRIM.lathe([[.08,0],[.12,.5],[.35,.9],[.4,1]],8),T(Math.cos(a)*r,0,Math.sin(a)*r),'#ffffff');}else if(t===1){for(let b=0;b<4;b++)g.add(PRIM.cyl(.05,.08,.8,5),T(Math.cos(a)*r,0,Math.sin(a)*r,b,(b-1.5)*.35,(b%2-.5)*.6),'#ffffff');}else g.add(PRIM.sphere(.3,8,6),T(Math.cos(a)*r,.2,Math.sin(a)*r,0,0,0,1,.7,1),'#ffffff');}K.coral=g.build();}
+ {const g=new GB();for(let k=0;k<7;k++){const a=k/7*TAU,r=k?.6:0,h=2+(k%3);g.add(PRIM.cyl(.12,.18,h,7),T(Math.cos(a)*r,0,Math.sin(a)*r),'#2a3040');g.add(PRIM.sphere(.2,8,6),T(Math.cos(a)*r,h,Math.sin(a)*r),COL('#ffffff',2));}K.seaglow=g.build();}};}
+{const _pf=placeFlora;placeFlora=function(){_pf();if(!wv4())return;const W=WORLD,out=W.flora,rnd=mulberry(W.seed*733+3);const add=(kind,n,lo,hi,pals,s0,s1,deepT)=>{let made=0;for(let t=0;t<n*10&&made<n;t++){const x=(rnd()*2-1)*(W.half-60),z=(rnd()*2-1)*(W.half-60);const h=ground(x,z);if(h>hi||h<lo)continue;if(deepT&&trenchD(x,z)>150)continue;if(groundNormal(x,z)[1]<.6)continue;
+   out.push({i:out.length,kind,x,z,y:h,s:s0+rnd()*(s1-s0),r:rnd()*TAU,pal:pals[Math.floor(rnd()*pals.length)],alive:true});made++;}};
+ add('kelp',1100,-38,-4,[['#5a8a3a'],['#7a9a3a'],['#4a7a5a']],.7,1.5);add('coral',700,-16,-2,[['#ff6a8a'],['#ffa04a'],['#9a6aff'],['#4ae0d0']],.6,1.6);add('seaglow',260,-200,-55,[['#3affd8'],['#7aa8ff'],['#ff6af0']],.8,1.6,true);
+ floraGrid();};}
+{const _lo=floraLoMeshes;floraLoMeshes=function(){const L=_lo();const B=f=>{const g=new GB();f(g);return g.build();};L.kelp=B(g=>{for(let k=0;k<3;k++)g.add(PRIM.box(.08,7,.4,{y0:true}),T((k-1)*.4,0,0,k),'#ffffff');});L.coral=B(g=>g.add(PRIM.sphere(.6,5,3),T(0,.3,0,0,0,0,1,.7,1),'#ffffff'));L.seaglow=B(g=>{g.add(PRIM.cyl(.3,.4,2.4,4),null,'#2a3040');g.add(PRIM.sphere(.3,4,3),T(0,2.5,0),COL('#ffffff',2));});return L;};}
+{const _fi=floraInstancers;floraInstancers=function(){_fi();if(FLORA.inst.kelp)FLORA.inst.kelp.sway=2.4;if(FLORA.inst.seaglow)FLORA.inst.seaglow.sway=.6;};}
+// ---------- keep land things on land ----------
+function dryLand(x,z){return !wv4()||ground(x,z)>1.6;}
+// the ocean regions get names on the map and when you swim into them
+{const _iw=initWorld;initWorld=function(){_iw();if(!wv4())return;BIOMES.push({n:'The Shallows',c:'#9aa67c',x:-80,z:420,amb:'Warm, shallow water full of kelp and coral. Mind your oxygen.'},{n:'The Abyss',c:'#1a2a36',x:-560,z:640,amb:'The trench drops away into the dark. Something down there is glowing.'});
+ const land=biomeAt;biomeAt=(x,z)=>{const h=ground(x,z);if(h<-2)return BIOMES[h<-45?BIOMES.length-1:BIOMES.length-2];return land(x,z);};};}
+
+// ---- 43-survival.js ----
+// ===== Survival: no breathable air. Your suit tank, tethers back to base, oxygenators, canisters, cold nights and storms =====
+const O2={net:new Set(),dirty:true,warn:0};
+const o2Mode=()=>S.settings.o2||'normal';
+const o2On=()=>wv4()&&o2Mode()!=='off'&&GAME.mode==='play'&&!GAME.landing;
+function o2Cap(){const t=S.tier||0;return (t>=6?360:t>=4?240:t>=2?160:100)*(o2Mode()==='relaxed'?3:1);}
+Object.assign(ITEMS,{tether:{n:'Tether',c:'#3fe0c8',s:'small'},o2can:{n:'Oxygen Canister',c:'#7ad8ff',s:'medium'}});
+Object.assign(ITEM_MODEL,{tether(g){g.add(PRIM.cyl(.04,.05,.36,8),null,'#c8ccd2');g.add(PRIM.sphere(.07,10,8),T(0,.38,0),COL('#3fe0c8',1.6));g.add(PRIM.cone(.05,.1,6),T(0,0,0,0,Math.PI),'#5a606a');},
+ o2can(g){g.add(PRIM.cyl(.1,.1,.32,14),null,'#e8ecf0');g.add(PRIM.sphere(.1,12,6),T(0,.32,0),'#e8ecf0');g.add(PRIM.cyl(.04,.04,.08,8),T(0,.4,0),C_DARK);g.add(PRIM.cyl(.105,.105,.06,14),T(0,.14,0),COL('#7ad8ff',1.2));}});
+RECIPES.push({id:'tether',m:'bench',bench:1,in:{iron_ingot:1},out:{tether:4},t:1.5,tier:0},{id:'o2can',m:'bench',bench:1,in:{leaves:10,iron_plate:1},out:{o2can:1},t:3,tier:0});
+for(const r of RECIPES.slice(-2))RECIPE[r.id]=r;
+Object.assign(BUILDINGS,{oxygenator:{n:'Oxygenator',w:2,d:2,h:3.4,cost:{iron_plate:6,iron_rod:6,wire:10},power:4,cat:'power',desc:'Makes breathable air in a 32 m bubble while it has power. Tethers can link back to it, too.',tier:1}});
+Object.assign(BUILD_MODEL,{oxygenator(g){g.add(RB(2,.3,2,.08),null,C_FRAME);g.add(PRIM.cyl(.75,.8,2.2,18),T(0,.3,0),C_LIGHT);for(const y of [.8,1.6])g.add(PRIM.cyl(.82,.82,.12,18),T(0,y,0),C_PANEL);g.add(PRIM.sphere(.78,16,10),T(0,2.5,0,0,0,0,1,.5,1),COL('#9ad8ff',-4));
+ g.add(PRIM.cyl(.3,.3,.4,12),T(0,2.85,0),C_FRAME);g.add(PRIM.sphere(.18,10,8),T(0,3.3,0),COL('#3fe0c8',2));for(let k=0;k<4;k++){const a=k/4*TAU;g.add(PRIM.cyl(.06,.06,.7,8),T(Math.cos(a)*.85,.6,Math.sin(a)*.85),'#5a606a');}}});
+{const _wp=wantsPower;wantsPower=function(b){if(b.k==='oxygenator')return true;return _wp(b);};}
+// ---- where you can breathe ----
+const tethers=()=>S.tethers||(S.tethers=[]);
+function o2Sources(){const L=[];const hb=hubB();if(hb)L.push({x:hb.x,y:hb.y,z:hb.z,r:42});else if(S.landPod)L.push({x:S.landPod.x,y:ground(S.landPod.x,S.landPod.z),z:S.landPod.z,r:24});
+ for(const b of FAC.b.values()){if(b.k==='oxygenator'&&b.pf>0)L.push({x:b.x,y:b.y,z:b.z,r:32});}
+ for(const v of (S.vehicles||[]))if(VEH.driving===v)L.push({x:v.x,y:v.y,z:v.z,r:5});return L;}
+const T_LINK=26,T_R=16;
+function o2Network(){const src=o2Sources(),T_=tethers();const on=new Set(),par=new Map();const q=[];
+ for(const t of T_){if(t.y<-.5)continue;for(const s of src)if(Math.hypot(t.x-s.x,t.z-s.z)<=s.r+T_LINK*.5){on.add(t.id);par.set(t.id,s);q.push(t);break;}}
+ while(q.length){const a=q.shift();for(const b of T_){if(on.has(b.id)||b.y<-.5)continue;if(Math.hypot(a.x-b.x,a.z-b.z,(a.y-b.y)*.5)<=T_LINK){on.add(b.id);par.set(b.id,a);q.push(b);}}}
+ O2.net=on;O2.par=par;O2.src=src;O2.dirty=false;O2.cable=null;}
+function inBubble(x,y,z){if(O2.dirty||R.time-(O2.t||0)>1){O2.t=R.time;o2Network();}if(y<-1.2)return false;for(const s of O2.src)if(Math.hypot(x-s.x,z-s.z)<s.r)return true;for(const t of tethers())if(O2.net.has(t.id)&&Math.hypot(x-t.x,z-t.z,(y-t.y)*.6)<T_R)return true;return false;}
+// ---- the tank ----
+function o2Rate(){let r=1/o2Cap();const night=1-(ENV.dayK??1);if(night>.5)r*=1.3;if(S.wx&&S.wx.k==='storm')r*=1.5;if(PL.swim&&PL.y<-1.2)r*=1.8;if(PL.speed>7)r*=1.15;if(wv3()){const i=bioW(PL.x,PL.z);if(i===1)r*=1.2;}return r;}
+function o2Update(dt){if(!o2On()||PL.dead){if(PL.dead)S.o2=1;return;}if(S.o2==null)S.o2=1;const ok=inBubble(PL.x,PL.y,PL.z);O2.ok=ok;
+ if(ok)S.o2=Math.min(1,S.o2+dt*.4);else S.o2=Math.max(0,S.o2-o2Rate()*dt);
+ if(S.o2<.3&&O2.warn<1){O2.warn=1;UI.toast('Oxygen low. Head back to a tether, the HUB or an oxygenator.','warn');}if(S.o2>.5)O2.warn=0;
+ if(S.o2<.12){O2.beep=(O2.beep||0)-dt;if(O2.beep<=0){O2.beep=1;AUDIO.tone&&AUDIO.tone(880,.12,{type:'square',vol:.06});}}
+ if(S.o2<=0){PL.hp=(PL.hp??100)-16*dt;PL.hurtT=5;if(Math.random()<dt*2)UI.flash&&UI.flash();if(PL.hp<=0)o2KnockOut();}}
+function o2KnockOut(){const items={};for(const [k,v] of Object.entries(S.inv))if(v>0&&!ITEMS[k]?.fluid)items[k]=v;if(Object.keys(items).length){S.inv={};GEAR.dropCrate(items);S.lostPack={x:PL.x,z:PL.z};}
+ PL.hp=1;hurtPlayer(999);UI.toast('You ran out of oxygen. Your suit dragged you home; your backpack is where you fell (marked on the map).','bad');setTimeout(()=>{S.o2=1;},1300);saveSoon();}
+// ---- canisters ----
+{const _u=GEAR.use;GEAR.use=function(k){if(k==='o2can'){if((S.inv.o2can||0)<1)return;if((S.o2??1)>.95){UI.toast('Your tank is already full','info');return;}addInv('o2can',-1);S.o2=Math.min(1,(S.o2||0)+.6);AUDIO.tone&&AUDIO.tone(400,.4,{type:'sine',vol:.08,slide:1.8});UI.pop('+60% O₂');return;}return _u(k);};}
+UI.A.o2Use=()=>GEAR.use('o2can');
+// ---- tethers: drop them as you go, pick them back up ----
+function tetherDrop(){if(!wv4()){UI.toast('Tethers are for the new planet','info');return;}if((S.inv.tether||0)<1){UI.toast('No tethers left. Craft more at the workbench (1 iron ingot makes 4).','warn');return;}
+ const {o,d}=aimRay();const hg=rayGround(o,d,5);let x=PL.x+Math.sin(PL.yaw)*1.2,z=PL.z+Math.cos(PL.yaw)*1.2;if(hg){x=hg.p[0];z=hg.p[2];}const y=solidAt(x,z,PL.y+1.5);
+ addInv('tether',-1);tethers().push({id:'t'+(S.nextId++),x,y,z});O2.dirty=true;AUDIO.place&&AUDIO.place();o2Network();const on=O2.net.has(tethers()[tethers().length-1].id);UI.pop(on?'Tether connected':'Tether placed · not connected yet');saveSoon();}
+UI.A.tether=tetherDrop;
+let TETM=null;function tetherMesh(){if(TETM)return TETM;const g=new GB();g.add(PRIM.cone(.12,.3,6),T(0,-.2,0,0,Math.PI),'#5a606a');g.add(PRIM.cyl(.05,.06,1.1,8),T(0,0,0),'#d8dce2');g.add(PRIM.cyl(.09,.09,.08,10),T(0,.5,0),C_PANEL);g.add(PRIM.sphere(.11,10,8),T(0,1.15,0),COL('#ffffff',2));return TETM=g.build();}
+function rayTether(o,d){let best=null;for(const t of tethers()){const c=[t.x,t.y+.8,t.z];const s=v3.dot(v3.sub(c,o),d);if(s<0||s>6)continue;const e=Math.hypot(o[0]+d[0]*s-c[0],o[1]+d[1]*s-c[1],o[2]+d[2]*s-c[2]);if(e<.5&&(!best||s<best.t))best={t:s,te:t};}return best;}
+{const _ht=handTarget;handTarget=function(){const H=_ht();const {o,d}=aimRay();const q=rayTether(o,d);if(q&&(!H||q.t<H.t+.2))return {kind:'tether',t:q.t,te:q.te};return H;};}
+{const _uh=updateHand;updateHand=function(dt,holding){const t=handTarget();if(t&&t.kind==='tether'){HAND.what=t;if(!holding){HAND.t=0;return;}HAND.t+=dt;if(HAND.t>=.5){HAND.t=0;S.tethers=tethers().filter(x=>x!==t.te);addInv('tether',1);O2.dirty=true;UI.pop('+1 Tether');saveSoon();}return;}_uh(dt,holding);};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const H=HAND.what;if(H&&H.kind==='tether'&&!BUILD.mode){const act=$('#act');act.classList.remove('hide');act.firstElementChild.textContent='Pick up';const lk=$('#look');const t='Tether · '+(O2.net.has(H.te.id)?'connected':'not connected')+' · hold to pick up';if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}}};}
+// glowing cables between connected tethers
+function cableMesh(){const g=new GB();const seg=(a,b,on)=>{const n=8;const pts=[];for(let i=0;i<=n;i++){const t=i/n;pts.push([lerp(a[0],b[0],t),lerp(a[1],b[1],t)-Math.sin(t*Math.PI)*Math.min(1.2,Math.hypot(b[0]-a[0],b[2]-a[2])*.05),lerp(a[2],b[2],t)]);}
+  for(let i=0;i<n;i++){const p=pts[i],q=pts[i+1];const L=Math.hypot(q[0]-p[0],q[1]-p[1],q[2]-p[2]);g.add(PRIM.box(.035,.035,L),T((p[0]+q[0])/2,(p[1]+q[1])/2,(p[2]+q[2])/2,Math.atan2(q[0]-p[0],q[2]-p[2]),-Math.atan2(q[1]-p[1],Math.hypot(q[0]-p[0],q[2]-p[2]))),COL(on?'#3fe0c8':'#606878',on?1.6:0));}};
+ for(const t of tethers()){if(!O2.net.has(t.id))continue;const p=O2.par.get(t.id);if(!p)continue;const isT=p.id!=null;seg([t.x,t.y+1.15,t.z],[p.x,(p.y||0)+(isT?1.15:1.5),p.z],true);}return g.build();}
+{const _to=TR.objects;TR.objects=function(){const out=_to();if(!wv4())return out;const M=tetherMesh();for(const t of tethers()){if(Math.abs(t.x-R.cam[0])>220||Math.abs(t.z-R.cam[2])>220)continue;const on=O2.net.has(t.id);out.push({mesh:M,model:T(t.x,t.y+.2,t.z),tint:on?null:[.5,.5,.55,.6]});}
+ if(!O2.cable&&tethers().length){if(O2.cableM)freeMesh(O2.cableM);O2.cableM=cableMesh();O2.cable=true;}if(O2.cableM)out.push({mesh:O2.cableM,model:R.ident});return out;};}
+// ---- HUD: an oxygen gauge, a tether button, warnings ----
+{const _i=UI.init;UI.init=function(){_i();const el=document.createElement('div');el.id='o2hud';el.innerHTML='<div class="o2g"><i></i></div><b>O₂</b><span></span><em></em>';document.body.appendChild(el);
+ const pad=document.getElementById('pad');const tb=document.createElement('button');tb.className='rb';tb.id='tetherbtn';tb.dataset.a='tether';tb.title='Drop a tether (Y)';tb.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 3v14" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="4.5" r="2.6" fill="#3fe0c8"/><path d="M8 21l4-4 4 4" stroke="currentColor" stroke-width="2" fill="none"/></svg><em></em>';
+ const tr=$('#tr');tr.insertBefore(tb,tr.firstChild);const ob=document.createElement('button');ob.className='rb';ob.id='o2btn';ob.dataset.a='o2Use';ob.title='Use an oxygen canister';ob.innerHTML='<b style="font-size:11px">O₂+</b><em></em>';tr.insertBefore(ob,tr.firstChild);
+ const v=document.createElement('div');v.id='o2vig';document.body.appendChild(v);};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const el=document.getElementById('o2hud');if(!el)return;const on=o2On();el.style.display=on?'':'none';const tb=document.getElementById('tetherbtn'),ob=document.getElementById('o2btn'),vg=document.getElementById('o2vig');
+ if(tb)tb.style.display=on?'':'none';if(!on){if(ob)ob.style.display='none';if(vg)vg.style.opacity=0;return;}const o=S.o2??1;el.querySelector('.o2g i').style.width=(o*100).toFixed(1)+'%';el.classList.toggle('low',o<.3);el.classList.toggle('ok',!!O2.ok);
+ const night=1-(ENV.dayK??1)>.5;const t=Math.round(o*100)+'%';const sub=O2.ok?'linked':(PL.swim&&PL.y<-1.2?'underwater':night?'cold night':'off tether');if(el._t!==t+sub){el._t=t+sub;el.querySelector('span').textContent=t;el.querySelector('em').textContent=sub;}
+ if(tb)tb.querySelector('em').textContent=S.inv.tether||0;if(ob){const show=(S.inv.o2can||0)>0&&o<.6;ob.style.display=show?'':'none';ob.querySelector('em').textContent=S.inv.o2can||0;}
+ if(vg)vg.style.opacity=o<.35?String((.35-o)/.35*.9):'0';};}
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||GAME.mode!=='play'||GAME.paused)return;if(e.code==='KeyY')tetherDrop();if(e.code==='KeyO')GEAR.use('o2can');});
+// ---- starting kit, research upgrades shown on the HUD, saving ----
+{const _ei=EXP.init;EXP.init=function(){_ei();if(wv4()&&!S.gotKit){S.gotKit=1;addInv('tether',14);addInv('o2can',2);S.o2=1;}};}
+{const _eu=EXP.update;EXP.update=function(dt){_eu(dt);if(GAME.mode==='play'&&!GAME.paused)o2Update(dt);};}
+{const _nb=newBuilding;newBuilding=function(o){const b=_nb(o);if(b.k==='oxygenator'||b.k==='hub')O2.dirty=true;return b;};}
+// the lost backpack shows on the map
+{const _dm=UI.drawMap;UI.drawMap=function(){_dm();const c=$('#mapc');if(!c||!S.lostPack)return;if(!(S.crates||[]).some(q=>Math.hypot(q.x-S.lostPack.x,q.z-S.lostPack.z)<4)){S.lostPack=null;return;}const x=c.getContext('2d'),N=c.width,M=UI.map,s=N/(WORLD.half*2)*M.z;const q=[(S.lostPack.x-M.cx)*s+N/2,(S.lostPack.z-M.cz)*s+N/2];x.font='22px system-ui';x.textAlign='center';x.fillText('🎒',q[0],q[1]+7);};}
+// ---- storms: wind that shoves you around, lightning and thunder ----
+WX.storm={fog:2.8,light:.42,rain:1,dust:.25,cloud:1,n:'Storm'};
+const STORM={wind:[0,0],next:5};
+{const _eu=ENV.update;ENV.update=function(dt,play){if(play&&wv4()&&S.wx&&S.wx.k==='rain'&&!S.wx.st){S.wx.st=1;if(Math.random()<.45){S.wx.k='storm';UI.toast('⛈ Storm incoming. Stay near shelter; the wind is strong and your air goes faster.','warn');}}if(S.wx&&S.wx.k==='clear')S.wx.st=0;_eu(dt,play);
+ if(!play||!S.wx||S.wx.k!=='storm'){STORM.on=false;return;}STORM.on=true;const a=R.time*.05;const g=(.6+.4*Math.sin(R.time*.7)*Math.sin(R.time*.23))*9;STORM.wind=[Math.cos(a)*g,Math.sin(a)*g];
+ STORM.next-=dt;if(STORM.next<=0){STORM.next=5+Math.random()*12;STORM.flash=.25;const d=40+Math.random()*80,aa=Math.random()*TAU;const x=PL.x+Math.cos(aa)*d,z=PL.z+Math.sin(aa)*d;STORM.bolt={x,z,y:ground(x,z),t:.35};setTimeout(()=>{AUDIO.noise&&AUDIO.noise(1.6,{freq:120,vol:.35});AUDIO.tone&&AUDIO.tone(50,1.2,{type:'sawtooth',vol:.1,slide:.5});},d*6);}
+ if(STORM.flash>0){STORM.flash-=dt;const k=Math.max(0,STORM.flash)*8;R.sky=R.sky.map(c=>c+k*.6);R.sunCol=R.sunCol.map(c=>c+k);}};}
+{const _up=updatePlayer;updatePlayer=function(dt){_up(dt);if(!STORM.on||VEH.driving||PL.swim||PL.cave||PL.tube||inBubble(PL.x,PL.y,PL.z)&&hubB()&&Math.hypot(hubB().x-PL.x,hubB().z-PL.z)<14)return;const k=PL.ground?.22:.5;const nx=PL.x+STORM.wind[0]*dt*k,nz=PL.z+STORM.wind[1]*dt*k;if(!blockedAt(nx,nz,PL.y)){PL.x=nx;PL.z=nz;}};}
+let BOLTM=null;
+{const _to=TR.objects;TR.objects=function(){const out=_to();const b=STORM.bolt;if(b&&b.t>0){b.t-=.016;if(!BOLTM){const g=new GB();let x=0,z=0;for(let i=0;i<10;i++){const nx=x+(Math.random()-.5)*6,nz=z+(Math.random()-.5)*6;const y0=120-i*12,y1=y0-12;const L=Math.hypot(nx-x,12,nz-z);g.add(PRIM.box(.35,L,.35),T((x+nx)/2,(y0+y1)/2,(z+nz)/2,Math.atan2(nx-x,nz-z),Math.atan2(Math.hypot(nx-x,nz-z),12)),COL('#ffffff',4));x=nx;z=nz;}BOLTM=g.build();}
+ out.push({mesh:BOLTM,model:T(b.x,b.y,b.z,b.x)});if(b.t<.3&&!b.fx){b.fx=1;FX.burst(b.x,b.y+.5,b.z,COL('#e8f0ff',3),24,8);}}else if(b&&b.t<=0){STORM.bolt=null;BOLTM=null;}return out;};}
+// ---- settings ----
+{const _m=UI.views.menu;UI.views.menu=function(){let h=_m();const m=o2Mode();const seg=`<div class="sc"><h5>Survival</h5><div class="seg">${[['normal','Oxygen: normal'],['relaxed','Relaxed (3× air)'],['off','Off']].map(([v,t])=>`<button class="${m===v?'on':''}" data-a="o2Set" data-v="${v}">${t}</button>`).join('')}</div><p class="mut sm">Your suit tank drains away from the HUB, oxygenators and connected tethers, faster at night, in storms and underwater.</p></div>`;
+ return h.replace('<div class="sc"><h5>Camera</h5>',seg+'<div class="sc"><h5>Camera</h5>');};}
+UI.A.o2Set=v=>{S.settings.o2=v;UI.refresh();saveSoon();};
+(function(){const st=document.createElement('style');st.textContent=`#o2hud{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:14px;background:linear-gradient(180deg,rgba(32,37,48,.8),rgba(14,17,23,.8));border:1px solid rgba(255,255,255,.1);color:#fff;font:800 12px system-ui;pointer-events:none}
+#o2hud .o2g{width:120px;height:8px;border-radius:5px;background:rgba(255,255,255,.12);overflow:hidden}#o2hud .o2g i{display:block;height:100%;background:linear-gradient(90deg,#3fa8e0,#7ae8ff);transition:width .2s}#o2hud em{font-style:normal;font-weight:600;opacity:.7;font-size:11px}
+#o2hud.ok .o2g i{background:linear-gradient(90deg,#3fe0c8,#9affe8)}#o2hud.low{border-color:#e0574a;animation:o2pulse 1s infinite}#o2hud.low .o2g i{background:#e0574a}@keyframes o2pulse{50%{box-shadow:0 0 0 4px rgba(224,87,74,.35)}}
+#tetherbtn,#o2btn{position:relative}#tetherbtn em,#o2btn em{position:absolute;right:-4px;bottom:-4px;font-style:normal;font:800 10px system-ui;background:#3fe0c8;color:#06201c;border-radius:8px;padding:1px 5px}
+#o2vig{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:0;transition:opacity .4s;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(160,20,30,.7) 100%)}`;document.head.appendChild(st);})();
+
+// a first-time tip about air when you land on the new planet
+{const _eu=EXP.update;EXP.update=function(dt){_eu(dt);if(!o2On()||S.o2Intro||!S.landed)return;EXP._o2i=(EXP._o2i||0)+dt;if(EXP._o2i>4){S.o2Intro=1;UI.banner('No air out here','Your suit tank lasts about '+Math.round(o2Cap()/60*10)/10+' minutes away from the drop pod. Drop tethers (📍 or Y) as you explore to stay linked, and craft more at the workbench.');saveSoon();}};}
+
+// ---- 44-story.js ----
+// ===== The story: ruins of the Vael across the planet, the signal that leads you between them, and crashed ships to strip for parts =====
+Object.assign(ITEMS,{relic:{n:'Vael Relic',c:'#5af0e0',s:'small'}});
+Object.assign(ITEM_MODEL,{relic(g){g.add(PRIM.lathe([[.001,0],[.09,.06],[.07,.26],[.001,.34]],6,{flat:true}),T(0,.02,0),COL('#5af0e0',1.6));g.add(PRIM.lathe([[.13,-.02],[.14,0],[.13,.02]],12,{cap:false}),T(0,.16,0,0,.4),'#3a3448');}});
+const ECHO=[
+ {b:0,t:'Echo 1 · Arrival',x:'…signal holding. If you can hear this, the beacon has found you, as it was built to. This world is called Thessa. We made it. We came from a sun that was dying, and we taught this rock to breathe… almost. Follow the signal. Learn what we learned. — the Vael'},
+ {b:7,t:'Echo 2 · The Gardeners',x:'The great trees were our first gift. Their roots drink the deep water and their crowns catch the light. We seeded every valley. We thought, in a few thousand years, the air would be sweet enough to breathe without masks. We were patient. We were wrong about how much time we had.'},
+ {b:1,t:'Echo 3 · The Cold Engine',x:'Up here the air is thinnest, so here we built the Engine: a machine as large as a mountain that pulled oxygen out of the stone. It still runs, very slowly. That is why your tank fills a little faster in the old places. Listen and you can hear it breathing under the ice.'},
+ {b:2,t:'Echo 4 · The Chorus',x:'The crystals are not stone. They are a network: we grew them so every outpost could speak to every other. When they sing, the whole planet is talking. Lately they sing only one note, over and over, the note that means look down.'},
+ {b:3,t:'Echo 5 · Exodus',x:'We carved our names into these cliffs before we left. Not all of us agreed to leave. Some said the thing in the water could be reasoned with. Some said it had always been here, long before we came, and that we were the guests. The ones who stayed are still here, in a way.'},
+ {b:8,t:'Echo 6 · What Grew in the Dark',x:'The hollows were our mistake. We dug too deep looking for heat, and something answered. The fungus came up from below; it is not ours. It glows the same colour as the trench. Do not sleep near it.'},
+ {b:6,t:'Echo 7 · The Drowned Door',x:'The marsh was once a harbour. The first door to the deep stood here: a gate we could walk through and come out on the sea floor, dry. We flooded it ourselves, the night the water rose. If you want to go down, you will have to build your own way now.'},
+ {b:-1,t:'Echo 8 · Below',x:'You came down. Good. Few of us could. The pressure grows quickly past the shelf; your suit will not hold forever. Somewhere in the dark there is a vault, and in the vault there is a sleeper, and the sleeper is dreaming of the surface. Every year its dream comes closer.'},
+ {b:4,t:'Echo 9 · The Forge',x:'The volcanoes powered our foundries. With what we made here we built the ships that carried us up to the moon, where we watch now, where the sleeper cannot reach. There is a station there, waiting, with its lights still on. A keeper should be on duty. Perhaps that will be you.'},
+ {b:5,t:'Echo 10 · Bones',x:'These bones are not from anything that walked. They washed up when the sea was higher; they belong to something that swam. It was not the largest. Remember that.'},
+ {b:-2,t:'Echo 11 · The Vault',x:'This is the vault. The door is sealed with our last strength. Do not open it. Or, if you must, come back stronger: with a ship that can dive and a hull that can hold. And when you are ready, look up. The station on the moon remembers how the door was closed. (End of chapter one.)'}];
+const ruins=()=>WORLD.ruins||[];
+let RUINM=null;
+function ruinMesh(seed,wet){const g=new GB(),rnd=mulberry(seed*97+5);const stone=wet?'#3a4a4e':'#4a4652',st2=wet?'#2e3c40':'#3a3644',glow=COL('#5af0e0',1.7);
+ g.add(PRIM.cyl(9,9.6,.6,28),T(0,-.4,0),stone);g.add(PRIM.cyl(8.2,8.2,.06,28),T(0,.2,0),st2);for(let k=0;k<3;k++)g.add(PRIM.lathe([[2+k*2.2,-.02],[2.06+k*2.2,0],[2+k*2.2,.02]],32,{cap:false}),T(0,.23,0),glow);
+ const n=7+Math.floor(rnd()*3);for(let k=0;k<n;k++){const a=k/n*TAU+rnd()*.2,r=7+rnd()*.6;const broken=rnd()<.35;const h=broken?2+rnd()*2:5+rnd()*3;const tilt=broken?(rnd()-.5)*.6:(rnd()-.5)*.12;
+  g.add(PRIM.lathe([[.9,0],[.8,h*.85],[.4,h],[.001,h+(broken?0:.8)]],4,{flat:true,phase:Math.PI/4}),T(Math.cos(a)*r,0,Math.sin(a)*r,a,tilt,tilt*.5),stone);g.add(PRIM.box(.08,h*.5,.04),T(Math.cos(a)*(r-.62),h*.25,Math.sin(a)*(r-.62),-a+Math.PI/2),glow);
+  if(broken)for(let j=0;j<3;j++)g.add(PRIM.ico(.5+rnd()*.5,0,{noise:.2,seed:k*7+j}),T(Math.cos(a)*(r+1.5+rnd()*2),.2,Math.sin(a)*(r+1.5+rnd()*2),rnd()*6),stone);}
+ // the gate arch
+ for(const s of [-1,1])g.add(PRIM.box(1.1,7,1.1,{y0:true}),T(s*2.6,0,-8.4),stone);g.add(PRIM.box(6.4,1.2,1.2,{y0:true}),T(0,7,-8.4),stone);g.add(PRIM.box(4.6,.1,.1,{y0:true}),T(0,6.7,-7.8),glow);
+ // the echo obelisk in the middle
+ g.add(PRIM.cyl(1.6,1.9,.8,6,{flat:true}),T(0,0,0),st2);g.add(PRIM.lathe([[.7,0],[.62,3.2],[.001,4.4]],3,{flat:true}),T(0,.8,0),stone);for(let k=0;k<3;k++)g.add(PRIM.box(.06,2.4,.03),T(Math.cos(k*2.094)*.42,2,Math.sin(k*2.094)*.42,-k*2.094+Math.PI/2),glow);
+ return g.build();}
+let ECHOM=null;function echoCrystal(){if(ECHOM)return ECHOM;const g=new GB();g.add(PRIM.lathe([[.001,-.6],[.35,0],[.001,.6]],6,{flat:true}),null,COL('#9affef',2.4));g.add(PRIM.lathe([[.55,-.03],[.6,0],[.55,.03]],16,{cap:false}),T(0,0,0,0,.5),COL('#5af0e0',1.6));return ECHOM=g.build();}
+function placeRuins(){const W=WORLD;W.ruins=[];if(!wv4())return;const rnd=mulberry(W.seed*1777+9);
+ const ok=(x,z)=>{if(Math.abs(x)>W.half-100||Math.abs(z)>W.half-100||!dryLand(x,z)||caveZone(x,z,12))return false;if(lakeAt(x,z)||LAKES.some(L=>Math.hypot(L.x-x,L.z-z)<L.r*1.3+14))return false;if(groundNormal(x,z)[1]<.88)return false;for(const n of W.nodes)if(Math.hypot(n.x-x,n.z-z)<26)return false;for(const r of W.ruins)if(Math.hypot(r.x-x,r.z-z)<150)return false;return true;};
+ ECHO.forEach((e,i)=>{let p=null;for(let t=0;t<4000&&!p;t++){let x,z;if(e.b>=0){const B=BIO3[e.b];const a=rnd()*TAU,r=e.b===0?120+rnd()*120:Math.sqrt(rnd())*230;x=B.x+Math.cos(a)*r;z=B.z+Math.sin(a)*r;if(e.b!==0&&biomeTop2(x,z)[0]!==e.b)continue;if(!ok(x,z))continue;}
+   else{x=(rnd()*2-1)*(W.half-120);z=(rnd()*2-1)*(W.half-120);const h=ground(x,z);if(e.b===-1?(h>-10||h<-22):(h>-90||trenchD(x,z)>140))continue;if(groundNormal(x,z)[1]<.8)continue;}p=[x,z];}
+  if(!p)return;const y=ground(p[0],p[1]);W.ruins.push({id:i,x:p[0],z:p[1],y,wet:e.b<0});});
+ for(const r of W.ruins){r.obj={mesh:ruinMesh(r.id,r.wet),model:T(r.x,r.y,r.z,r.id*1.3)};r.obj.org=2;R.objects.push(r.obj);}}
+{const _ei=EXP.init;EXP.init=function(){_ei();placeRuins();placeWrecks();storySignal();};}
+// reading an echo
+function rayRuin(o,d){let best=null;for(const r of ruins()){const c=[r.x,r.y+3.4,r.z];const t=v3.dot(v3.sub(c,o),d);if(t<0||t>9)continue;const e=Math.hypot(o[0]+d[0]*t-c[0],o[1]+d[1]*t-c[1],o[2]+d[2]*t-c[2]);if(e<1.6&&(!best||t<best.t))best={t,r};}return best;}
+const read=()=>S.echoes||(S.echoes={});
+function readEcho(r){const e=ECHO[r.id];const first=!read()[r.id];read()[r.id]=1;if(first){addInv('relic',2);codexAdd('story:'+r.id);}
+ UI.modal(`<small style="color:#5af0e0;letter-spacing:.14em;font-weight:800">VAEL ECHO</small><h3>${esc(e.t)}</h3><p style="line-height:1.55;font-size:15px">${esc(e.x)}</p>${first?'<p class="mut">+2 Vael Relics. Keep them: they unlock alien tech later.</p>':''}<div class="btns"><button class="btn gold" data-a="modalClose">Close</button></div>`);
+ AUDIO.tone&&AUDIO.tone(330,1.4,{type:'sine',vol:.08,slide:1.5});AUDIO.tone&&AUDIO.tone(495,1.6,{type:'sine',vol:.05,slide:1.5});storySignal();saveSoon();}
+function storySignal(){if(!wv4())return;const L=WPT.list();for(let i=L.length-1;i>=0;i--)if(L[i].sig)L.splice(i,1);const next=ruins().filter(r=>!read()[r.id]).sort((a,b)=>a.id-b.id)[0];if(!next){S.storyDone=1;return;}L.push({x:next.x,z:next.z,n:'Signal',c:'#5af0e0',on:true,sig:1});}
+{const _ht=handTarget;handTarget=function(){const H=_ht();const {o,d}=aimRay();const q=rayRuin(o,d);if(q&&(!H||q.t<H.t+.5))return {kind:'ruin',t:q.t,r:q.r};const w=rayWreck(o,d);if(w&&(!H||w.t<H.t+.3))return {kind:'wreck',t:w.t,w:w.w};return H;};}
+{const _uh=updateHand;updateHand=function(dt,holding){const t=handTarget();if(t&&(t.kind==='ruin'||t.kind==='wreck')){HAND.what=t;if(!holding){HAND.t=0;return;}HAND.t+=dt;const need=t.kind==='ruin'?1.2:1.6;if(HAND.t>=need){HAND.t=0;INPUT.act=false;if(t.kind==='ruin')readEcho(t.r);else salvage(t.w);}return;}_uh(dt,holding);};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const H=HAND.what;if(!H||BUILD.mode||(H.kind!=='ruin'&&H.kind!=='wreck'))return;const act=$('#act');act.classList.remove('hide');act.firstElementChild.textContent=H.kind==='ruin'?'Listen':'Salvage';act.querySelector('circle').style.strokeDashoffset=String(289*(1-clamp(HAND.t/(H.kind==='ruin'?1.2:1.6),0,1)));
+ const lk=$('#look');const t=H.kind==='ruin'?(ECHO[H.r.id].t+(read()[H.r.id]?' · heard':' · hold to listen')):('Crashed ship · '+(H.w.left>0?H.w.left+' parts left · hold to salvage':'stripped bare'));if(lk._v!==t){lk._v=t;lk.textContent=t;lk.style.display='';}};}
+// floating echo crystals over unheard ruins, and a beam of light from the one the signal points at
+{const _to=TR.objects;TR.objects=function(){const out=_to();const M=echoCrystal();for(const r of ruins()){if(Math.abs(r.x-R.cam[0])>400||Math.abs(r.z-R.cam[2])>400)continue;const heard=read()[r.id];out.push({mesh:M,model:T(r.x,r.y+6.4+Math.sin(R.time*1.3+r.id)*.3,r.z,R.time*.6+r.id,0,0,heard?.7:1.2),tint:heard?[.4,.5,.55,.5]:null});
+  if(!heard&&Math.random()<.08)PFX.glows.push({x:r.x+(Math.random()-.5)*14,y:r.y+.5,z:r.z+(Math.random()-.5)*14,vx:0,vy:.6,vz:0,life:3,t:0,s0:.08,s1:.02,c:[.35,1,.9],g:1.4});}return out;};}
+// ruins block like stone
+{const _b=blockedAt;blockedAt=function(x,z,y){for(const r of ruins()){if(Math.abs(r.x-x)>11||Math.abs(r.z-z)>11)continue;const d=Math.hypot(r.x-x,r.z-z);if(d<1.9&&y<r.y+4)return true;}return _b(x,z,y);};}
+// ---------- crashed ships ----------
+let WRECKM=null;
+function wreckMesh(seed){const g=new GB(),rnd=mulberry(seed*131+7);const hull='#8a9098',dark='#3a3f48';
+ g.add(PRIM.lathe([[.001,-9],[1.6,-7],[2.6,-3],[2.8,2],[2.2,6],[.9,8.5],[.001,9]],14),T(0,1.6,0,0,Math.PI/2,.18),hull);g.add(PRIM.lathe([[2.85,-.4],[2.9,0],[2.85,.4]],14,{cap:false}),T(-2,1.6,0,0,0,Math.PI/2+.18),C_PANEL);
+ g.add(PRIM.box(7,.3,3.4),T(-1,1.2,3.8,.3,0,-.25),hull);g.add(PRIM.box(4,.3,2.6),T(1,.6,-4.2,-.6,0,.5),hull);g.add(PRIM.box(1.6,.8,1.4),T(5.5,1.2,3,.5,.3,0),dark);
+ g.add(PRIM.cyl(1.1,1.4,2,12),T(-8.4,1.8,0,0,0,Math.PI/2),dark);g.add(PRIM.cyl(.9,.9,.2,12),T(-9.5,1.8,0,0,0,Math.PI/2),COL('#ff7a2a',.6));
+ g.add(PRIM.box(2.6,.06,1.2),T(6.2,3.1,0,0,0,-.3),COL('#9ad8ff',-4));for(let k=0;k<14;k++){const a=rnd()*TAU,r=4+rnd()*9;g.add(PRIM.box(.4+rnd()*1.2,.1+rnd()*.3,.4+rnd(),{y0:true}),T(Math.cos(a)*r,0,Math.sin(a)*r,rnd()*6,(rnd()-.5)*.5),rnd()<.5?hull:dark);}
+ g.add(PRIM.cyl(9,10,.3,20),T(0,-.15,0),COL('#3a2e28'));lamp(g,3,3.6,1.4,'#ff3a2a');return g.build();}
+const WRECK_LOOT=[['iron_plate',8,24],['iron_rod',8,18],['screw',40,16],['wire',16,14],['cable',6,12],['rotor',2,8],['reinforced_plate',2,6],['modular_frame',1,4],['circuit',2,3],['computer',1,1],['o2can',2,8],['tether',6,8]];
+function placeWrecks(){const W=WORLD;W.wrecks=[];if(!wv4())return;const rnd=mulberry(W.seed*2671+13);for(let i=0;i<16;i++){for(let t=0;t<800;t++){const x=(rnd()*2-1)*(W.half-120),z=(rnd()*2-1)*(W.half-120);const h=ground(x,z);const wet=i>=13;if(wet?(h>-6||h<-20):!dryLand(x,z))continue;if(Math.hypot(x,z)<140||groundNormal(x,z)[1]<.85||caveZone(x,z,14))continue;
+  if(W.wrecks.some(w=>Math.hypot(w.x-x,w.z-z)<120)||ruins().some(r=>Math.hypot(r.x-x,r.z-z)<60))continue;W.wrecks.push({id:i,x,z,y:h,rot:rnd()*TAU});break;}}
+ for(const w of W.wrecks){w.left=(S.wrecks||{})[w.id]??6;w.obj={mesh:wreckMesh(w.id),model:T(w.x,w.y,w.z,w.rot)};R.objects.push(w.obj);}}
+function rayWreck(o,d){let best=null;for(const w of (WORLD.wrecks||[])){const c=[w.x,w.y+1.8,w.z];const t=v3.dot(v3.sub(c,o),d);if(t<0||t>11)continue;const e=Math.hypot(o[0]+d[0]*t-c[0],o[1]+d[1]*t-c[1],o[2]+d[2]*t-c[2]);if(e<3.2&&(!best||t<best.t))best={t,w};}return best;}
+function salvage(w){if(w.left<=0){UI.toast('Nothing left worth taking','info');return;}let tot=0;for(const q of WRECK_LOOT)tot+=q[2];let r=Math.random()*tot,pick=WRECK_LOOT[0];for(const q of WRECK_LOOT){r-=q[2];if(r<=0){pick=q;break;}}const n=Math.max(1,Math.round(pick[1]*(.6+Math.random()*.8)));
+ const m=Math.min(n,invRoom(pick[0]));if(m<1){UI.toast('Inventory full','warn');return;}addInv(pick[0],m);w.left--;(S.wrecks||(S.wrecks={}))[w.id]=w.left;UI.pop('+'+m+' '+ITEMS[pick[0]].n);AUDIO.strike&&AUDIO.strike();FX.burst(w.x,w.y+2,w.z,COL('#ffb84a',1.6),10,4);codexAdd('art:wreck');saveSoon();}
+{const _b=blockedAt;blockedAt=function(x,z,y){for(const w of (WORLD.wrecks||[])){if(Math.abs(w.x-x)>10||Math.abs(w.z-z)>10)continue;const c=Math.cos(w.rot),s=Math.sin(w.rot);const dx=x-w.x,dz=z-w.z;const lx=c*dx-s*dz,lz=s*dx+c*dz;if(Math.abs(lx)<8.5&&Math.abs(lz)<2.4&&y<w.y+3.5)return true;}return _b(x,z,y);};}
+// ---------- the codex gets a Story section; the map shows ruins and wrecks you have found ----------
+ECHO.forEach((e,i)=>CODEX.push({k:'story:'+i,cat:'Story',n:e.t,d:e.x}));CODEX.push({k:'art:wreck',cat:'Artifacts',n:'Crashed ships',d:'Other ships came here before you. Strip their hulls for parts.'});
+{const _dm=UI.drawMap;UI.drawMap=function(){_dm();const c=$('#mapc');if(!c||!wv4())return;const x=c.getContext('2d'),N=c.width,M=UI.map,s=N/(WORLD.half*2)*M.z;const P=(wx,wz)=>[(wx-M.cx)*s+N/2,(wz-M.cz)*s+N/2];x.textAlign='center';
+ for(const r of ruins()){const d=Math.hypot(r.x-PL.x,r.z-PL.z);if(!read()[r.id]&&d>120&&!(WPT.list().some(w=>w.sig&&Math.hypot(w.x-r.x,w.z-r.z)<1)))continue;const q=P(r.x,r.z);x.font='20px system-ui';x.fillStyle=read()[r.id]?'#7a9a98':'#5af0e0';x.fillText('◈',q[0],q[1]+7);}
+ for(const w of (WORLD.wrecks||[])){if(Math.hypot(w.x-PL.x,w.z-PL.z)>140&&!(S.wrecks||{})[w.id]&&(S.wrecks||{})[w.id]!==0)continue;const q=P(w.x,w.z);x.font='16px system-ui';x.fillStyle=w.left>0?'#ffb84a':'#888';x.fillText('✈',q[0],q[1]+6);}};}
+// the first echo announces itself shortly after you land
+{const _eu=EXP.update;EXP.update=function(dt){_eu(dt);if(!wv4()||GAME.mode!=='play'||S.sigIntro||!S.landed)return;S.sigIntro=(S.sigIntro||0);EXP._sig=(EXP._sig||0)+dt;if(EXP._sig>25){S.sigIntro=1;UI.banner('A signal','Your suit picked up a faint, repeating signal. It is marked on your screen and map.');AUDIO.tone&&AUDIO.tone(660,.3,{type:'sine',vol:.06});storySignal();saveSoon();}};}
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.4.0',VERSION_MARK='FFVER@0.4.0@';
+const VERSION='0.5.0',VERSION_MARK='FFVER@0.5.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -4858,7 +5108,7 @@ function frame(now){let dt=Math.min(.1,(now-lastT)/1000);lastT=now;R.time+=dt;
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
