@@ -1429,10 +1429,10 @@ function updatePlayer(dt){if(VEH.driving){R.yaw=PL.yaw;R.pitch=PL.pitch;return;}
  else{const k2=Math.min(1,dt*(PL.ground?(cs>sp+1?4:14):3));PL.mv[0]=lerp(PL.mv[0],wx,k2);PL.mv[1]=lerp(PL.mv[1],wz,k2);if(PL.ground)PL.hop=false;}
  PL.landT=Math.max(0,(PL.landT||0)-dt);
  let nx=PL.x+PL.mv[0]*dt,nz=PL.z+PL.mv[1]*dt;
- const lim=WORLD.half-8;nx=clamp(nx,-lim,lim);nz=clamp(nz,-lim,lim);
+ {const cw=clampWorld(nx,nz);nx=cw[0];nz=cw[1];}
  if(!blockedAt(nx,PL.z,PL.y))PL.x=nx;else{PL.mv[0]=0;PL.slide=0;}if(!blockedAt(PL.x,nz,PL.y))PL.z=nz;else{PL.mv[1]=0;PL.slide=0;}
  playerExtras(dt);if(zipStep(dt)){PL.speed=0;R.yaw=PL.yaw;R.pitch=PL.pitch;PL.camY=PL.y+PL.eye;R.cam=[PL.x,PL.camY,PL.z];return;}
- const wasGround=PL.ground;PL.vy-=24*dt;PL.y+=PL.vy*dt;const top=solidAt(PL.x,PL.z,PL.y);
+ const wasGround=PL.ground;PL.vy-=24*GRAVK()*dt;PL.y+=PL.vy*dt;const top=solidAt(PL.x,PL.z,PL.y);
  if(PL.y<=top){if(top-PL.y<1.2||PL.vy<0){if(!wasGround&&PL.hop)PL.landT=.25;PL.y=top;PL.vy=0;PL.ground=true;}}
  else if(wasGround&&PL.vy<=0&&PL.y-top<.6){PL.y=top;PL.vy=0;PL.ground=true;}// stick to the ground walking downhill instead of hopping
  else PL.ground=PL.y-top<.05;
@@ -1923,6 +1923,7 @@ const LOGO_SVG='<svg viewBox="0 0 120 120"><defs><linearGradient id="eg2" x1="0"
 const fmtTime=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m+'m';};
 const MENU={};
 const PATCH_NOTES=[
+ {v:'0.9.0',t:'Stage 4: To the moon',items:['After the vault, research the Vael drive. Build it into a rig with a sealed cockpit, enough thrusters to lift it and 30 MJ of power, and it becomes a ship.','Tap 🌙 while flying it and the autopilot takes you to the moon in real time, with no loading screens: climb out of the atmosphere, watch the planet turn into a globe, cruise past a Vael relay satellite, and land as the moon grows ahead. Tap 🌍 on the moon to fly home.','Walk around inside your rig: tap 🚶 to get up from the seat and wander the decks while the ship flies itself. Tap 🪑 to sit back down.','The moon: low gravity (jumps go a long way), craters and dark plains, no air and no weather. Rich ore and helium-3, which makes Fusion Cells (each one refills 100 MJ of a rig\'s battery).','The Vael station waits on the moon with the last two echoes. Bring its core what it asks for to finish the story. When it ends, the air of Thessa changes: you can breathe above the water without your suit, and you keep playing in the world you built.']},
  {v:'0.8.0',t:'Stage 3: The deep',items:['New Underwater build menu: habitat corridors, rooms, glass domes, airlocks and moon pools. Join pieces so they touch; a complex with an airlock and power fills with air, so you can walk around inside with no suit.','Submarines: a rig becomes a sub underwater when it has a sealed cockpit, a propeller and a ballast tank. ▲ and ▼ rise and dive. Frames hold to 40 m and armour to 110 m; new pressure hull blocks and the deep cockpit go to 300 m. Moon pools dock subs to unload, charge and refill air.','Conveyors switch to a sealed tube on the stretch that runs under the water, with a sealed joint where they cross the waterline.','Ocean materials: kelp gives kelp fibre for sealant; abyssite lies on the deep sea floor and smelts into abyssal ingots for pressure hull plates; quartz and sealant make habitat glass.','Pressure: your suit is rated to 60 m. Dive deeper and it starts to hurt. Research stronger suits in the Analysis Lab (120 m, then 240 m).','Sea life: schools of fish, reef stalkers that guard the kelp and coral, and something enormous that patrols the trench. Don\'t get close.','Tidal generators (15 to 75 MW with the tide) and vent generators (180 MW, over thermal vents deep in the sea).','The vault in the trench can finally be opened: find every echo, research the Vael key, and dive down to it. Chapter two ends there.']},
  {v:'0.7.0',t:'Stage 2: Build your own rigs',items:['New: the Vehicle Bay. Build one, open it, and design a rig block by block. Tap a face to add a block, switch to Remove to take one off, and Undo any mistake. Parts come from your inventory and come back when you remove them.','Rig parts: frames, armour, a seat or sealed cockpit, wheels, big wheels, tracks, motors, batteries, solar panels, air tanks, cargo boxes, drills, headlights and dock connectors. Later: pistons, rotors and hinges for moving arms, and thrusters for flight.','Rigs really drive: weight, motor power, grip and ground clearance all matter. Too heavy for the hill? Add a motor or lose weight. Stuck on its belly? Big wheels lift it. Wheels slipping? Tracks grip. The designer shows top speed, climb, clearance and width before you build.','Rigs keep you alive out there: an air tank makes the rig a breathing bubble, and its battery runs the motors. Load Battery items and Oxygen Canisters from the rig\'s menu, and craft Repair Kits for crash damage.','New: the Rig Dock. Park a rig with a dock connector on it to unload its cargo onto a belt, charge its battery and refill its air.','Drills fill your cargo when you park over an ore node.','Vael relics can be researched in the Analysis Lab into hover pads (they float, even over water) and the Vael core, an engine that never runs dry.','Undo for building: a ↶ button appears while building, laying belts or dismantling. It takes back your last action and refunds or re-charges the parts.']},
  {v:'0.6.6',t:'The real jetpack fix',items:['You can now look around while holding jump (or the action button): just slide your thumb.','Found it, thanks to a crash report: holding jump in mid-air made the zipline check hit an error every frame, which froze the game until you let go. Fixed, and ziplines along power lines work again.']},
@@ -4568,7 +4569,7 @@ function placeDoggos(){const W=WORLD,rnd=mulberry(W.seed*471+3);DOG.wild=[];cons
 function dogUpdate(dt){if(GAME.mode!=='play'||GAME.paused)return;for(const d of DOG.wild){if(d.tamed)continue;d.t-=dt;if(d.t<0){d.t=2+Math.random()*4;d.wy=Math.random()<.4?null:Math.atan2(d.hx-d.x+(Math.random()-.5)*16,d.hz-d.z+(Math.random()-.5)*16);}
   if(d.wy!=null){const da=wrapAngle(d.wy-d.yaw);d.yaw+=da*Math.min(1,dt*4);const nx=d.x+Math.sin(d.yaw)*1.5*dt,nz=d.z+Math.cos(d.yaw)*1.5*dt;if(!lakeAt(nx,nz)&&groundNormal(nx,nz)[1]>.7){d.x=nx;d.z=nz;d.hop+=dt*6;}}d.y=ground(d.x,d.z);}
  pets().forEach((p,i)=>{if(p.x==null){p.x=PL.x+2;p.z=PL.z;}const stay=p.stay;const side=(i%2?1:-1)*(1+Math.floor(i/2));const tx=PL.x-Math.sin(PL.yaw)*2.6+Math.cos(PL.yaw)*side*1.2,tz=PL.z-Math.cos(PL.yaw)*2.6-Math.sin(PL.yaw)*side*1.2;const dd=Math.hypot(tx-p.x,tz-p.z);
-  if(!stay&&Math.hypot(PL.x-p.x,PL.z-p.z)>55&&!PL.tube){p.x=tx;p.z=tz;}else if(!stay&&dd>.6){const sp=Math.min(dd*2.5,PL.speed>7?11:6.5);const a=Math.atan2(tx-p.x,tz-p.z);p.yaw=a;const nx=p.x+Math.sin(a)*sp*dt,nz=p.z+Math.cos(a)*sp*dt;if(!blockedAt(nx,nz,(p.y||0)+.1)||dd>8){p.x=nx;p.z=nz;}p.hop=(p.hop||0)+dt*sp*1.6;}else p.yaw=lerp(p.yaw||0,Math.atan2(PL.x-p.x,PL.z-p.z),Math.min(1,dt*3));
+  if(!stay&&Math.hypot(PL.x-p.x,PL.z-p.z)>55&&!PL.tube&&!onMoon()){p.x=tx;p.z=tz;}else if(!stay&&dd>.6){const sp=Math.min(dd*2.5,PL.speed>7?11:6.5);const a=Math.atan2(tx-p.x,tz-p.z);p.yaw=a;const nx=p.x+Math.sin(a)*sp*dt,nz=p.z+Math.cos(a)*sp*dt;if(!blockedAt(nx,nz,(p.y||0)+.1)||dd>8){p.x=nx;p.z=nz;}p.hop=(p.hop||0)+dt*sp*1.6;}else p.yaw=lerp(p.yaw||0,Math.atan2(PL.x-p.x,PL.z-p.z),Math.min(1,dt*3));
   p.y=solidAt(p.x,p.z,(p.y??PL.y)+1.2);p.dig=(p.dig||0)+dt;if(p.dig>240){p.dig=0;if(!p.has){let tot=0;for(const q of DIG)tot+=q[2];let r=Math.random()*tot;for(const q of DIG){r-=q[2];if(r<=0){if(ITEMS[q[0]]){p.has=[q[0],q[1]];FX.puff(p.x,p.y+.2,p.z,COL('#b89a7a'));AUDIO.tone&&AUDIO.tone(900,.12,{type:'sine',vol:.06,slide:1.4});}break;}}}}});}
 {const _eu=EXP.update;EXP.update=function(dt){_eu(dt);dogUpdate(dt);};}
 {const _cu=catchUp;catchUp=function(){_cu();for(const p of pets())p.dig=(p.dig||0)+Math.min(240,Math.max(0,(Date.now()-(S.time||Date.now()))/1000));};}
@@ -4814,7 +4815,7 @@ GFX.apply=function(){const q=S.settings.quality||'auto';GFX.level=q==='low'?'off
 // ---- 41-life.js ----
 // ===== A livelier, better-looking world: new sky, birds, fireflies, a detailed pioneer, richer plants =====
 // ---------- sky: scattering colours, sun corona, lit clouds, stars, the Milky Way and auroras ----------
-const FS_SKY2=`in vec2 vP;uniform mat4 uInv;uniform vec3 uSun,uSky,uTop,uSunD;uniform float uNight;uniform vec4 uFog;uniform float uTime,uCloud,uAur;out vec4 o;
+const FS_SKY2=`in vec2 vP;uniform mat4 uInv;uniform vec3 uSun,uSky,uTop,uSunD;uniform float uNight;uniform vec4 uFog;uniform float uTime,uCloud,uAur,uSpc;out vec4 o;
 float h12(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
 float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h12(i),h12(i+vec2(1,0)),f.x),mix(h12(i+vec2(0,1)),h12(i+vec2(1,1)),f.x),f.y);}
 float fb(vec2 p){float s=0.,a=.5;for(int i=0;i<5;i++){s+=vn(p)*a;p=p*2.03+vec2(1.7,9.2);a*=.5;}return s;}
@@ -4836,12 +4837,12 @@ void main(){vec4 a=uInv*vec4(vP,1.,1.),b=uInv*vec4(vP,-1.,1.);vec3 d=normalize(a
  vec3 ax=normalize(vec3(.25,1.,.12));float pl=dot(d-pd,ax);vec3 q=d-pd-ax*pl;float rr=length(q);if(abs(pl)<.004&&rr>.21&&rr<.33&&dot(d,pd)>.93)c=mix(c,vec3(.9,.82,.72),.55*(.7+.3*sin(rr*400.)));
  vec3 md=normalize(vec3(.62,.22,-.4));float mg=dot(d,md);c=mix(c,vec3(.82,.86,.9)*(.85+.15*vn(d.xy*900.)),smoothstep(.99955,.9997,mg));c+=vec3(.6,.7,.9)*pow(max(mg,0.),900.)*.4*uNight;
  // two cloud layers, lit from the sun side with bright silver edges
- if(h>0.){float cov=mix(.6,.34,uCloud);for(int L=0;L<2;L++){float hgt=L==0?1.:1.8;vec2 cp=d.xz/(h+.1)*1.3*hgt+vec2(uTime*.006,uTime*.0025)*(L==0?1.:1.7)+float(L)*9.;float k=cloudD(cp,cov+float(L)*.08)*smoothstep(0.,.22,h);if(k<.01)continue;
+ if(h>0.){float cov=mix(.6,.34,uCloud)+uSpc*1.5;for(int L=0;L<2;L++){float hgt=L==0?1.:1.8;vec2 cp=d.xz/(h+.1)*1.3*hgt+vec2(uTime*.006,uTime*.0025)*(L==0?1.:1.7)+float(L)*9.;float k=cloudD(cp,cov+float(L)*.08)*smoothstep(0.,.22,h);if(k<.01)continue;
   float ls=cloudD(cp+uSunD.xz*.06,cov+float(L)*.08);float lit=clamp(1.-ls*.85,0.,1.);vec3 base=mix(vec3(.55,.6,.7),vec3(1.,.98,.95),.35+.65*lit);base*=.35+.65*day;base=mix(base,vec3(1.,.6,.4),set*.5*lit);
   base+=vec3(1.,.85,.6)*pow(s,5.)*lit*.8*day;base=mix(base,vec3(.03,.04,.07),(1.-day)*.85);c=mix(c,base,k*(L==0?.9:.6));}}
  o=vec4(pow(clamp(c,0.,1.),vec3(1./2.2)),1.);}`;
 {const _ir=initRenderer;initRenderer=function(){_ir();try{compile('sky',VS_SKY,FS_SKY2);}catch(e){console.warn('new sky failed',e);compile('sky',VS_SKY,FS_SKY);}};}
-{const _rf=renderFrame;renderFrame=function(){const p=GL.progs.sky;if(p&&p.u.uAur){use(p);let a=.25;if(typeof wv3==='function'&&wv3()){bioW(R.cam[0],R.cam[2]);a=.2+BW[1]*1.2+BW[2]*.5;}GL.gl.uniform1f(p.u.uAur,a);}_rf();};}
+{const _rf=renderFrame;renderFrame=function(){const p=GL.progs.sky;if(p&&p.u.uAur){use(p);let a=.25;if(typeof wv3==='function'&&wv3()){bioW(R.cam[0],R.cam[2]);a=.2+BW[1]*1.2+BW[2]*.5;}const sk=spaceK();a*=1-sk;GL.gl.uniform1f(p.u.uAur,a);if(p.u.uSpc)GL.gl.uniform1f(p.u.uSpc,sk);}_rf();};}
 // ---------- birds circling overhead by day, fireflies drifting by night ----------
 const LIFE={birds:[],t:0};
 let BIRDM=null;
@@ -5375,7 +5376,7 @@ function addNodes5(){const W=WORLD,rnd=mulberry(W.seed*6047+11);const out=W.node
 // ---------- creatures follow you around the big world: the ones far away quietly move somewhere near you ----------
 function nearSpot5(r0,r1,test){for(let t=0;t<12;t++){const a=Math.random()*TAU,r=r0+Math.random()*(r1-r0),x=PL.x+Math.cos(a)*r,z=PL.z+Math.sin(a)*r;if(Math.abs(x)>WORLD.half-60||Math.abs(z)>WORLD.half-60)continue;if(test(x,z))return [x,z];}return null;}
 const landOK5=(x,z)=>dryLand(x,z)&&!lakeAt(x,z)&&!caveZone(x,z,2)&&groundNormal(x,z)[1]>.75&&Math.hypot(x,z)>75;
-{const _f=BP.frame;BP.frame=function(){_f();if(!W5.on||GAME.mode!=='play')return;W5.ct=(W5.ct||0)+1;if(W5.ct%20)return;
+{const _f=BP.frame;BP.frame=function(){_f();if(!W5.on||GAME.mode!=='play'||onMoon())return;W5.ct=(W5.ct||0)+1;if(W5.ct%20)return;
  for(const c of CRE.list){if(c.dead>0||Math.hypot(PL.x-c.x,PL.z-c.z)<700)continue;const p=nearSpot5(220,460,landOK5);if(p){Object.assign(c,{x:p[0],z:p[1],hx:p[0],hz:p[1],y:ground(p[0],p[1]),st:'idle',t:Math.random()*3});}break;}
  for(const c of CRE2.list){if(c.dead>0||Math.hypot(PL.x-c.x,PL.z-c.z)<700)continue;let p=null;if(c.k==='stinger'){const cv=CAVE3.list.filter(q=>Math.hypot(q.mx-PL.x,q.mz-PL.z)<700);if(cv.length){const q=cv[Math.floor(Math.random()*cv.length)];const pt=q.pts[Math.floor(Math.random()*q.pts.length)];if(pt.cov)p=[pt.x,pt.z];}}else p=nearSpot5(220,460,landOK5);
   if(p){Object.assign(c,{x:p[0],z:p[1],hx:p[0],hz:p[1],y:ground(p[0],p[1]),st:'idle',t:Math.random()*3});}break;}
@@ -5470,7 +5471,7 @@ function rigDerive(rig){let D=RIGD.get(rig.id);if(D&&D.ver===rig.ver)return D;if
  st.mass=m;st.clear=st.wheels?Math.max(0,hullLo-lo):0;st.width=maxX-minX;st.len=maxZ-minZ;st.height=maxY-lo;st.radius=Math.hypot(st.width,st.len,st.height)/2;
  // what the rig can do, in plain numbers
  const mu=st.wheels?B.filter(b=>RIGP[b[3]].wheel).reduce((a,b)=>a+RIGP[b[3]].wheel.mu,0)/st.wheels:0;const F3=st.pw*1000/3;
- st.top=st.pw&&st.wheels?Math.min(st.track?16:30,Math.cbrt(st.pw*1000/36)*((st.track?.75:1))):0;st.climb=st.pw&&st.wheels?Math.round(Math.min(Math.atan(mu),Math.asin(Math.min(1,F3/(m*9.8))))*180/Math.PI):0;st.mu=mu;st.lift=st.thr/(m*9.8);
+ st.top=st.pw&&st.wheels?Math.min(st.track?16:30,Math.cbrt(st.pw*1000/36)*((st.track?.75:1))):0;st.climb=st.pw&&st.wheels?Math.round(Math.min(Math.atan(mu),Math.asin(Math.min(1,F3/(m*9.8*GRAVK()))))*180/Math.PI):0;st.mu=mu;st.lift=st.thr/(m*9.8*GRAVK());
  D={ver:rig.ver,B,grp,groups,com,st,lo,meshes:null,wheels:B.map((b,i)=>RIGP[b[3]].wheel?i:-1).filter(i=>i>=0)};RIGD.set(rig.id,D);return D;}
 function rigFree(D){if(D.meshes)for(const m of D.meshes)if(m)freeMesh(m);D.meshes=null;}
 // ---------- looks ----------
@@ -5543,20 +5544,20 @@ function rigUpdate(rig,dt){const D=rigDerive(rig),st=D.st;if(rig.edit)return;con
  if(drv&&st.mech){const k=RIG.mk||0;const M=rig.mech;if(RIG.up)M.p=Math.min(1,M.p+dt*.4),M.h=Math.min(Math.PI/2,M.h+dt*.8);if(RIG.down)M.p=Math.max(0,M.p-dt*.4),M.h=Math.max(-Math.PI/2,M.h-dt*.8);if(rig.spin)M.r+=dt*2.2*rig.spin;}
  // flight
  const G0=rigPose(rig);const sup=rigSupport(rig,D,G0);const floor=Math.max(sup.need,sup.hull);
- if(rig.fly&&st.thr>0&&(rig.energy>0)){const want=(RIG.up?5:RIG.down?-5:0);const T_=clamp((want-rig.vy)*m*2+m*9.8,0,st.thr);rig.vy+=(T_/m-9.8)*dt;rig.energy=Math.max(0,rig.energy-T_/1000*dt*1.4);
-  const amax=st.thr>m*9.8?6:2;rig.spd=lerp(rig.spd,thr*Math.min(26,8+st.thr/m),Math.min(1,dt*.8));rig.yaw+=steer*dt*1.1;rig.y+=rig.vy*dt;if(rig.y<floor){rig.y=floor;rig.vy=Math.max(0,rig.vy);}
+ if(rig.fly&&st.thr>0&&(rig.energy>0)){const want=(RIG.up?5:RIG.down?-5:0);const T_=clamp((want-rig.vy)*m*2+m*9.8*GRAVK(),0,st.thr);rig.vy+=(T_/m-9.8*GRAVK())*dt;rig.energy=Math.max(0,rig.energy-T_/1000*dt*1.4);
+  const amax=st.thr>m*9.8*GRAVK()?6:2;rig.spd=lerp(rig.spd,thr*Math.min(26,8+st.thr/m),Math.min(1,dt*.8));rig.yaw+=steer*dt*1.1;rig.y+=rig.vy*dt;if(rig.y<floor){rig.y=floor;rig.vy=Math.max(0,rig.vy);}
   rig.pitch=lerp(rig.pitch||0,thr*.12,Math.min(1,dt*2));rig.roll=lerp(rig.roll||0,-steer*.18,Math.min(1,dt*2));
-  const nx=rig.x+Math.sin(rig.yaw)*rig.spd*dt,nz=rig.z+Math.cos(rig.yaw)*rig.spd*dt;if(Math.abs(nx)<WORLD.half-20&&Math.abs(nz)<WORLD.half-20){rig.x=nx;rig.z=nz;}
+  const nx=rig.x+Math.sin(rig.yaw)*rig.spd*dt,nz=rig.z+Math.cos(rig.yaw)*rig.spd*dt;if(inWorld(nx,nz)){rig.x=nx;rig.z=nz;}
   if(Math.random()<dt*20)PFX.emit('steam',[rig.x,rig.y-D.st.height*.4,rig.z],.6);rigAfter(rig,D,dt,drv);return;}
  // ground: settle onto the terrain, or fall
  const supported=rig.y<=floor+.08&&rig.vy<=.5;
  if(supported){if(rig.vy<-9){rigDamage(rig,(-rig.vy-9)*6);}rig.vy=0;rig.y=lerp(rig.y,floor,Math.min(1,dt*14));const tilt=rigFit(rig,D);if(tilt){rig.pitch=lerp(rig.pitch||0,tilt[0],Math.min(1,dt*8));rig.roll=lerp(rig.roll||0,tilt[1],Math.min(1,dt*8));}}
- else{rig.vy-=24*dt;rig.y+=rig.vy*dt;if(rig.y<floor){rig.y=floor;}}
+ else{rig.vy-=24*GRAVK()*dt;rig.y+=rig.vy*dt;if(rig.y<floor){rig.y=floor;}}
  // traction: only wheels actually touching help; a rig sitting on its belly goes nowhere
  const touching=supported?sup.wn.filter(w=>w.req>=floor-.22):[];const grip=st.wheels?touching.length/st.wheels:0;const mu=st.mu||0;
- const N=m*9.8*Math.cos(rig.pitch||0)*grip;const tracF=mu*N;const v=rig.spd;
+ const N=m*9.8*GRAVK()*Math.cos(rig.pitch||0)*grip;const tracF=mu*N;const v=rig.spd;
  let F=0;if(Math.abs(thr)>.01&&eff>0&&rig.hp>0){F=thr*Math.min(eff*1000/Math.max(Math.abs(v),1.5),tracF);if(st.track)F*=1;}
- const slope=m*9.8*Math.sin(rig.pitch||0);// downhill pushes forward
+ const slope=m*9.8*GRAVK()*Math.sin(rig.pitch||0);// downhill pushes forward
  const drag=36*v*Math.abs(v)+m*.25*Math.sign(v)*grip;let a=(F+slope*(grip>0?1:0)-drag)/m;
  if(Math.abs(thr)<.01&&grip>0){// brakes hold until the slope beats them
   const hold=tracF*.9;const net=slope-drag;if(Math.abs(net)<hold&&Math.abs(v)<2)a=-v*4;}
@@ -5567,11 +5568,11 @@ function rigUpdate(rig,dt){const D=rigDerive(rig),st=D.st;if(rig.edit)return;con
  const nx=rig.x+Math.sin(rig.yaw)*rig.spd*dt,nz=rig.z+Math.cos(rig.yaw)*rig.spd*dt;let hit=false;
  if(Math.abs(rig.spd)>.05){const dir=Math.sign(rig.spd),c=Math.cos(rig.yaw),s=Math.sin(rig.yaw);const L=(dir>0?D.st.len:D.st.len)*.5,Wd=D.st.width*.45;
   for(const off of [-Wd,0,Wd]){const lz=dir*L,px=nx+s*lz+c*off,pz=nz+c*lz-s*off;if(rigHit(px,pz,rig.y-D.st.height*.2)){hit=true;break;}}}
- if(hit||Math.abs(nx)>WORLD.half-20||Math.abs(nz)>WORLD.half-20){if(Math.abs(rig.spd)>7)rigDamage(rig,(Math.abs(rig.spd)-7)*5);rig.spd*=-.2;}else{rig.x=nx;rig.z=nz;}
+ if(hit||!inWorld(nx,nz)){if(Math.abs(rig.spd)>7)rigDamage(rig,(Math.abs(rig.spd)-7)*5);rig.spd*=-.2;}else{rig.x=nx;rig.z=nz;}
  if(Math.abs(rig.spd)>1&&grip>0&&Math.random()<dt*6)PFX.emit('dust',[rig.x-Math.sin(rig.yaw)*D.st.len*.5,rig.y-D.st.height*.4,rig.z-Math.cos(rig.yaw)*D.st.len*.5],.8);
  rig.wspin=(rig.wspin||0)+rig.spd*dt;rig.steer=lerp(rig.steer||0,steer,Math.min(1,dt*6));
  // feedback when it's not going to make it up the hill
- if(drv&&thr>.6&&Math.abs(rig.spd)<.6&&grip>0&&(rig.pitch||0)<-.15){RIG.strain=(RIG.strain||0)+dt;if(RIG.strain>2.5&&!RIG.toldStrain){RIG.toldStrain=1;UI.toast(eff*1000/1.5<m*9.8*Math.sin(-(rig.pitch||0))?'Not enough power for this hill: add a motor, or lighten the rig':'Wheels are slipping: try big wheels or tracks','warn');}}else RIG.strain=0;
+ if(drv&&thr>.6&&Math.abs(rig.spd)<.6&&grip>0&&(rig.pitch||0)<-.15){RIG.strain=(RIG.strain||0)+dt;if(RIG.strain>2.5&&!RIG.toldStrain){RIG.toldStrain=1;UI.toast(eff*1000/1.5<m*9.8*GRAVK()*Math.sin(-(rig.pitch||0))?'Not enough power for this hill: add a motor, or lighten the rig':'Wheels are slipping: try big wheels or tracks','warn');}}else RIG.strain=0;
  if(drv&&grip<.35&&supported&&thr>.3&&Math.abs(rig.spd)<.5&&!RIG.toldBelly&&st.wheels){RIG.toldBelly=1;UI.toast('Stuck on its belly: big wheels give more ground clearance','warn');}
  rigAfter(rig,D,dt,drv);}
 function rigDamage(rig,n){const D=rigDerive(rig);n/=1+D.st.hp*.15;if(n<1)return;rig.hp=Math.max(0,(rig.hp??100)-n);AUDIO.bad&&AUDIO.bad();if(VEH.driving===rig)UI.toast(rig.hp>0?'Rig damaged · '+Math.round(rig.hp)+'%':'Rig wrecked: use a Repair Kit','warn');}
@@ -5889,9 +5890,166 @@ CODEX.push({k:'story:vault',cat:'Story',n:'Echo 12 · The Sleeper',d:VAULT_TEXT}
  {k:'sea:deep',cat:'Underwater',n:'Pressure',d:'Your suit is rated to 60 m. Research stronger suits in the Analysis Lab (120 m, then 240 m) using abyssite from the deep floor.'});
 (function(){const st=document.createElement('style');st.textContent=`#depthhud{position:fixed;left:50%;bottom:calc(64px + var(--safe-b));transform:translateX(-50%);display:none;background:rgba(10,30,44,.78);color:#bfefff;border-radius:12px;padding:5px 12px;font:800 13px system-ui;z-index:6}#depthhud span{opacity:.6;font-weight:600}#depthhud.on{display:block}#depthhud.bad{background:rgba(120,24,18,.85);color:#fff}`;document.head.appendChild(st);})();
 
+// ---- 49-space.js ----
+// ===== Stage 4: space. A walk-in ship with a Vael drive flies to the moon and back in real time, no loading screens:
+// the climb, the planet turning into a globe, the cruise, the moon growing ahead, the landing. The moon has low gravity,
+// craters, helium-3, and the Vael station where the story ends. =====
+const MOON={prime:true,ox:40000,oz:0,R:1150,tiles:new Map(),meshes:new Map(),st:{x:40000,z:-70}};
+function onMoon(x){return (x??PL.x)>20000;}
+function GRAVK(){return onMoon(VEH.driving&&VEH.driving.blocks?VEH.driving.x:PL.x)?.19:1;}
+function clampWorld(x,z){if(onMoon(x)){const lx=x-MOON.ox,lz=z-MOON.oz,r=Math.hypot(lx,lz),m=MOON.R-10;if(r>m){x=MOON.ox+lx/r*m;z=MOON.oz+lz/r*m;}return [x,z];}const lim=WORLD.half-8;return [clamp(x,-lim,lim),clamp(z,-lim,lim)];}
+function inWorld(x,z){if(onMoon(x))return Math.hypot(x-MOON.ox,z-MOON.oz)<MOON.R-20;return Math.abs(x)<WORLD.half-20&&Math.abs(z)<WORLD.half-20;}
+// ---------- the moon's surface ----------
+const MCRAT=[[-400,300,160],[350,-250,120],[150,450,90],[-300,-420,110],[520,200,70],[-600,-80,85],[60,-560,95]];
+function moonH(x,z){const lx=x-MOON.ox,lz=z-MOON.oz,r=Math.hypot(lx,lz);
+ let h=30+fbm(lx*.004,lz*.004,4)*14+ridged(lx*.012+3,lz*.012-5,3)*3.5;const mare=smooth(.04,.22,fbm(lx*.0016+7,lz*.0016-3,3));h=lerp(h,24+fbm(lx*.02,lz*.02,2)*1.2,mare*.85);
+ const crater=(cx,cz,cr)=>{const d=Math.hypot(lx-cx,lz-cz);if(d>cr*1.8)return;const t=d/cr;if(t<1)h-=cr*.32*(1-t*t);h+=cr*.11*Math.exp(-Math.pow((t-1)/.22,2));};
+ for(const c of MCRAT)crater(c[0],c[1],c[2]);
+ const C=70,ci=Math.floor(lx/C),cj=Math.floor(lz/C);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const gi=ci+i,gj=cj+j;if(hash2(gi,gj,41)>.5)continue;const cx=(gi+.2+hash2(gi,gj,42)*.6)*C,cz=(gj+.2+hash2(gi,gj,43)*.6)*C,cr=5+Math.pow(hash2(gi,gj,44),2)*26;crater(cx,cz,cr);}
+ // a flat landing field beside the Vael station, and mountains ringing the edge of the map
+ const ds=Math.hypot(lx,lz-20);h=lerp(32,h,smooth(70,150,ds));h+=smooth(MOON.R-220,MOON.R,r)*240*(.6+.4*ridged(lx*.01,lz*.01,3));return Math.max(h,6);}
+const MT=64,MS=2,MN=MT/MS+1;// 64 m tiles, 2 m grid
+function moonTile(ti,tj){const k=ti*4096+tj;let t=MOON.tiles.get(k);if(t)return t;t=new Float32Array(MN*MN);const x0=MOON.ox+ti*MT,z0=MOON.oz+tj*MT;for(let j=0;j<MN;j++)for(let i=0;i<MN;i++)t[j*MN+i]=moonH(x0+i*MS,z0+j*MS);MOON.tiles.set(k,t);return t;}
+function moonGround(x,z){const lx=x-MOON.ox,lz=z-MOON.oz,ti=Math.floor(lx/MT),tj=Math.floor(lz/MT);const t=moonTile(ti,tj);let fx=(lx-ti*MT)/MS,fz=(lz-tj*MT)/MS;fx=clamp(fx,0,MN-1.001);fz=clamp(fz,0,MN-1.001);const i=Math.floor(fx),j=Math.floor(fz),u=fx-i,v=fz-j;
+ const a=t[j*MN+i],b=t[j*MN+i+1],c=t[(j+1)*MN+i],d=t[(j+1)*MN+i+1];return u+v<1?a+(b-a)*u+(c-a)*v:d+(c-d)*(1-u)+(b-d)*(1-v);}
+{const _g=ground;ground=function(x,z){return x>20000?moonGround(x,z):_g(x,z);};}
+function moonColor(x,z,h,ny){const lx=x-MOON.ox,lz=z-MOON.oz;const mare=smooth(.04,.22,fbm(lx*.0016+7,lz*.0016-3,3));const n=fbm(lx*.03,lz*.03,2);let c=mixc([.5,.5,.52],[.62,.61,.6],smooth(-.2,.3,n));c=mixc(c,[.26,.27,.3],mare*.8);
+ const rock=smooth(.86,.7,ny);c=mixc(c,[.3,.29,.31],rock);if(Math.hypot(lx,lz+50)<40)c=mixc(c,[.2,.24,.3],.5);return [c[0],c[1],c[2],.66];}
+function moonMesh(ti,tj,st){const t=moonTile(ti,tj),cw=(MN-1)/st+1,pos=[],nrm=[],col=[],idx=[];const H=(i,j)=>{if(i>=0&&j>=0&&i<MN&&j<MN)return t[j*MN+i];return moonH(MOON.ox+ti*MT+i*MS,MOON.oz+tj*MT+j*MS);};
+ for(let j=0;j<cw;j++)for(let i=0;i<cw;i++){const gi=i*st,gj=j*st,x=MOON.ox+ti*MT+gi*MS,z=MOON.oz+tj*MT+gj*MS,h=H(gi,gj);const N=v3.norm([H(gi-st,gj)-H(gi+st,gj),2*st*MS,H(gi,gj-st)-H(gi,gj+st)]);const c=moonColor(x,z,h,N[1]);pos.push(x,h,z);nrm.push(...N);col.push(c[0],c[1],c[2],c[3]);}
+ for(let j=0;j<cw-1;j++)for(let i=0;i<cw-1;i++){const a=j*cw+i,b=a+cw;idx.push(a,b,a+1,a+1,b,b+1);}
+ // skirts hide cracks between detail levels
+ const sk=st>1?5:3,base=pos.length/3;const ring=[];for(let i=0;i<cw;i++)ring.push(i);for(let j=1;j<cw;j++)ring.push(j*cw+cw-1);for(let i=cw-2;i>=0;i--)ring.push((cw-1)*cw+i);for(let j=cw-2;j>0;j--)ring.push(j*cw);
+ for(const v of ring){pos.push(pos[v*3],pos[v*3+1]-sk,pos[v*3+2]);nrm.push(nrm[v*3],nrm[v*3+1],nrm[v*3+2]);col.push(col[v*4],col[v*4+1],col[v*4+2],col[v*4+3]);}
+ for(let q=0;q<ring.length;q++){const a=ring[q],b=ring[(q+1)%ring.length],a2=base+q,b2=base+(q+1)%ring.length;idx.push(a,a2,b,b,a2,b2,a,b,a2,b,b2,a2);}
+ return makeMesh({pos:new Float32Array(pos),nrm:new Float32Array(nrm),col:new Float32Array(col),idx});}
+function moonTerrain(cx,cz){const D=drawDist()+100,L=[],lx=cx-MOON.ox,lz=cz-MOON.oz;let budget=performance.now()+(MOON.prime?2e4:5);MOON.prime=false;const want=new Set();
+ const r0=Math.floor((lx-D)/MT),r1=Math.floor((lx+D)/MT),q0=Math.floor((lz-D)/MT),q1=Math.floor((lz+D)/MT);
+ const cand=[];for(let tj=q0;tj<=q1;tj++)for(let ti=r0;ti<=r1;ti++){const tx=(ti+.5)*MT,tz=(tj+.5)*MT;if(Math.hypot(tx,tz)>MOON.R+80)continue;const d=Math.hypot(tx-lx,tz-lz)-MT*.7;if(d>D)continue;cand.push([d,ti,tj]);}cand.sort((a,b)=>a[0]-b[0]);
+ for(const [d,ti,tj] of cand){const lv=d<160?1:d<420?2:4;const key=ti*4096+tj;want.add(key);let m=MOON.meshes.get(key);if(!m||m.lv!==lv){if(performance.now()<budget||!m){if(!m&&performance.now()>budget){continue;}const mesh=moonMesh(ti,tj,lv);if(m)freeMesh(m.mesh);m={mesh,lv};MOON.meshes.set(key,m);}}if(m)L.push(m.mesh);}
+ for(const [k,m] of MOON.meshes)if(!want.has(k)){freeMesh(m.mesh);MOON.meshes.delete(k);}return L;}
+{const _st=selectTerrain;selectTerrain=function(force){_st(force);if(onMoon(R.cam[0])){R.terrain=moonTerrain(R.cam[0],R.cam[2]);R.casters=[];}else if(MOON.meshes.size){for(const m of MOON.meshes.values())freeMesh(m.mesh);MOON.meshes.clear();}};}
+// a big jump to or from the moon happens in the sky: planet tiles fill in during the descent instead of all at once
+// moon resources: helium-3 and rich ore
+Object.assign(ITEMS,{helium3:{n:'Helium-3',c:'#c8e8ff',s:'ore'},fusion_cell:{n:'Fusion Cell',c:'#5af0e0',s:'medium'}});
+Object.assign(ITEM_MODEL,{helium3(g){for(let k=0;k<5;k++)g.add(PRIM.ico(.08,1,{noise:.3,seed:k}),T((k%3-1)*.09,.06+(k>>1)*.05,(k%2-.5)*.08),COL('#c8e8ff',1.2));},fusion_cell(g){g.add(PRIM.cyl(.12,.12,.34,14),null,'#3a3f48');g.add(PRIM.cyl(.125,.125,.18,14),T(0,.08,0),COL('#5af0e0',2));g.add(PRIM.cyl(.06,.06,.06,10),T(0,.34,0),'#d0d4da');}});
+NODE_TYPES.helium3={n:'Helium-3',c:'#c8e8ff'};
+RECIPES.push({id:'fusion_cell',m:'assembler',in:{helium3:6,copper_sheet:2},out:{fusion_cell:1},t:10,tier:3},{id:'fusion_cell_b',m:'bench',bench:1,in:{helium3:8,copper_sheet:3},out:{fusion_cell:1},t:6,tier:3});
+for(const r of RECIPES.slice(-2))RECIPE[r.id]=r;
+MAMR.push({id:'vael_drive',tree:'Vael Relics',n:'Vael drive',d:'The engine that can carry a ship to the moon (after the vault)',cost:{relic:6,pressure_hull:6,computer:6},t:240,req:'vael_keyr',fx:()=>UI.toast('Vael drive unlocked: build it into a sealed, flying rig','good')});
+Object.assign(RIGP,{vdrive:{n:'Vael drive',m:300,cost:{relic:4,computer:4,fusion_cell:2},tier:0,res:'vael_drive',c:'#5af0e0',deep:1,d:'With a sealed cockpit, enough thrusters and 30 MJ of power, it flies the rig to the moon and back.'}});
+{const _g=rigBlockGeo;rigBlockGeo=function(g,b,o){if(b[3]!=='vdrive')return _g(g,b,o);const x=b[0]-o[0],y=b[1]-o[1],z=b[2]-o[2];g.add(RB(.9,.9,.9,.2),T(x,y-.45,z),'#2a2438');g.add(PRIM.cyl(.3,.3,1,14),T(x,y,z-.5,0,Math.PI/2),COL('#5af0e0',2.4));for(let k=0;k<4;k++){const a=k/4*TAU;g.add(PRIM.box(.08,.08,.9),T(x+Math.cos(a)*.38,y+Math.sin(a)*.38,z),COL('#c890ff',1.6));}};}
+function placeMoon(){const W=WORLD,rnd=mulberry(W.seed*9001+7);const add=(type,pu,x,z)=>{const nd={id:W.nodes.length,type,purity:pu,x:Math.round(x),z:Math.round(z),y:0,moon:1};nd.y=ground(nd.x,nd.z);W.nodes.push(nd);let m=W.nodeMesh[type];if(!m)m=W.nodeMesh[type]=nodeMesh(type);nd.obj={mesh:m,model:T(nd.x,nd.y,nd.z,nd.id*1.7,0,0,pu>1?1.2:pu<1?.8:1)};R.objects.push(nd.obj);};
+ const L=[['helium3',[2,1,1]],['helium3',[1,1]],['helium3',[2,1]],['helium3',[1,0]],['iron_ore',[2,2]],['copper_ore',[2,1]],['aurite_ore',[2,2]],['uranium_ore',[2,1]],['limestone',[2,1]],['helium3',[2,2,1]],['iron_ore',[2,1]],['aurite_ore',[2,1]]];
+ for(const [type,purs] of L){for(let t=0;t<300;t++){const a=rnd()*TAU,r=200+rnd()*700,x=MOON.ox+Math.cos(a)*r,z=MOON.oz+Math.sin(a)*r;if(groundNormal(x,z)[1]<.9||W.nodes.some(n=>n.moon&&Math.hypot(n.x-x,n.z-z)<70))continue;let k=0;for(const pu of purs){const a2=rnd()*TAU,r2=k?11+rnd()*6:0;add(type,pu,x+Math.cos(a2)*r2,z+Math.sin(a2)*r2);k++;}break;}}}
+// ---------- the Vael station ----------
+function stationMesh(){const g=new GB();const st='#2e2a38',st2='#3a3448',glow=COL('#5af0e0',2),vio=COL('#c890ff',1.8);
+ g.add(PRIM.cyl(34,36,2,40),T(0,-1,0),st);g.add(PRIM.cyl(30,30,.3,40),T(0,1,0),st2);for(let k=0;k<12;k++){const a=k/12*TAU;g.add(PRIM.box(2.2,26,2.2),T(Math.cos(a)*31,1,Math.sin(a)*31,-a),st);g.add(PRIM.box(.5,22,.4),T(Math.cos(a)*32.2,3,Math.sin(a)*32.2,-a),glow);g.add(PRIM.box(8,1.4,1.4),T(Math.cos(a+.26)*31,26,Math.sin(a+.26)*31,-a-.26-Math.PI/2),st2);}
+ g.add(PRIM.sphere(16,28,16),T(0,1,0,0,0,0,1,.75,1),COL('#a8dcf0',-4));for(let k=0;k<8;k++){const a=k/8*TAU;g.add(PRIM.box(.5,13,.5),T(Math.cos(a)*10,1,Math.sin(a)*10,-a,0,.55),st);}
+ g.add(PRIM.cyl(3,4,6,16),T(0,1,0),st2);g.add(PRIM.cyl(1.4,1.4,30,14),T(0,7,0),st);g.add(PRIM.sphere(3,18,12),T(0,38,0),glow);for(let k=0;k<3;k++)g.add(PRIM.cyl(5-k,5-k,.4,24),T(0,12+k*7,0),vio);
+ for(let k=0;k<4;k++){const a=k/4*TAU+.4;g.add(PRIM.box(6,4,10),T(Math.cos(a)*24,1,Math.sin(a)*24,-a),st2);g.add(PRIM.box(4,.4,8),T(Math.cos(a)*24,5,Math.sin(a)*24,-a),glow);}return g.build();}
+const STA={need:{fusion_cell:12,pressure_hull:12,computer:12,relic:8}};
+{const _ei=EXP.init;EXP.init=function(){_ei();placeMoon();const y=ground(MOON.st.x,MOON.st.z);STA.obj={mesh:stationMesh(),model:T(MOON.st.x,y,MOON.st.z)};R.objects.push(STA.obj);STA.y=y;};}
+const ECHO13='Echo 13 · The Station. You came. Then the vault is open and you have heard the Sleeper breathing. We built this station to sing to it: to wake it slowly, so it lets go of the air without tearing the world apart. We ran out of time before the song was finished. The core still listens. Bring it power, hulls, minds and our relics, and finish what we started.';
+const ECHO14='Echo 14 · The Waking. Listen. Under the trench, something huge turns over in its sleep and, for the first time in an age, breathes out. The forests do the rest. Look at your world: in a year the sky will be blue enough to stand under without a suit. We could not stay to see it. You can. Everything you built is yours to keep. (The end. Keep playing.)';
+// a solid floor for the landing dome, so you don't fall into it
+{const _s=solidAt;solidAt=function(x,z,y){const t=_s(x,z,y);if(STA.y!=null&&x>20000){const d=Math.hypot(x-MOON.st.x,z-MOON.st.z);if(d<30&&y>STA.y+.8)return Math.max(t,STA.y+1.3);}return t;};}
+UI.A.staDeliver=()=>{const C=S.core||(S.core={got:{}});for(const [k,n] of Object.entries(STA.need)){const m=Math.min(S.inv[k]||0,n-(C.got[k]||0));if(m>0){addInv(k,-m);C.got[k]=(C.got[k]||0)+m;}}AUDIO.craft&&AUDIO.craft();
+ if(Object.entries(STA.need).every(([k,n])=>(C.got[k]||0)>=n)){S.airFixed=1;S.ended=1;UI.closePanel&&0;const el=document.getElementById('nfmodal');if(el)el.remove();AUDIO.fanfare&&AUDIO.fanfare();UI.banner&&UI.banner('The Sleeper wakes','The air of Thessa is changing');setTimeout(()=>UI.modal(`<h3>Echo 14 · The Waking</h3><p>${ECHO14}</p><p class="mut">Back on the planet, the air above the sea is now breathable: you no longer need a suit outside. Thanks for playing Novaforge.</p>`),3000);saveSoon();return;}
+ staOpen();};
+function staOpen(){const C=S.core||(S.core={got:{}});UI.modal(`<h3>The station core</h3><p>${ECHO13}</p><h5>Bring to the core</h5><div class="inv">${Object.entries(STA.need).map(([k,n])=>`<div class="slot">${iIcon(k)}<em>${Math.min(n,C.got[k]||0)}/${n}</em></div>`).join('')}</div><div class="pwrsw"><button class="btn big gold" data-a="staDeliver">Deliver what I have</button></div>`);
+ if(!S.echo13){S.echo13=1;addInv('relic',2);try{codexAdd('story:e13');}catch(e){}}}
+CODEX.push({k:'story:e13',cat:'Story',n:'Echo 13 · The Station',d:ECHO13},{k:'story:e14',cat:'Story',n:'Echo 14 · The Waking',d:ECHO14},{k:'space:ship',cat:'Vehicles',n:'Ships',d:'A ship is a rig with a sealed cockpit, thrusters that lift its weight, the Vael drive, and 30 MJ of power. Fly it, then tap 🌙 to go to the moon (or 🌍 to come home). Tap 🚶 to get up and walk around inside while it flies itself.'});
+// ---------- after the ending the planet's air is breathable above the water ----------
+{const _ib=inBubble;inBubble=function(x,y,z){if(S.airFixed&&!onMoon(x)&&y>-1.2)return true;return _ib(x,y,z);};}
+// ---------- the moon: no weather, no sea, black sky, low gravity ----------
+{const _eu=ENV.update;ENV.update=function(dt,play){const moon=onMoon(R.cam[0]);if(moon&&S.wx&&S.wx.k!=='clear'){S.wx.k='clear';S.wx.t=60;}_eu(dt,play);
+ const alt=moon?1e4:R.cam[1]-Math.max(0,typeof ground==='function'?ground(R.cam[0],R.cam[2]):0);const k=moon?1:smooth(150,800,alt);MOON.k=k;if(k<=0)return;
+ R.fog=[lerp(R.fog[0],.02,k),lerp(R.fog[1],.02,k),lerp(R.fog[2],.03,k),R.fog[3]*(1-k*.97)];R.sky=R.sky.map(c=>lerp(c,.01,k));R.top=(R.top||[.16,.3,.62]).map(c=>lerp(c,.002,k));R.night=Math.max(R.night||0,k*.9);R.cloud=(R.cloud||0)*(1-k);R.gnd=R.gnd.map(c=>lerp(c,moon?.14:.05,k));if(moon){R.sunCol=R.sunCol.map(c=>c*1.15);}
+ if(S.airFixed&&!moon&&k<.5){R.top=R.top.map((c,i)=>lerp(c,[.18,.36,.72][i],.25));}};}
+{const _dw=drawWater;drawWater=function(){if(onMoon(R.cam[0]))return;_dw();};}
+{const _gf=grassFill;grassFill=function(){if(onMoon(R.cam[0])){if(GRASS.I)GRASS.I.n=0;return;}_gf();};}
+{const _lo=lifeObjects;lifeObjects=function(dt){if(onMoon(R.cam[0]))return [];return _lo(dt);};}
+{const _lp=lifeParticles;lifeParticles=function(dt){if(onMoon(R.cam[0]))return;_lp(dt);};}
+{const _u=OCEAN.update;OCEAN.update=function(dt){if(onMoon(R.cam[0])){if(OCEAN.I)OCEAN.I.n=0;return;}_u(dt);};}
+// ---------- planets in the sky ----------
+function globeMesh(kind){const g={pos:[],nrm:[],col:[],idx:[]};const NA=48,NB=24;
+ for(let j=0;j<=NB;j++)for(let i=0;i<=NA;i++){const th=j/NB*Math.PI,ph=i/NA*TAU;const n=[Math.sin(th)*Math.cos(ph),Math.cos(th),Math.sin(th)*Math.sin(ph)];g.pos.push(...n);g.nrm.push(...n);let c;
+  if(kind==='planet'){const l=fbm(n[0]*2.2+n[1]*.7,n[2]*2.2-n[1]*.9,4)+fbm(n[1]*3+5,n[0]*3-2,3)*.5;const ice=smooth(.82,.95,Math.abs(n[1]));c=l>.08?mixc([.24,.46,.32],[.62,.5,.36],smooth(.08,.4,l)):mixc([.04,.16,.34],[.1,.34,.5],smooth(-.3,.08,l));c=mixc(c,[.92,.95,.98],ice);const cl=smooth(.15,.35,fbm(n[0]*4+11,n[2]*4+n[1]*2,3));c=mixc(c,[.95,.96,1],cl*.6);}
+  else{const m=smooth(.05,.25,fbm(n[0]*1.8+n[1],n[2]*1.8,3));c=mixc([.58,.57,.56],[.28,.29,.32],m*.8);}g.col.push(c[0],c[1],c[2],-4);}
+ for(let j=0;j<NB;j++)for(let i=0;i<NA;i++){const a=j*(NA+1)+i,b=a+NA+1;g.idx.push(a,b,a+1,a+1,b,b+1);}return makeMesh({pos:new Float32Array(g.pos),nrm:new Float32Array(g.nrm),col:new Float32Array(g.col),idx:g.idx});}
+function relayMesh(){const g=new GB();g.add(PRIM.sphere(1.6,14,10),null,'#3a3448');for(const s of [-1,1]){g.add(PRIM.box(7,.08,2.4),T(s*4.6,0,0),COL('#2a4a8a',-1));g.add(PRIM.box(1.4,.2,.2),T(s*1.4,0,0),'#8a92a0');}g.add(PRIM.sphere(.4,8,6),T(0,1.8,0),COL('#5af0e0',3));return g.build();}
+const SKYB={};
+function skyBody(out,mesh,dir,ang){const d=550,r=d*Math.sin(Math.min(1.3,ang));const L=Math.hypot(...dir);out.push({mesh,model:T(R.cam[0]+dir[0]/L*d,R.cam[1]+dir[1]/L*d,R.cam[2]+dir[2]/L*d,R.time*.003,0,.35,r)});}
+{const _o=TR.objects;TR.objects=function(){const out=_o();if(!SKYB.p){SKYB.p=globeMesh('planet');SKYB.m=globeMesh('moon');SKYB.r=relayMesh();}const F=FLIGHT;
+ if(F.on){const p=F.p||0,yaw=F.rig.yaw,fw=[Math.sin(yaw),0,Math.cos(yaw)];const home=F.to==='moon'?SKYB.p:SKYB.m,dest=F.to==='moon'?SKYB.m:SKYB.p;
+  if(F.phase==='up'){const a=smooth(150,900,F.alt||0);if(a>0)skyBody(out,home,[0,-1,0],lerp(.2,1.25,a));skyBody(out,dest,[fw[0],.45,fw[2]],.02);}
+  else if(F.phase==='cruise'){skyBody(out,home,[-fw[0]*.6,-1+p*.7,-fw[2]*.6],lerp(1.2,.05,Math.pow(p,.6)));skyBody(out,dest,[fw[0],.35-p*.5,fw[2]],lerp(.02,1.15,Math.pow(p,1.6)));
+   const q=clamp((p-.25)*3,0,1);if(q>0&&q<1)out.push({mesh:SKYB.r,model:T(R.cam[0]+fw[0]*(120-q*260)+fw[2]*40,R.cam[1]+18-q*10,R.cam[2]+fw[2]*(120-q*260)-fw[0]*40,R.time*.2,.3,.2,1)});}
+  else{skyBody(out,dest,[0,-1,0],lerp(1.25,.2,smooth(1600,400,F.alt||0)));}}
+ else if(onMoon(R.cam[0]))skyBody(out,SKYB.p,[.35,.62,-.7],.12);
+ return out;};}
+// ---------- flight between worlds ----------
+const FLIGHT={on:false};
+function shipCheck(r){const D=rigDerive(r),st=D.st;let sealed=false,drive=false;for(const b of D.B){if(b[3]==='cockpit'||b[3]==='pcockpit')sealed=true;if(b[3]==='vdrive')drive=true;}
+ if(!drive)return 'This rig needs a Vael drive';if(!sealed)return 'Space needs a sealed cockpit';const lift=st.thr/(st.mass*9.8*GRAVK());if(lift<1)return 'Not enough thrusters to lift it ('+Math.round(lift*100)+'%)';if(st.o2<=0)return 'Bring an air tank';if((r.energy||0)<30000&&st.free<=0)return 'Needs 30 MJ of power (load Fusion Cells or Batteries)';return '';}
+UI.A.shipGo=()=>{const r=VEH.driving;if(!r||!r.blocks||FLIGHT.on)return;const why=shipCheck(r);if(why){UI.toast(why,'warn');AUDIO.bad&&AUDIO.bad();return;}
+ if(rigDerive(r).st.free<=0)r.energy-=30000;const to=onMoon(r.x)?'planet':'moon';if(to==='moon')S.launch={x:r.x,z:r.z};
+ Object.assign(FLIGHT,{on:true,rig:r,to,phase:'up',t:0,y0:r.y,p:0,jumped:false});r.fly=false;r.spd=0;UI._mk='';AUDIO.tone&&AUDIO.tone(70,3,{type:'sawtooth',vol:.2,slide:2.5});UI.toast(to==='moon'?'Autopilot: course for the moon. Tap 🚶 to walk around.':'Autopilot: course for home.','good');};
+function flightStep(dt){const F=FLIGHT,r=F.rig;if(!F.on||!r)return;F.t+=dt;const D=rigDerive(r);
+ if(F.phase==='up'){const T=14,k=Math.min(1,F.t/T);r.y=F.y0+Math.pow(k,2.2)*1700;r.pitch=lerp(r.pitch||0,-.08,dt);r.roll=lerp(r.roll||0,0,dt);F.alt=r.y-F.y0;if(k>=1){F.phase='cruise';F.t=0;}}
+ else if(F.phase==='cruise'){const T=32;F.p=Math.min(1,F.t/T);r.yaw+=dt*.004;
+  if(F.p>.5&&!F.jumped){F.jumped=true;// cross over while only the sky can be seen
+   let tx,tz;if(F.to==='moon'){tx=MOON.ox+(Math.random()-.5)*30;tz=MOON.oz+25+(Math.random()-.5)*20;}else{const L=S.launch||{x:0,z:0};tx=L.x+6;tz=L.z+6;}const dx=tx-r.x,dz=tz-r.z;const gy=ground(tx,tz)+1700;const dy=gy-r.y;r.x=tx;r.z=tz;r.y=gy;PL.x+=dx;PL.z+=dz;PL.y+=dy;F.gy=gy;if(F.to==='moon')MOON.prime=false;}
+  if(F.p>=1){F.phase='down';F.t=0;F.ytop=r.y;}}
+ else if(F.phase==='down'){const T=16,k=Math.min(1,F.t/T);const G=rigPose(r);const sp=rigSupport(r,D,G);const floor=Math.max(sp.need,sp.hull);const e=1-Math.pow(1-k,2.4);r.y=Math.max(floor,lerp(F.ytop,floor,e));F.alt=r.y-floor;r.pitch=lerp(r.pitch||0,0,dt);
+  if(Math.random()<dt*25)PFX.emit('dust',[r.x,r.y-D.st.height*.5,r.z],1);if(k>=1){F.on=false;r.vy=0;r.spd=0;UI._mk='';UI.toast(F.to==='moon'?'Touchdown on the moon. Low gravity: jumps go a long way. The Vael station is just ahead.':'Welcome home.','good');saveSoon();}}
+ rigAfter(r,D,dt,VEH.driving===r);}
+{const _u=rigUpdate;rigUpdate=function(rig,dt){if(FLIGHT.on&&FLIGHT.rig===rig)return;if(ABOARD.on&&ABOARD.rig===rig){const jx=INPUT.jx,jy=INPUT.jy,k=INPUT.keys;const kw=k.KeyW,ks=k.KeyS,ka=k.KeyA,kd=k.KeyD;INPUT.jx=INPUT.jy=0;k.KeyW=k.KeyS=k.KeyA=k.KeyD=false;_u(rig,dt);INPUT.jx=jx;INPUT.jy=jy;k.KeyW=kw;k.KeyS=ks;k.KeyA=ka;k.KeyD=kd;return;}_u(rig,dt);};}
+{const _u=TR.update;TR.update=function(dt){_u(dt);if(!GAME.paused)flightStep(Math.min(dt,.05));};}
+// keep the planet streamer from stalling when the ship crosses over: it fills in during the descent
+{const _s=stream5;stream5=function(force){if(FLIGHT.on){W5.last=[R.cam[0],R.cam[2]];}return _s(force);};}
+// ---------- walking around inside a rig ----------
+const ABOARD={on:false};
+function aboardStart(){const r=VEH.driving;if(!r||!r.blocks)return;if(Math.abs(r.spd)>1&&!FLIGHT.on){UI.toast('Stop first, or put it on autopilot','warn');return;}const D=rigDerive(r);const seat=D.B.find(b=>RIGP[b[3]].seat)||D.B[0];
+ Object.assign(ABOARD,{on:true,rig:r,lx:seat[0],ly:seat[1]+.5,lz:seat[2]+(D.B.some(b=>b[0]===seat[0]&&b[2]===seat[2]+1&&b[1]===seat[1])?0:1),vy:0,ly0:0});PL.yaw=r.yaw;UI._mk='';UI.toast('Walking around the rig. Tap 🪑 to sit back down.','info');}
+function aboardEnd(){ABOARD.on=false;UI._mk='';GAME.freeCam=null;}
+UI.A.shipWalk=()=>aboardStart();UI.A.shipSit=()=>aboardEnd();
+function aboardFloor(r,D,x,y,z){const cx=Math.round(x),cz=Math.round(z);let f=-1e9;for(const b of D.B){if(b[0]!==cx||b[2]!==cz)continue;const top=b[1]+.5;if(top<=y+.6&&top>f)f=top;}return f;}
+function aboardWall(D,x,y,z){const cx=Math.round(x),cz=Math.round(z);for(const b of D.B)if(b[0]===cx&&b[2]===cz&&b[1]-.5<y+1.7&&b[1]+.5>y+.35)return true;return false;}
+{const _up=updatePlayer;updatePlayer=function(dt){if(!ABOARD.on)return _up(dt);const A=ABOARD,r=A.rig;if(VEH.driving!==r){A.on=false;return _up(dt);}const D=rigDerive(r);
+ const yl=PL.yaw-r.yaw;let fx=INPUT.jx||(INPUT.keys.KeyD?1:INPUT.keys.KeyA?-1:0),fz=INPUT.jy||(INPUT.keys.KeyW?1:INPUT.keys.KeyS?-1:0);const sp=3.2*dt;const mx=(Math.sin(yl)*fz-Math.cos(yl)*fx)*sp,mz=(Math.cos(yl)*fz+Math.sin(yl)*fx)*sp;
+ const tryMove=(nx,nz)=>{const fl=aboardFloor(r,D,nx,A.ly,nz);if(fl<A.ly-2.5)return false;if(aboardWall(D,nx,A.ly,nz))return false;return true;};if(tryMove(A.lx+mx,A.lz))A.lx+=mx;if(tryMove(A.lx,A.lz+mz))A.lz+=mz;
+ const g=24*GRAVK();A.vy-=g*dt;const fl=aboardFloor(r,D,A.lx,A.ly,A.lz);if((INPUT.jump||INPUT.keys.Space)&&A.ly<=fl+.02)A.vy=5.5;INPUT.jump=false;A.ly+=A.vy*dt;if(A.ly<fl){A.ly=fl;A.vy=0;}if(A.ly<-6){A.ly=fl>-1e8?fl:1;}
+ const G=rigPose(r);const p=M4.xform(G[0],A.lx-D.com[0],A.ly-D.com[1],A.lz-D.com[2]);PL.x=p[0];PL.y=p[1];PL.z=p[2];PL.vy=0;GAME.freeCam={cam:[p[0],p[1]+1.6,p[2]],yaw:PL.yaw,pitch:PL.pitch};};}
+{const _rc=rigCam;rigCam=function(r,dt){if(ABOARD.on)return;_rc(r,dt);};}
+// ---------- the ship's buttons ----------
+{const _f=UI.frame;UI.frame=function(dt){const v=VEH.driving;const isShip=!!(v&&v.blocks&&rigDerive(v).B.some(b=>b[3]==='vdrive'));const key='ship'+(isShip?1:0)+(ABOARD.on?1:0)+(FLIGHT.on?1:0)+(onMoon(v?v.x:0)?1:0)+(v&&v.fly?1:0);if(v&&v.blocks&&v._sk!==key){v._sk=key;UI._mk='';}
+ _f(dt);if(!v||!v.blocks)return;
+ if(ABOARD.on||FLIGHT.on){const k2='shipm'+key;if(UI._mk!==k2&&!UI._pressing){UI._mk=k2;$('#modeBtns').innerHTML=(ABOARD.on?`<button class="rb tier" data-a="shipSit">🪑 Sit</button>`:`<button class="rb tier" data-a="shipWalk">🚶 Walk</button>`)+(!FLIGHT.on&&ABOARD.on?`<button class="rb tier" data-a="vExit">Exit</button>`:'');}if(ABOARD.on)$('#act').classList.add('hide');}
+ else if(isShip){const mb=$('#modeBtns');if(!mb.querySelector('[data-a="shipGo"]')){mb.insertAdjacentHTML('afterbegin',`<button class="rb tier" data-a="shipGo">${onMoon(v.x)?'🌍':'🌙'}</button><button class="rb" data-a="shipWalk">🚶</button>`);}}
+ let el=document.getElementById('flighthud');if(!el){el=document.createElement('div');el.id='flighthud';document.body.appendChild(el);}el.classList.toggle('on',FLIGHT.on);if(FLIGHT.on){const t=FLIGHT.phase==='up'?'Climbing · '+Math.round(FLIGHT.alt||0)+' m':FLIGHT.phase==='cruise'?'Cruising to '+(FLIGHT.to==='moon'?'the moon':'Thessa')+' · '+Math.round(FLIGHT.p*100)+'%':'Descending · '+Math.round(FLIGHT.alt||0)+' m';if(el._t!==t){el._t=t;el.textContent='🛰 Autopilot · '+t;}}};}
+// the ship's own menu gets a fusion cell button
+{const _vv=UI.views.veh;UI.views.veh=function(){let h=_vv();const v=UI.veh;if(v&&v.blocks)h=h.replace('<button data-a="rigFix">',`<button data-a="rigFuse">⚛ Fusion cell (${S.inv.fusion_cell||0})</button><button data-a="rigFix">`);return h;};}
+UI.A.rigFuse=()=>{const v=UI.veh,D=rigDerive(v);if(!D.st.cap){UI.toast('This rig has no battery block','warn');return;}if(!(S.inv.fusion_cell>0)){UI.toast('No Fusion Cells: make them from helium-3','warn');return;}addInv('fusion_cell',-1);v.energy=Math.min(D.st.cap,(v.energy||0)+100000);AUDIO.craft&&AUDIO.craft();UI.refresh();saveSoon();};
+// near the station core: open it
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);if(GAME.mode!=='play'||!onMoon()||STA.y==null||UI.panel||VEH.driving)return;const d=Math.hypot(PL.x-MOON.st.x,PL.z-MOON.st.z);let b=document.getElementById('stabtn');if(!b){b=document.createElement('button');b.id='stabtn';b.textContent='✦ Open the station core';b.addEventListener('click',e=>{e.stopPropagation();staOpen();});document.body.appendChild(b);}b.classList.toggle('on',d<34&&!S.ended);};}
+{const _f=UI.frame;UI.frame=function(dt){_f(dt);const b=document.getElementById('stabtn');if(b&&(!onMoon()||VEH.driving||UI.panel))b.classList.remove('on');};}
+// the moon's map
+{const _dm=UI.drawMap;UI.drawMap=function(){if(!onMoon())return _dm();const c=$('#mapc');if(!c)return;const x=c.getContext('2d'),N=c.width;if(!MOON.map){const M=256,cv=document.createElement('canvas');cv.width=cv.height=M;const g=cv.getContext('2d'),im=g.createImageData(M,M);for(let j=0;j<M;j++)for(let i=0;i<M;i++){const wx=MOON.ox+(i/M*2-1)*MOON.R,wz=MOON.oz+(j/M*2-1)*MOON.R;const h=moonH(wx,wz),hx=moonH(wx+9,wz);const col=moonColor(wx,wz,h,1);const sh=.8+(hx-h)*.06;const o=(j*M+i)*4;for(let k=0;k<3;k++)im.data[o+k]=Math.pow(col[k],1/2.2)*255*sh;im.data[o+3]=255;}g.putImageData(im,0,0);MOON.map=cv;}
+ x.fillStyle='#000';x.fillRect(0,0,N,N);x.drawImage(MOON.map,0,0,N,N);const P=(wx,wz)=>[(wx-MOON.ox+MOON.R)/(2*MOON.R)*N,(wz-MOON.oz+MOON.R)/(2*MOON.R)*N];
+ for(const nd of WORLD.nodes){if(!nd.moon)continue;const q=P(nd.x,nd.z);x.fillStyle=NODE_TYPES[nd.type].c;x.beginPath();x.arc(q[0],q[1],4,0,TAU);x.fill();}
+ for(const b of FAC.b.values()){if(b.x<20000)continue;const q=P(b.x,b.z);x.fillStyle='#f4f4f4';x.fillRect(q[0]-2,q[1]-2,4,4);}
+ {const q=P(MOON.st.x,MOON.st.z);x.fillStyle='#5af0e0';x.beginPath();x.arc(q[0],q[1],8,0,TAU);x.fill();x.font='800 12px system-ui';x.textAlign='center';x.fillText('VAEL STATION',q[0],q[1]-12);}
+ const q=P(PL.x,PL.z);x.save();x.translate(q[0],q[1]);x.rotate(-PL.yaw+Math.PI);x.fillStyle='#ffb15e';x.beginPath();x.moveTo(0,-9);x.lineTo(6,7);x.lineTo(-6,7);x.closePath();x.fill();x.restore();};}
+(function(){const st=document.createElement('style');st.textContent=`#flighthud{position:fixed;left:50%;top:calc(96px + var(--safe-t));transform:translateX(-50%);display:none;background:rgba(10,12,24,.82);color:#bfefff;border:1px solid rgba(90,240,224,.4);border-radius:12px;padding:6px 14px;font:800 13px system-ui;z-index:6}#flighthud.on{display:block}
+#stabtn{position:fixed;left:50%;bottom:calc(110px + var(--safe-b));transform:translateX(-50%);display:none;z-index:7;border:1px solid rgba(90,240,224,.6);background:rgba(20,16,36,.88);color:#bfefff;border-radius:16px;padding:10px 18px;font:800 14px system-ui;pointer-events:auto}#stabtn.on{display:block}`;document.head.appendChild(st);})();
+
+function spaceK(){return MOON.k||0;}
+
 // ---- 99-main.js ----
 // ===== Boot and main loop =====
-const VERSION='0.8.0',VERSION_MARK='FFVER@0.8.0@';
+const VERSION='0.9.0',VERSION_MARK='FFVER@0.9.0@';
 // ---- update check: a small pill appears when a newer version is online ----
 const UPD={start(){setTimeout(()=>this.check(),4000);setInterval(()=>this.check(),5*60000);},async check(){if(location.protocol!=='https:')return;try{const t=await (await fetch(location.pathname+'?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/FFVER@([\d.]+)@/);if(m&&m[1]!==VERSION&&!document.getElementById('updpill')){const b=document.createElement('button');b.id='updpill';b.textContent='Update '+m[1]+' ready · tap to install';b.onclick=()=>{saveGame();location.reload();};document.body.appendChild(b);}}catch(e){}}};
 const GAME={started:false};
@@ -5922,7 +6080,7 @@ function frame(now){CRASH.tick(now);let dt=Math.min(.1,(now-lastT)/1000);lastT=n
  requestAnimationFrame(frame);}
 (async function boot(){try{
  // the showcase factory is added once to the last save slot if that slot is empty
- try{const LK=SLOT_KEYS[SLOT_KEYS.length-1];let old=null;try{old=JSON.parse(localStorage.getItem(LK)||'null');}catch(_){}const upg=old&&old.name==='Novaforge Showcase'&&!(old.showV>=2)&&!localStorage.getItem('nf_showcase_v2');if(upg||(!localStorage.getItem('nf_showcase_added')&&!old)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();JSON.parse(t);localStorage.setItem(LK,t);localStorage.setItem('nf_showcase_added','1');localStorage.setItem('nf_showcase_v2','1');}}}catch(e){}
+ try{const LK=SLOT_KEYS[SLOT_KEYS.length-1];let old=null;try{old=JSON.parse(localStorage.getItem(LK)||'null');}catch(_){}const upg=old&&old.name==='Novaforge Showcase'&&!(old.showV>=3)&&!localStorage.getItem('nf_showcase_v3');if(upg||(!localStorage.getItem('nf_showcase_added')&&!old)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();JSON.parse(t);localStorage.setItem(LK,t);localStorage.setItem('nf_showcase_added','1');localStorage.setItem('nf_showcase_v3','1');}}}catch(e){}
  // ?showcase replaces the current slot with the prebuilt showcase factory (asks first)
  try{if(/[?&]showcase\b/.test(location.search)){const r=await fetch('showcase.json',{cache:'no-store'});if(r.ok){const t=await r.text();if(confirm('Replace the save in slot '+(SLOT+1)+' with the Novaforge Showcase factory? Your current save in this slot will be deleted.')){localStorage.setItem(SAVE_KEY,t);}}history.replaceState(null,'',location.pathname);}}catch(e){}
  const _bt0=performance.now();nextTip();const tipT=setInterval(nextTip,2600);const fresh=!loadGame();glInit(document.getElementById('gl'));initRenderer();applyQuality();setLoad(.1,'Scanning terrain…');await sleep(20);
@@ -5930,7 +6088,7 @@ function frame(now){CRASH.tick(now);let dt=Math.min(.1,(now-lastT)/1000);lastT=n
  UI.init();makeThumbs();initScreens();R.post=drawScreens;initInput();restoreWorld();EXP.init();if(!fresh)catchUp();
  setLoad(1,'Ready');await sleep(250);clearInterval(tipT);const L=document.getElementById('loading');L.style.transition='opacity .6s';L.style.opacity=0;setTimeout(()=>L.remove(),650);UI.hint('');GAME.started=true;MENU.title();let nw=false,ct=false;try{nw=sessionStorage.getItem('ff_new')==='1';ct=sessionStorage.getItem('nf_cont')==='1';const nm=sessionStorage.getItem('nf_name');if(nw&&nm)S.name=nm;sessionStorage.removeItem('ff_new');sessionStorage.removeItem('nf_cont');sessionStorage.removeItem('nf_name');}catch(e){}if(nw&&!S.name)S.name='Expedition '+(SLOT+1);if(window.__AUTOPLAY||(nw&&!S.landed)||ct)MENU.play();else setTimeout(()=>MENU.notes(false),600);
  addEventListener('visibilitychange',()=>{if(document.hidden)saveGame();});setInterval(saveGame,15000);
- window.FW={S:()=>S,SEAL,HAB,OCEAN,VAULT,rigSub,suitDepth,UNDO,dismantle,NODE_TYPES,RIG,CRASH,RIGED,RIGP,rigDerive,rigEdOpen,rigEdClose,rigNew,rigUpdate,VEH,MAMR,saveKey:()=>SAVE_KEY,mapStep5,W5,REG5,stream5,biomeTop2:(x,z)=>biomeTop2(x,z),dryLand:(x,z)=>dryLand(x,z),trenchD:(x,z)=>trenchD(x,z),groundNormal:(x,z)=>groundNormal(x,z),rawHeight:(x,z)=>rawHeight(x,z),BOOTT:0,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
+ window.FW={S:()=>S,MOON,FLIGHT,ABOARD,STA,flightStep,onMoon,moonH,SEAL,HAB,OCEAN,VAULT,rigSub,suitDepth,UNDO,dismantle,NODE_TYPES,RIG,CRASH,RIGED,RIGP,rigDerive,rigEdOpen,rigEdClose,rigNew,rigUpdate,VEH,MAMR,saveKey:()=>SAVE_KEY,mapStep5,W5,REG5,stream5,biomeTop2:(x,z)=>biomeTop2(x,z),dryLand:(x,z)=>dryLand(x,z),trenchD:(x,z)=>trenchD(x,z),groundNormal:(x,z)=>groundNormal(x,z),rawHeight:(x,z)=>rawHeight(x,z),BOOTT:0,ECHO,readEcho,salvage,storySignal,O2,tetherDrop,inBubble,o2Update,STORM,SWIM,elevRide,portalGo,TRN,DOG,pets,takeSloop,RENEW,vehUpdate,stamps,GL_STATS:()=>GL.stats,enterTube,PHOTO,fbEncode,fbDecode,planTree,codexAdd,pmPlace,railBlocks,BUILD2:BUILD,shedLoad,camThird,CAVE3,BIO3,PION,PHOTO,EMOTES,emote,bioW,BW,caveQ,FLORA,GRASS,TER3,biomeTop2,LAKES,updatePlayer,INPUT,renderFrame,PAD,beltCheck,wireAim,wirePoint,applyPaint,fbpCost,TR,VEH,vehSpawn,stationNodes,railPath,railSync,GEAR,invRoom,invSlots,slotsUsed,refreshFlora,PFX,BP,TODO,WPT,SCAN,MENU,ENV,EXP,CRE,TUT,START,TOOL,hubB,spotPos,openPod,takeCore,zap,HAND,handTarget,newPipe,resetFuse,wireAction,canWire,ITEMS,spliceBelt,curveAt,updateBuildMode,FAC,BUILD,PL,R,WORLD,UI,GAME,addInv,BUILDINGS,RECIPES,placeBuilding,beltAction,newBuilding,newBelt,portWorld,autoWire,ground,MILESTONES,curMilestone,hubDeliver,simStep,saveGame};
  requestAnimationFrame(t=>{lastT=t;frame(t);});window.READY=true;CRASH.start();
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});UPD.start();
 }catch(e){console.error(e);window.ERR=String(e.stack||e);try{CRASH.add('boot',e.message,e.stack,'the game could not start');}catch(_){}const l=document.getElementById('lmsg');if(l)l.textContent='Could not start: '+e.message;}})();
